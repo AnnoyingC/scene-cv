@@ -18,6 +18,7 @@ import { BakedRoom, loadBaked, tvLight } from './baked.js';
 import { waterMaterial, orbMaterial, flameMaterial, gemMaterial, OrbText, RIPPLES } from './magic.js';
 import { BasinMagic } from './basin.js';
 import { TowerCat } from './tower-cat.js';
+import { PaperFire } from './paper-fire.js';
 
 const BASE = new URL('../assets/tower/', import.meta.url).href;
 const CREDITS = new URL('../assets/vendor/credits.json', import.meta.url).href;
@@ -31,8 +32,13 @@ const deg = THREE.MathUtils.degToRad;
 const ROUTES = ['about', 'work', 'shelf', 'online'];
 const HINTS = { about: '水晶球 · 关于我', work: '水盆 · 作品', shelf: '书架 · 书单', online: '羊皮纸 · 联系方式' };
 const BASIN_GAIN = 0.3; // 项目画面只给常亮的冥想盆底光添加一点染色。
+// 绿火：烘焙好的壁炉光是橙色的（约 #ff8a3a），乘上这个系数就变成绿光（不是颜色本身，是对橙光的校正）
+const FIRE_GREEN = new THREE.Color(0.2, 1.85, 1.9);
+const EMBER_GREEN = new THREE.Color('#2dff6a');
+const CAT_FIRE = new THREE.Color('#ffbb77'), CAT_GREEN = new THREE.Color('#5dff8c');
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)');
 
-export async function start(content) {
+export async function start(content, { nav = null } = {}) {
   const { tapes: projects, books = [], links } = content;
   const N = projects.length;
   $('room').hidden = false;
@@ -112,7 +118,7 @@ export async function start(content) {
   noteTex.colorSpace = THREE.SRGBColorSpace;
   noteTex.anisotropy = aniso;
   const od = M.views.online.dir;
-  room.decal('parchment', noteTex, new THREE.Vector3(-od[0], 0, -od[2]).normalize()); // 纸的上方 = 背对镜头的方向
+  const noteDecal = room.decal('parchment', noteTex, new THREE.Vector3(-od[0], 0, -od[2]).normalize()); // 纸的上方 = 背对镜头的方向
 
   // ---------- 壁炉的火苗：三片交叉的面 ----------
   const F = M.fire;
@@ -130,6 +136,29 @@ export async function start(content) {
     return m;
   });
   scene.add(fire);
+  // 绿火从炉口里窜出来：炉口前面两片往屋里倾斜的大火苗，平时不显示（揉纸投火时用）
+  const flare = new THREE.Group();
+  flare.position.copy(fire.position).addScaledVector(new THREE.Vector3().fromArray(F.dir).setY(0).normalize(), 0.12);
+  flare.quaternion.copy(fire.quaternion);
+  const flares = [-0.25, 0.25].map((r, i) => {
+    const g = new THREE.PlaneGeometry(F.w * 1.5, F.h * 2.1);
+    g.translate(0, (F.h * 2.1) / 2, 0);
+    const m = new THREE.Mesh(g, flameMaterial(3.1 + i * 1.9));
+    m.rotation.set(0.38, r, 0); // 往屋里（本地 +z）倾斜，上半截伸出炉口，挡不住
+    m.renderOrder = 1;
+    m.material.uniforms.green.value = 1;
+    flare.add(m);
+    return m;
+  });
+  flare.visible = false;
+  scene.add(flare);
+
+  // ---------- 揉纸投火：点联系方式的链接 → 纸揉成团扔进壁炉 → 绿火 → 跳转（js/paper-fire.js）----------
+  const paperFire = noteDecal && new PaperFire({
+    room, scene, decal: noteDecal, texture: noteTex, fire: F, viewDir: M.views.online.dir, host: document.body, // 绿光要盖住导航栏
+  });
+  const fireK = new THREE.Color();
+  const embers = room.emitters.filter((e) => e.layer === 'fire').map((e) => ({ e, green: EMBER_GREEN.clone().multiplyScalar(e.power) }));
 
   // ---------- 水晶：从模型里拆出来，换成会发光的材质 ----------
   const WATER_Y = W.pos[1];
@@ -252,6 +281,12 @@ export async function start(content) {
   let workWide = 0;
   let workReveal = null;
   let fly = null;
+  let shot = null; // 过场镜头（揉纸投火）：{ target, size, dir }，有它时不管当前视角
+  function cut(s, dur) {
+    shot = s;
+    if (!s) return startFly(); // 过场结束：回到当前视角
+    fly = { from: { pos: cur.pos.clone(), yaw: cur.yaw, pitch: cur.pitch, fov: cur.fov }, t: 0, dur };
+  }
   const right = new THREE.Vector3(), up = new THREE.Vector3(), dirV = new THREE.Vector3();
   function basis(yaw, pitch) {
     right.set(Math.cos(yaw), 0, -Math.sin(yaw));
@@ -265,10 +300,11 @@ export async function start(content) {
     out.fov = Math.min(95, Math.max(look.fov, (minV * look.fov) / 55));
     return out;
   }
-  function covered() { // 面板挡住了多少像素：宽屏在右边，窄屏在下面。"关于我"的面板只是右下角一行提示，宽屏时不让位
-    if (panel.hidden || (view === 'about' && innerWidth > 600)) return { w: 0, h: 0 };
+  function covered() { // 面板挡住了多少像素：宽屏在右边，窄屏在下面。"关于我"的面板只是右下角一行提示，宽屏时不让位；top 是顶部导航栏
+    const top = nav?.height() ?? 0;
+    if (panel.hidden || (view === 'about' && innerWidth > 600)) return { w: 0, h: 0, top };
     const r = panel.getBoundingClientRect();
-    return innerWidth > 600 ? { w: innerWidth - r.left + 16, h: 0 } : { w: 0, h: innerHeight - r.top + 12 };
+    return innerWidth > 600 ? { w: innerWidth - r.left + 16, h: 0, top } : { w: 0, h: innerHeight - r.top + 12, top };
   }
   function focusPose(name, out) {
     framePose(M.views[name], out);
@@ -286,7 +322,7 @@ export async function start(content) {
   function framePose(v, out) {
     const fov = camera.aspect < 0.8 ? 60 : 44;
     const tv_ = Math.tan(deg(fov / 2)), th = tv_ * camera.aspect;
-    const cv = covered(), fw = Math.max(0.35, 1 - cv.w / innerWidth), fh = Math.max(0.35, 1 - cv.h / innerHeight);
+    const cv = covered(), fw = Math.max(0.35, 1 - cv.w / innerWidth), fh = Math.max(0.35, 1 - (cv.h + cv.top) / innerHeight);
     const dist = Math.max(v.size[0] / (th * fw), v.size[1] / (tv_ * fh)) * 1.15;
     dirV.fromArray(v.dir).normalize();
     out.yaw = Math.atan2(dirV.x, dirV.z);
@@ -295,7 +331,7 @@ export async function start(content) {
     out.pos.fromArray(v.target).addScaledVector(dirV, dist);
     basis(out.yaw, out.pitch);
     out.pos.addScaledVector(right, (dist * th * cv.w) / innerWidth);
-    out.pitch -= Math.atan((tv_ * cv.h) / innerHeight);
+    out.pitch -= Math.atan((tv_ * (cv.h - cv.top)) / innerHeight); // 面板在下面：低头；导航栏在上面：抬头
     return out;
   }
   function startFly() {
@@ -318,7 +354,7 @@ export async function start(content) {
     look.pitch += (look.pitchT - look.pitch) * a;
     look.fov += (look.fovT - look.fov) * a;
     par.lerp(parT, 1 - Math.exp(-dt * 3));
-    if (view === 'home') homePose(goal); else focusPose(view, goal);
+    if (shot) framePose(shot, goal); else if (view === 'home') homePose(goal); else focusPose(view, goal);
     if (fly) {
       fly.t = Math.min(1, fly.t + dt / fly.dur);
       const e = ease(fly.t), f = fly.from;
@@ -353,6 +389,7 @@ export async function start(content) {
   }
   function setView(name, instant = false) {
     if (name === view) return;
+    if (paperFire?.busy) paperFire.cancel(); // 过场中途去了别的地方：纸回到桌上
     const first = view === null;
     view = name;
     credits = null;
@@ -362,6 +399,7 @@ export async function start(content) {
     backBtn.hidden = name === 'home';
     help.hidden = name !== 'home';
     document.title = TITLES[name];
+    nav?.setActive(name === 'home' ? null : name);
     renderPanel();
     if (instant || first) fly = null;
     else startFly();
@@ -397,14 +435,39 @@ export async function start(content) {
           : `<div class="row">${esc(b.title)} <span>${esc(b.author)}</span></div>`}${b.note ? `<p class="note">${esc(b.note)}</p>` : ''}</li>`).join('')}</ul>` : '<p>书架上还没有书。</p>'}`;
     } else if (view === 'online') {
       html = `<div class="kicker">联系</div>
-        <ul class="list">${links.map((l) => `<li><a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)} <span>${esc(l.handle)}</span></a></li>`).join('')}</ul>`;
+        <ul class="list">${links.map((l, i) => `<li><a href="${esc(l.url)}" target="_blank" rel="noopener" data-link="${i}">${esc(l.label)} <span>${esc(l.handle)}</span></a></li>`).join('')}</ul>`;
     }
     panel.innerHTML = html;
     panel.hidden = !html;
     panel.classList.toggle('credits', !!(view === 'home' && credits));
     help.hidden = view !== 'home' || !!credits;
   }
+  // 点联系方式：先演揉纸投火，再在本页跳过去（等几秒再开新标签页会被浏览器当成弹窗拦掉）。
+  // 按住 ⌘ / Ctrl / Shift、中键、或者系统设置了减少动态效果：照常在新标签页打开。
+  function burnLink(i) {
+    const l = links[i];
+    if (!paperFire || !l?.url || paperFire.busy) return false;
+    setHover(null);
+    panel.hidden = true;
+    help.hidden = true;
+    paperFire.start(l, {
+      onCamera: cut,
+      onImpact: () => { light.fireT = 1; }, // 火灭着也会被纸团点着
+      onDone: (url) => location.assign(url),
+      onCancel: () => renderPanel(),
+    });
+    return true;
+  }
+  addEventListener('pageshow', (e) => { // 从目标网站按后退回来（页面从缓存里恢复）：纸回到桌上
+    if (e.persisted && paperFire?.busy) paperFire.cancel();
+  });
   panel.addEventListener('click', (e) => {
+    const a = e.target.closest('a[data-link]');
+    if (a) {
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || REDUCED.matches) return;
+      if (burnLink(Number(a.dataset.link))) e.preventDefault();
+      return;
+    }
     const b = e.target.closest('button');
     if (b?.dataset.cmd === 'close') { credits = null; renderPanel(); }
     else if (b?.dataset.cmd) cmd(b.dataset.cmd);
@@ -461,6 +524,7 @@ export async function start(content) {
   let hover = null;
   function setHover(h, x, y) {
     if (h && h.kind === view && view !== 'about') h = null;
+    if (paperFire?.busy) h = null;
     if (h?.key !== hover?.key) {
       if (hover?.kind === 'gem' && gems[hover.i]) gems[hover.i].pullT = 0;
       hover = h;
@@ -468,7 +532,7 @@ export async function start(content) {
       else if (h) room.highlight(h.kind);
       canvas.style.cursor = h ? 'pointer' : view === 'home' ? 'grab' : 'default';
     }
-    const text = h ? hintText(h) : '';
+    const text = h && x != null ? hintText(h) : ''; // 导航栏悬停时只高亮物件，不显示提示
     if (text) {
       hintEl.textContent = text;
       hintEl.style.left = x + 'px';
@@ -477,6 +541,7 @@ export async function start(content) {
     } else hintEl.classList.remove('show');
   }
   function click(x, y, mouse) {
+    if (paperFire?.busy) return paperFire.skip(); // 过场里点一下：直接跳
     const h = pick(x, y), before = view;
     if (!h) { if (view !== 'home') go('home'); return; }
     if (h.kind === 'gem') { dropGem(h.i); go('work'); }
@@ -549,11 +614,12 @@ export async function start(content) {
   }, { passive: false });
   addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
+      if (paperFire?.busy) { paperFire.cancel(); return; } // 取消过场，纸回到桌上
       if (view !== 'home') go('home');
       else if (credits) { credits = null; renderPanel(); }
       return;
     }
-    if (e.target.closest?.('button,a,input,textarea')) return;
+    if (e.target.closest?.('button,a,input,textarea') && !e.target.closest('#topbar')) return; // 点过导航栏以后方向键照常换项目
     if (view === 'work' && e.key === 'ArrowRight') cmd('next');
     else if (view === 'work' && e.key === 'ArrowLeft') cmd('prev');
     else if (view === 'about' && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) { e.preventDefault(); orbText.scrollBy(e.key === 'ArrowDown' ? 2 : -2); }
@@ -571,6 +637,11 @@ export async function start(content) {
   resize();
   // 开场保留所有水晶在盆沿；第一次点击也会完整经历投掷和光柱。
   setView(viewFromHash(), true);
+  // 顶部导航栏：点一项和点对应的物件走同一个 go()；悬停时高亮那个物件
+  nav?.bind({
+    go, routes: ROUTES.filter((r) => M.views?.[r]), current: () => view,
+    preview: (kind) => setHover(kind && kind !== view ? { kind, key: kind } : null),
+  });
 
   // ---------- 每帧 ----------
   let simT = 0;
@@ -592,13 +663,16 @@ export async function start(content) {
     basinMagic.update(t, dt);
 
     // 提亮现有月光与分布在四周的灯；盆的底光始终存在，换片/黑画面时也不会熄灭。
-    const fireLv = light.fire * (0.82 + 0.18 * flick(t, 0));
+    const fx = paperFire ? paperFire.update(dt, camera, renderer.domElement.height, light.fire) : { green: 0, boost: 0, flash: 0 };
+    const fireLv = light.fire * (0.82 + 0.18 * flick(t, 0)) * (1 + 0.55 * fx.boost + 0.45 * fx.flash); // 纸团进火：火一下子旺起来
     const candleLv = light.candles * (0.94 + 0.06 * flick(t * 1.3, 2));
     tvLight(tv.color, basinColor).multiplyScalar(BASIN_GAIN * light.basin);
     const breath = 1 + 0.06 * Math.sin(t * 1.2);
     runeColor.copy(basinGlow).multiplyScalar(2.6 * breath + basinMagic.power * 1.2 + basinMagic.flash * 1.8);
     basinColor.add(runeColor);
-    room.setLevels({ ambient: 2.2, candles: candleLv * 1.6, fire: fireLv * 1.2, basin: basinColor });
+    fireK.setRGB(1, 1, 1).lerp(FIRE_GREEN, fx.green).multiplyScalar(fireLv * 1.2);
+    room.setLevels({ ambient: 2.2, candles: candleLv * 1.6, fire: fireK, basin: basinColor });
+    for (const { e, green } of embers) e.mat.color.copy(e.base).lerp(green, fx.green).multiplyScalar(Math.max(fireLv * 1.2, 0.02)); // 光照层传的是颜色时，炭火保留自己的底色
     if (loaded != null) projColor.set(projects[loaded].color);
     runeColor.copy(basinGlow).lerp(projColor, 0.15).multiplyScalar(2.1 * breath + basinMagic.power + basinMagic.flash);
     for (const e of runes) e.mat.color.copy(runeColor);
@@ -616,8 +690,13 @@ export async function start(content) {
     ou.focus.value += ((view === 'about' ? 1 : 0) - ou.focus.value) * s;
     ou.hover.value += ((hover?.kind === 'about' ? 1 : 0) - ou.hover.value) * s;
     textPlane.visible = orbText.fade > 0.01;
-    for (const f of flames) { f.material.uniforms.time.value = t; f.material.uniforms.level.value = fireLv; }
+    for (const f of flames) { f.material.uniforms.time.value = t; f.material.uniforms.level.value = fireLv; f.material.uniforms.green.value = fx.green; }
     fire.visible = light.fire > 0.01;
+    fire.scale.set(1 + 0.3 * fx.boost, 1 + 0.8 * fx.boost + 0.4 * fx.flash, 1);
+    const flareLv = fx.green * (0.55 * fx.boost + 0.8 * fx.flash);
+    flare.visible = flareLv > 0.01;
+    for (const f of flares) { f.material.uniforms.time.value = t; f.material.uniforms.level.value = flareLv; }
+    flare.scale.set(1, 0.7 + 0.5 * fx.boost + 0.5 * fx.flash, 1);
 
     for (const g of gems) {
       if (!g) continue;
@@ -634,6 +713,7 @@ export async function start(content) {
     moveChess(t);
     updateCamera(dt);
     camera.updateMatrixWorld();
+    cat?.fire.color.copy(CAT_FIRE).lerp(CAT_GREEN, fx.green);
     cat?.update(t, dt, { camera, view, fire: fireLv, candles: candleLv, basin: 0.5 + basinMagic.power });
     if (render) composer.render(dt);
   }
@@ -655,7 +735,7 @@ export async function start(content) {
   renderer.setAnimationLoop(frame);
 
   window.__room = {
-    go, dropGem, cmd, tick, pick, look, light, camera, renderer, composer, room, tv, orbText, gems, chess, water, orb, basinMagic, cat,
+    go, dropGem, cmd, tick, pick, look, light, camera, renderer, composer, room, tv, orbText, gems, chess, water, orb, basinMagic, cat, paperFire, burnLink,
     get view() { return view; }, get loaded() { return loaded; }, get hover() { return hover; },
     hoverAt: (x, y) => setHover(pick(x, y), x, y), clickAt: (x, y) => click(x, y, true),
   };

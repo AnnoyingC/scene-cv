@@ -2,11 +2,14 @@
 // 和 felixrieseberg.com 的思路一样：没有 WebGL2、或者 GPU 是软件渲染（SwiftShader 等）时，3D 会卡死机器，直接给静态版。
 // ?room=1 强制 3D，?plain=1 强制静态版，?scene=tower 换成城堡塔楼书房（默认是窗前书桌的房间）。
 import { readContent } from './content.js';
+import { createNav } from './nav.js';
 
 const params = new URLSearchParams(location.search);
 const forceRoom = params.has('room');
 const forcePlain = params.has('plain') && !forceRoom;
 const html = document.documentElement;
+const tower = params.get('scene') === 'tower';
+html.dataset.scene = tower ? 'tower' : 'room'; // 导航栏等外壳 UI 按场景换颜色
 
 function detect() {
   let gl = null;
@@ -35,14 +38,14 @@ function plain(reason) {
 }
 
 const env = detect();
+const nav = createNav(); // 和下面加的 is-room / is-plain 在同一帧里生效，不会闪
 if (forcePlain || !env.ok) {
   plain();
 } else if (env.soft && !forceRoom) {
   plain('soft');
 } else {
   html.classList.add('is-room');
-  const scene = params.get('scene') === 'tower' ? './tower.js' : './room.js';
-  import(scene)
-    .then((m) => m.start(readContent()))
+  import(tower ? './tower.js' : './room.js')
+    .then((m) => m.start(readContent(), { nav }))
     .catch((err) => { console.error('3D 房间加载失败，改用静态版', err); plain(); });
 }

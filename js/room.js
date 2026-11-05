@@ -27,7 +27,7 @@ const deg = THREE.MathUtils.degToRad;
 const ROUTES = ['about', 'work', 'shelf', 'online'];
 const HINTS = { about: '电脑 · 关于我', work: '电视 · 作品', shelf: '书架 · 书单', online: '记事本 · 联系方式' };
 
-export async function start(content) {
+export async function start(content, { nav = null } = {}) {
   const { tapes, books = [], links } = content;
   const N = tapes.length;
   $('room').hidden = false;
@@ -195,27 +195,28 @@ export async function start(content) {
     out.fov = Math.min(95, Math.max(look.fov, (minV * look.fov) / 55));
     return out;
   }
-  function covered() { // 面板挡住了多少像素：宽屏在右边，窄屏在下面
-    if (panel.hidden) return { w: 0, h: 0 };
+  function covered() { // 面板挡住了多少像素：宽屏在右边，窄屏在下面；top 是顶部导航栏
+    const top = nav?.height() ?? 0;
+    if (panel.hidden) return { w: 0, h: 0, top };
     const r = panel.getBoundingClientRect();
-    return innerWidth > 600 ? { w: innerWidth - r.left + 16, h: 0 } : { w: 0, h: innerHeight - r.top + 12 };
+    return innerWidth > 600 ? { w: innerWidth - r.left + 16, h: 0, top } : { w: 0, h: innerHeight - r.top + 12, top };
   }
   function focusPose(name, out) {
     const v = M.views[name];
     const fov = camera.aspect < 0.8 ? 60 : 44;
     const tv_ = Math.tan(deg(fov / 2)), th = tv_ * camera.aspect;
-    const cv = covered(), fw = Math.max(0.35, 1 - cv.w / innerWidth), fh = Math.max(0.35, 1 - cv.h / innerHeight);
+    const cv = covered(), fw = Math.max(0.35, 1 - cv.w / innerWidth), fh = Math.max(0.35, 1 - (cv.h + cv.top) / innerHeight);
     const dist = Math.max(v.size[0] / (th * fw), v.size[1] / (tv_ * fh)) * 1.15;
     dirV.fromArray(v.dir);
     out.yaw = Math.atan2(dirV.x, dirV.z);
     out.pitch = Math.asin(-dirV.y);
     out.fov = fov;
     out.pos.fromArray(v.target).addScaledVector(dirV, dist);
-    // 把物件挪到面板没挡住的那块区域中间。面板在右边：镜头平移（屏幕、电视还是正对着看）；
-    // 面板在下面（竖屏）：镜头不往下挪（离得远时会钻到椅子、柜子后面），改成稍微低头。
+    // 把物件挪到面板和导航栏没挡住的那块区域中间。面板在右边：镜头平移（屏幕、电视还是正对着看）；
+    // 面板在下面（竖屏）：镜头不往下挪（离得远时会钻到椅子、柜子后面），改成稍微低头。导航栏在上面：稍微抬头。
     basis(out.yaw, out.pitch);
     out.pos.addScaledVector(right, (dist * th * cv.w) / innerWidth);
-    out.pitch -= Math.atan((tv_ * cv.h) / innerHeight);
+    out.pitch -= Math.atan((tv_ * (cv.h - cv.top)) / innerHeight);
     return out;
   }
   function startFly() {
@@ -272,6 +273,7 @@ export async function start(content) {
     backBtn.hidden = name === 'home';
     help.hidden = name !== 'home';
     document.title = TITLES[name];
+    nav?.setActive(name === 'home' ? null : name);
     renderPanel();
     if (instant || first) fly = null;
     else startFly();
@@ -352,7 +354,7 @@ export async function start(content) {
       else if (h) room.highlight(h.kind); // 移开时不清盒子，让高亮淡出
       canvas.style.cursor = h ? 'pointer' : view === 'home' ? 'grab' : 'default';
     }
-    const text = h ? hintText(h) : '';
+    const text = h && x != null ? hintText(h) : ''; // 导航栏悬停时只高亮物件，不显示提示
     if (text) {
       hintEl.textContent = text;
       hintEl.style.left = x + 'px';
@@ -432,7 +434,7 @@ export async function start(content) {
   }, { passive: false });
   addEventListener('keydown', (e) => {
     if (e.key === 'Escape') { if (view !== 'home') go('home'); return; }
-    if (e.target.closest?.('button,a,input,textarea')) return;
+    if (e.target.closest?.('button,a,input,textarea') && !e.target.closest('#topbar')) return; // 点过导航栏以后方向键照常换带
     if (view === 'work' && e.key === 'ArrowRight') cmd('next');
     else if (view === 'work' && e.key === 'ArrowLeft') cmd('prev');
     else if (view === 'work' && e.key === ' ') { e.preventDefault(); cmd('stop'); }
@@ -451,6 +453,11 @@ export async function start(content) {
   resize();
   insertTape(0, { animate: false }); // 开场电视就在播第一盘，房间带着电视的光
   setView(viewFromHash(), true);
+  // 顶部导航栏：点一项和点对应的物件走同一个 go()；悬停时高亮那个物件
+  nav?.bind({
+    go, routes: ROUTES.filter((r) => M.views?.[r]), current: () => view,
+    preview: (kind) => setHover(kind && kind !== view ? { kind, key: kind } : null),
+  });
 
   // ---------- 每帧 ----------
   let simT = 0;

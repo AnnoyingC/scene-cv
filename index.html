@@ -21,6 +21,7 @@
 <!--
   内容层：网站的真实内容都写在这里（以后可以换成 CMS / Markdown 生成）。
   3D 房间启动时从这里读数据；设备跑不动 3D 时，这一层本身就是静态版网站。
+  每个带 data-nav 的 section 会在顶部导航栏里出现一项（data-nav 是导航栏上显示的名字）。
 -->
 <main id="content">
   <header class="hero">
@@ -29,14 +30,14 @@
     <p class="notice" id="try-room" hidden>你的设备可能跑不动 3D 版，所以先显示静态版。<a href="?room=1">仍然试试 3D 版 →</a></p>
   </header>
 
-  <section id="about">
+  <section id="about" data-nav="关于">
     <h2>关于我</h2>
     <p>这里是一段自我介绍。可以写你现在在做什么，过去做过什么，以及你为什么对这些事情感兴趣。</p>
     <p>第二段可以写写兴趣爱好、正在学习的东西，或者你希望别人因为什么事情来联系你。</p>
     <p>这段文字在 3D 版里会一个字一个字地显现出来：书桌房间里打在旧电脑的屏幕上，塔楼里浮现在水晶球上方。</p>
   </section>
 
-  <section id="work">
+  <section id="work" data-nav="作品">
     <h2>作品</h2>
     <!-- 每个 li 是一盘录像带：data-tape 选画面效果（bars / synth / bounce / rain），data-color 是标签颜色 -->
     <ol class="tapes">
@@ -59,7 +60,7 @@
     </ol>
   </section>
 
-  <section id="shelf">
+  <section id="shelf" data-nav="书架">
     <h2>书架</h2>
     <!-- 在读 / 推荐的书。3D 版里点左墙的书架会显示这份书单；没有链接的书可以不写 a，直接写书名 -->
     <ul class="books">
@@ -72,7 +73,7 @@
     </ul>
   </section>
 
-  <section id="online">
+  <section id="online" data-nav="联系">
     <h2>联系</h2>
     <ul class="links">
       <li><a href="https://example.com/github">GitHub</a> <span>@your-name</span></li>

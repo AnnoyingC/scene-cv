@@ -131,16 +131,16 @@ export function orbMaterial() {
 }
 
 // ---------- 火苗 ----------
-// 平面底边在原点、往上 h。seed 让每片火苗形状不同；level 是火的强弱（0 = 熄灭）
+// 平面底边在原点、往上 h。seed 让每片火苗形状不同；level 是火的强弱（0 = 熄灭）；green：0 = 普通的火，1 = 绿火
 export function flameMaterial(seed) {
   return new THREE.ShaderMaterial({
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
-    uniforms: { time: { value: 0 }, level: { value: 1 }, seed: { value: seed } },
+    uniforms: { time: { value: 0 }, level: { value: 1 }, seed: { value: seed }, green: { value: 0 } },
     vertexShader: /* glsl */`
       varying vec2 vUv;
       void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
     fragmentShader: /* glsl */`
-      uniform float time, level, seed;
+      uniform float time, level, seed, green;
       varying vec2 vUv;
       ${NOISE}
       void main() {
@@ -155,7 +155,10 @@ export function flameMaterial(seed) {
         f = clamp(f * (0.6 + tongues), 0.0, 1.0) * level;
         vec3 col = mix(vec3(0.9, 0.12, 0.01), vec3(1.0, 0.55, 0.12), smoothstep(0.1, 0.6, f));
         col = mix(col, vec3(1.0, 0.9, 0.65), smoothstep(0.7, 1.0, f) * (1.0 - uv.y));
-        gl_FragColor = vec4(col * f * 1.6, 1.0);
+        vec3 g = mix(vec3(0.0, 0.32, 0.07), vec3(0.06, 0.92, 0.3), smoothstep(0.1, 0.6, f)); // 绿火：外焰深绿、内焰翠绿，芯只微微发白
+        g = mix(g, vec3(0.5, 1.0, 0.58), smoothstep(0.75, 1.0, f) * (1.0 - uv.y) * 0.7);
+        col = mix(col, g, green);
+        gl_FragColor = vec4(col * f * mix(1.6, 1.1, green), 1.0); // 绿火暗一点，几片叠起来不至于发白
         ${OUT}
       }`,
   });

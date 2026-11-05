@@ -358,6 +358,11 @@ export class BakedRoom {
     mat.polygonOffsetFactor = -1;
     mat.polygonOffsetUnits = -1;
     const mesh = new THREE.Mesh(geo, mat);
+    // 纸面的坐标系和光照贴图坐标，留给要让纸动起来的效果用（塔楼里揉纸投火）
+    mesh.userData.frame = {
+      center, right, long, hw, hh,
+      face: face.map((t) => ({ pts: t.pts, uv: t.ids.map((id) => new THREE.Vector2(UV.getX(id), UV.getY(id))) })),
+    };
     this.scene.add(mesh);
     return mesh;
   }
