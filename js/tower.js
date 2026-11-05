@@ -1,7 +1,7 @@
 // 3D 塔楼书房（烘焙光照版）。几何和光照由 Blender 预先算好（blender/bake_tower.py → assets/tower/），这里负责交互：
 //   - 开场站在门口，正对一扇窄窄的尖拱窗，屋子中间是一只石头水盆。拖动转头，滚轮 / 双指缩放
-//   - 水盆 = 作品：盆沿上一圈水晶，每颗是一个项目。点一颗，它飞起来落进水里，荡开波纹，水面浮出项目画面；
-//     水面的颜色实时照亮屋子（烘焙好的"水盆"光照层乘上画面颜色）
+//   - 水盆 = 作品：盆体常亮。水晶入水后荡开亮纹、升起光柱，乱码逐渐浮现，水面映出项目画面；
+//     常亮蓝青色底光与项目色共同照亮屋子（复用烘焙好的"水盆"光照层）
 //   - 壁炉上的水晶球 = 关于我：球里起雾，上方一个字一个字浮现介绍
 //   - 书桌上的羊皮纸 = 联系方式；左墙书架 = 书单
 //   - 点壁炉 / 蜡烛：熄火、生火（切的是光照层的系数）
@@ -16,6 +16,8 @@ import { TV } from './tv.js';
 import { paintParchment } from './paint.js';
 import { BakedRoom, loadBaked, tvLight } from './baked.js';
 import { waterMaterial, orbMaterial, flameMaterial, gemMaterial, OrbText, RIPPLES } from './magic.js';
+import { BasinMagic } from './basin.js';
+import { TowerCat } from './tower-cat.js';
 
 const BASE = new URL('../assets/tower/', import.meta.url).href;
 const CREDITS = new URL('../assets/vendor/credits.json', import.meta.url).href;
@@ -28,7 +30,7 @@ const angle = (a) => Math.atan2(Math.sin(a), Math.cos(a));
 const deg = THREE.MathUtils.degToRad;
 const ROUTES = ['about', 'work', 'shelf', 'online'];
 const HINTS = { about: '水晶球 · 关于我', work: '水盆 · 作品', shelf: '书架 · 书单', online: '羊皮纸 · 联系方式' };
-const BASIN_GAIN = 0.45; // 水盆光层：画面颜色 × 这个系数
+const BASIN_GAIN = 0.3; // 项目画面只给常亮的冥想盆底光添加一点染色。
 
 export async function start(content) {
   const { tapes: projects, books = [], links } = content;
@@ -74,6 +76,13 @@ export async function start(content) {
   water.userData.kind = 'work';
   scene.add(water);
   const WU = water.material.uniforms;
+  const basinMagic = new BasinMagic(W);
+  scene.add(basinMagic.group);
+  const cat = await TowerCat.load(W, { scene, renderer, room }).catch((error) => { console.warn('知知暂时没能加载', error); return null; });
+  if (cat) scene.add(cat.group);
+  function startRitual(i) { basinMagic.trigger(projects[i].color); cat?.noticeBasin(); }
+  const basinGlow = new THREE.Color('#83ddff');
+  const basinStone = room.byMat.get('basin_stone') || [];
   let ripN = 0;
   function ripple(p, amp = 1) { // p：世界坐标
     const r = WU.rip.value[ripN++ % RIPPLES];
@@ -146,6 +155,7 @@ export async function start(content) {
     if (g.splashed) return;
     g.splashed = true;
     ripple(g.group.position, 1);
+    startRitual(g.i);
   }
 
   // ---------- 动画小工具 ----------
@@ -178,13 +188,19 @@ export async function start(content) {
     if (loaded === i && tv.state !== 'off') return;
     const prev = loaded;
     loaded = i;
+    // 初次进入先看完整仪式；已经在看作品时，从当前构图平滑拉远。
+    if (prev == null || view !== 'work') { workWide = 1; workReveal = null; }
+    else workReveal = { from: workWide, t: 0 };
+    basinMagic.reset();
     tv.stop();
+    // 快速切换时取消上一轮的回收/投掷，旧的完成回调不能再投出另一颗。
+    gems.forEach((g) => { if (g) cancelTweens(g); });
     gems.forEach((g, k) => { if (g && k !== prev && k !== i && g.state !== 'rim') settle(k); });
     const play = () => { if (loaded === i) { tv.play(projects[i]); renderPanel(); } };
     const drop = () => {
       const g = gems[i];
-      if (!g || g.state === 'in') return play();
-      if (!animate) { sunk(i); return play(); }
+      if (!g || g.state === 'in') { startRitual(i); return play(); }
+      if (!animate) { sunk(i); startRitual(i); return play(); }
       settle(i);
       g.state = 'flying';
       g.splashed = false;
@@ -222,7 +238,7 @@ export async function start(content) {
 
   // ---------- 火光、烛光 ----------
   const light = { fire: 1, fireT: 1, candles: 1, candlesT: 1, basin: 0 };
-  const basinColor = new THREE.Color(), runeColor = new THREE.Color(), projColor = new THREE.Color();
+  const basinColor = new THREE.Color(), runeColor = new THREE.Color(), projColor = basinGlow.clone();
   const runes = room.emitters.filter((e) => e.layer === 'basin');
   const flick = (t, s) => 0.5 + 0.5 * (Math.sin(t * 7.1 + s) * 0.5 + Math.sin(t * 13.3 + s * 2) * 0.3 + Math.sin(t * 2.3 + s * 3) * 0.2);
 
@@ -232,7 +248,9 @@ export async function start(content) {
   const look = { yaw: C.yaw, pitch: C.pitch, fov: C.fov, yawT: C.yaw, pitchT: C.pitch, fovT: C.fov };
   const par = new THREE.Vector2(), parT = new THREE.Vector2();
   const pose = () => ({ pos: new THREE.Vector3(), yaw: 0, pitch: 0, fov: 55 });
-  const cur = pose(), goal = pose();
+  const cur = pose(), goal = pose(), ritualPose = pose();
+  let workWide = 0;
+  let workReveal = null;
   let fly = null;
   const right = new THREE.Vector3(), up = new THREE.Vector3(), dirV = new THREE.Vector3();
   function basis(yaw, pitch) {
@@ -253,7 +271,19 @@ export async function start(content) {
     return innerWidth > 600 ? { w: innerWidth - r.left + 16, h: 0 } : { w: 0, h: innerHeight - r.top + 12 };
   }
   function focusPose(name, out) {
-    const v = M.views[name];
+    framePose(M.views[name], out);
+    if (name !== 'work' || workWide === 0) return out;
+    // 光柱阶段看全景；消散时回到 manifest 里原来的盆内画面近景。
+    framePose({
+      target: [W.pos[0], W.pos[1] + basinMagic.height * 0.4, W.pos[2]],
+      size: [W.r * 1.65, basinMagic.height * (innerWidth <= 600 ? 0.74 : 0.65)], dir: [0, 0.38, 0.925],
+    }, ritualPose);
+    out.pos.lerp(ritualPose.pos, workWide);
+    out.yaw += angle(ritualPose.yaw - out.yaw) * workWide;
+    out.pitch += (ritualPose.pitch - out.pitch) * workWide;
+    return out;
+  }
+  function framePose(v, out) {
     const fov = camera.aspect < 0.8 ? 60 : 44;
     const tv_ = Math.tan(deg(fov / 2)), th = tv_ * camera.aspect;
     const cv = covered(), fw = Math.max(0.35, 1 - cv.w / innerWidth), fh = Math.max(0.35, 1 - cv.h / innerHeight);
@@ -274,6 +304,15 @@ export async function start(content) {
     fly = { from, t: 0, dur: clamp(0.9 + d * 0.25, 1, 1.7) };
   }
   function updateCamera(dt) {
+    const framing = gems.some((g) => g?.state === 'flying') ? 1 : basinMagic.framing;
+    if (workReveal) {
+      workReveal.t = Math.min(1, workReveal.t + dt / 1.15);
+      workWide = workReveal.from + (1 - workReveal.from) * ease(workReveal.t);
+      if (workReveal.t === 1) workReveal = null;
+    } else {
+      workWide += (framing - workWide) * (1 - Math.exp(-dt * 5));
+      if (Math.abs(workWide - framing) < 0.0001) workWide = framing;
+    }
     const a = 1 - Math.exp(-dt * 8);
     look.yaw += (look.yawT - look.yaw) * a;
     look.pitch += (look.pitchT - look.pitch) * a;
@@ -385,7 +424,7 @@ export async function start(content) {
     const rows = list.filter((a) => used.has(a.id)).map((a) => `<li><a href="${esc(a.url)}" target="_blank" rel="noopener">
       <b>${esc(a.zh || a.title)}</b><span>${esc(a.title)} · ${esc((a.authors || []).join('、'))} · ${esc(a.license)}</span></a></li>`).join('');
     credits = `<div class="kicker">素材致谢</div><h2>家具、灯和小物件</h2>
-      <p>来自 Poly Haven 的开放素材（CC0）。为了网页加载，做了减面、缩小贴图、调暗颜色等改动；墙、地板、水盆、书桌和其余小物件是原创的。</p>
+      <p>家具来自 Poly Haven。知知的三维网格、骨骼与动作以桌宠形象为参考重新制作；墙、地板、水盆、书桌和其余小物件也是原创的。</p>
       <ul class="list">${rows}</ul>
       <div class="ctl"><button type="button" data-cmd="close">关闭</button></div>`;
     renderPanel();
@@ -393,7 +432,7 @@ export async function start(content) {
 
   // ---------- 拾取 ----------
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
-  const pickables = [room.root, water, orb, textPlane, ...gems.filter(Boolean).map((g) => g.group)];
+  const pickables = [room.root, water, orb, textPlane, ...gems.filter(Boolean).map((g) => g.group), ...(cat ? [cat.group] : [])];
   const shown = (o) => { for (; o; o = o.parent) if (!o.visible) return false; return true; };
   function pick(x, y) {
     const r = canvas.getBoundingClientRect();
@@ -412,6 +451,7 @@ export async function start(content) {
     return null;
   }
   function hintText(h) {
+    if (h.kind === 'pet') return '知知 · 打个招呼';
     if (h.kind === 'gem') return `◆ ${projects[h.i].title}`;
     if (h.kind === 'fire') return light.fireT ? '壁炉 · 熄火' : '壁炉 · 生火';
     if (h.kind === 'candles') return light.candlesT ? '蜡烛 · 熄灭' : '蜡烛 · 点亮';
@@ -440,6 +480,7 @@ export async function start(content) {
     const h = pick(x, y), before = view;
     if (!h) { if (view !== 'home') go('home'); return; }
     if (h.kind === 'gem') { dropGem(h.i); go('work'); }
+    else if (h.kind === 'pet') cat?.pet();
     else if (h.kind === 'fire') light.fireT = light.fireT ? 0 : 1;
     else if (h.kind === 'candles') light.candlesT = light.candlesT ? 0 : 1;
     else if (h.kind === 'about' && view === 'about') orbText.finish();
@@ -528,7 +569,7 @@ export async function start(content) {
   }
   addEventListener('resize', resize);
   resize();
-  dropGem(0, { animate: false }); // 开场水面就映着第一个项目
+  // 开场保留所有水晶在盆沿；第一次点击也会完整经历投掷和光柱。
   setView(viewFromHash(), true);
 
   // ---------- 每帧 ----------
@@ -536,6 +577,7 @@ export async function start(content) {
   function tick(dt, render = true) {
     const t = (simT += dt);
     for (const tw of [...tweens]) {
+      if (!tweens.includes(tw)) continue;
       tw.t += dt;
       const k = Math.min(1, tw.t / tw.dur);
       tw.fn(k);
@@ -547,20 +589,27 @@ export async function start(content) {
     light.basin += ((tv.state === 'playing' ? 1 : 0) - light.basin) * (1 - Math.exp(-dt * 2.5));
     tv.update(t, dt);
     orbText.update(t, dt);
+    basinMagic.update(t, dt);
 
-    // 光照层：火光和烛光轻轻跳动；水盆的光 = 水面画面的颜色
+    // 提亮现有月光与分布在四周的灯；盆的底光始终存在，换片/黑画面时也不会熄灭。
     const fireLv = light.fire * (0.82 + 0.18 * flick(t, 0));
     const candleLv = light.candles * (0.94 + 0.06 * flick(t * 1.3, 2));
     tvLight(tv.color, basinColor).multiplyScalar(BASIN_GAIN * light.basin);
-    room.setLevels({ ambient: 1, candles: candleLv, fire: fireLv, basin: basinColor });
+    const breath = 1 + 0.06 * Math.sin(t * 1.2);
+    runeColor.copy(basinGlow).multiplyScalar(2.6 * breath + basinMagic.power * 1.2 + basinMagic.flash * 1.8);
+    basinColor.add(runeColor);
+    room.setLevels({ ambient: 2.2, candles: candleLv * 1.6, fire: fireLv * 1.2, basin: basinColor });
     if (loaded != null) projColor.set(projects[loaded].color);
-    runeColor.copy(projColor).multiplyScalar(0.25 + 1.4 * light.basin);
+    runeColor.copy(basinGlow).lerp(projColor, 0.15).multiplyScalar(2.1 * breath + basinMagic.power + basinMagic.flash);
     for (const e of runes) e.mat.color.copy(runeColor);
+    for (const m of basinStone) m.material.uniforms.emissive.value.copy(basinGlow).multiplyScalar(0.055 * breath + basinMagic.flash * 0.045);
     room.U.hiK.value += ((hover && hover.kind !== 'gem' ? 1 : 0) - room.U.hiK.value) * (1 - Math.exp(-dt * 14));
 
     WU.time.value = t;
     WU.level.value = 0.25 + 0.75 * light.basin;
     WU.tint.value.copy(projColor);
+    WU.glow.value = breath;
+    WU.pulse.value = basinMagic.flash;
     WU.hover.value += ((hover?.kind === 'work' ? 1 : 0) - WU.hover.value) * s;
     const ou = orb.material.uniforms;
     ou.time.value = t;
@@ -584,6 +633,8 @@ export async function start(content) {
     }
     moveChess(t);
     updateCamera(dt);
+    camera.updateMatrixWorld();
+    cat?.update(t, dt, { camera, view, fire: fireLv, candles: candleLv, basin: 0.5 + basinMagic.power });
     if (render) composer.render(dt);
   }
 
@@ -604,7 +655,7 @@ export async function start(content) {
   renderer.setAnimationLoop(frame);
 
   window.__room = {
-    go, dropGem, cmd, tick, pick, look, light, camera, renderer, composer, room, tv, orbText, gems, chess, water, orb,
+    go, dropGem, cmd, tick, pick, look, light, camera, renderer, composer, room, tv, orbText, gems, chess, water, orb, basinMagic, cat,
     get view() { return view; }, get loaded() { return loaded; }, get hover() { return hover; },
     hoverAt: (x, y) => setHover(pick(x, y), x, y), clickAt: (x, y) => click(x, y, true),
   };

@@ -44,3 +44,7 @@ RESOURCES.md
 *.sqlite*
 *.db
 coverage/
+
+# Local screenshots, comparisons and validation reports
+output/
+.playwright-cli/

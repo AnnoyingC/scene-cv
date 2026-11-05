@@ -65,6 +65,15 @@ export async function start(content) {
   const tv = new TV();
   const pc = new PCScreen(content);
   const screens = [room.screen('tv', tv.texture), room.screen('pc', pc.texture)];
+  // 显像管是鼓的（电脑的还往后仰）：按 manifest 里量好的玻璃深度网格把平面弯成玻璃的形状，再往外 1 毫米
+  for (const [m, s] of [[screens[0], M.screens.tv], [screens[1], M.screens.pc]]) {
+    if (!s.depth) continue;
+    const g = new THREE.PlaneGeometry(...s.size, ...s.grid); // 顶点顺序：从上一行开始，每行从左到右，和 depth 一样
+    const p = g.attributes.position;
+    for (let i = 0; i < p.count; i++) p.setZ(i, s.depth[i] + 0.001);
+    m.geometry.dispose();
+    m.geometry = g;
+  }
   const noteTex = new THREE.CanvasTexture(paintNote({ name: content.name, links }));
   noteTex.colorSpace = THREE.SRGBColorSpace;
   noteTex.anisotropy = renderer.capabilities.getMaxAnisotropy();

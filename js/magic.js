@@ -31,6 +31,7 @@ export function waterMaterial(map) {
   return new THREE.ShaderMaterial({
     uniforms: {
       map: { value: map }, time: { value: 0 }, level: { value: 1 }, hover: { value: 0 },
+      glow: { value: 1 }, pulse: { value: 0 },
       tint: { value: new THREE.Color(1, 1, 1) },
       rip: { value: [...Array(RIPPLES)].map(() => new THREE.Vector4(0, 0, -99, 0)) },
     },
@@ -45,7 +46,7 @@ export function waterMaterial(map) {
       }`,
     fragmentShader: /* glsl */`
       uniform sampler2D map;
-      uniform float time, level, hover;
+      uniform float time, level, hover, glow, pulse;
       uniform vec3 tint;
       uniform vec4 rip[${RIPPLES}];
       varying vec2 vP;
@@ -71,12 +72,18 @@ export function waterMaterial(map) {
         vec3 img = texture2D(map, iuv, 0.6).rgb * inRect.x * inRect.y; // 稍微糊一点（取低一级的 mipmap），像隔着水看
         img = mix(img, vec3(dot(img, vec3(0.3, 0.55, 0.15))), 0.3) * mix(vec3(1.0), tint, 0.2); // 像水里的倒影：淡一点、染一点项目色
         float r = length(vP);
-        float edge = smoothstep(1.02, 0.7, r);               // 靠近盆壁的水更暗、更深
+        float edge = 1.0 - smoothstep(0.7, 1.02, r);
         float facing = abs(normalize(cameraPosition - vW).y);  // 正上方看得清，斜着看主要是反光
         float see = mix(0.45, 1.0, smoothstep(0.25, 0.75, facing));
-        vec3 deep = vec3(0.006, 0.012, 0.02) + tint * 0.012;
+        vec3 aura = mix(vec3(0.18, 0.72, 1.0), tint, 0.12);
+        vec3 deep = vec3(0.006, 0.012, 0.02) + aura * 0.12 * glow;
         vec3 col = deep + img * level * see * (0.2 + 0.9 * edge) * (1.0 + 0.25 * hover);
-        col += tint * max(crest, 0.0) * 0.06;                 // 波峰反一点光
+        // 持续自发光的环流与内沿，和项目画面的明暗无关。
+        float flow = 0.5 + 0.5 * sin(r * 30.0 - time * 1.1 + sin(atan(vP.y, vP.x) * 5.0 + time * 0.4));
+        float rim = exp(-pow((r - 0.92) * 35.0, 2.0));
+        col += aura * (flow * 0.09 * edge + rim * 0.85) * glow;
+        col += aura * pulse * (0.4 + 0.8 * exp(-r * r * 6.0));
+        col += aura * max(crest, 0.0) * 0.35;
         col += vec3(0.5, 0.42, 0.32) * pow(smoothstep(0.55, 1.0, r), 3.0) * 0.05; // 盆沿反射的烛光
         gl_FragColor = vec4(col, 1.0);
         ${OUT}
