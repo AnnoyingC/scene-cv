@@ -1,0 +1,46 @@
+# macOS and editor temporary files
+.DS_Store
+._*
+*.swp
+*.swo
+*~
+
+# Local secrets and machine-specific configuration
+.env
+.env.*
+!.env.example
+.claude/settings.local.json
+
+# Python caches and local environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Node dependencies and logs
+node_modules/
+*.log
+
+# Blender automatic backups; keep the editable .blend source
+*.blend[0-9]*
+*.blend@
+
+# 第三方素材的原始文件：体积大，用 node scripts/fetch_assets.mjs 重新下载
+vendor-src/
+
+# Local previews, generated packages and personal learning notes
+dist/
+.claude/
+learning/
+learning-records/
+MISSION.md
+GLOSSARY.md
+RESOURCES.md
+.envrc
+*.pem
+*.key
+*.p12
+*.pfx
+*.sqlite*
+*.db
+coverage/

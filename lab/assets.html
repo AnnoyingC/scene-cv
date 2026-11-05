@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>书房素材候选</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Noto+Serif+SC:wght@500;700&family=Noto+Sans+SC:wght@400;500&display=swap">
+<style>
+/* 布局：顶部说明 + 筛选条（吸顶），下面按分组排缩略图网格，底部固定一条"已选"栏 */
+:root {
+  --bg: #f3efe6; --panel: #fffdf8; --ink: #2a241c; --muted: #7a6f60; --line: #ddd3c2;
+  --accent: #8a5a1f; --accent-soft: #f1e2c8; --cc0: #2f6b4f; --ccby: #6b4f8a; --warn: #a2482f;
+  --display: "Cormorant Garamond", "Noto Serif SC", "Songti SC", serif;
+  --title: "Noto Serif SC", "Songti SC", "STSong", serif;
+  --body: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #17140f; --panel: #211c15; --ink: #eee5d6; --muted: #a89a86; --line: #3a3127;
+  --accent: #e0a858; --accent-soft: #3a2c1a; --cc0: #7fcfa6; --ccby: #c2a6e6; --warn: #ee8a6a; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #17140f; --panel: #211c15; --ink: #eee5d6; --muted: #a89a86; --line: #3a3127;
+  --accent: #e0a858; --accent-soft: #3a2c1a; --cc0: #7fcfa6; --ccby: #c2a6e6; --warn: #ee8a6a; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 14px/1.6 var(--body); }
+.wrap { max-width: 1240px; margin: 0 auto; padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px)); }
+
+header.top { padding-block: 36px 18px; display: grid; gap: 10px; }
+header.top .eyebrow { font: 600 13px/1 var(--display); letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); }
+header.top h1 { margin: 0; font: 700 30px/1.25 var(--title); text-wrap: balance; }
+header.top p { margin: 0; max-width: 68ch; color: var(--muted); }
+.rules { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--muted); }
+.rules b { color: var(--ink); font-weight: 500; }
+
+.bar { position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+.bar .wrap { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding-block: 10px; }
+.bar .label { font-size: 12px; color: var(--muted); letter-spacing: 0.06em; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font: inherit; font-size: 13px; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.chip:focus-visible, .card:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+nav.toc { display: flex; flex-wrap: wrap; gap: 4px 14px; padding-block: 16px 4px; font-size: 13px; }
+nav.toc a { color: var(--muted); text-decoration: none; }
+nav.toc a:hover { color: var(--accent); }
+
+section.src { padding-block: 22px 8px; }
+section.src > h2 { margin: 0 0 4px; font: 600 26px/1.2 var(--display); }
+section.src > h2 small { font: 500 14px var(--body); color: var(--muted); margin-left: 10px; }
+section.src > p { margin: 0 0 6px; color: var(--muted); max-width: 72ch; }
+.group { padding-block: 14px 6px; }
+.group h3 { margin: 0 0 10px; font: 700 16px/1.3 var(--title); display: flex; gap: 10px; align-items: baseline; }
+.group h3 span { font: 400 12px var(--body); color: var(--muted); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 12px; }
+
+.card { position: relative; display: grid; grid-template-rows: auto 1fr; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; cursor: pointer; transition: border-color .15s, transform .15s; }
+.card:hover { border-color: var(--accent); }
+.card[aria-checked="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
+.card .img { aspect-ratio: 1; background: #fff; display: grid; place-items: center; overflow: hidden; }
+.card.tex .img, .card.sf .img { background: var(--line); }
+.card img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.card.tex img, .card.sf img { object-fit: cover; }
+.card .tick { position: absolute; top: 8px; left: 8px; width: 24px; height: 24px; border-radius: 6px; border: 1.5px solid var(--line); background: var(--panel); display: grid; place-items: center; font-size: 15px; color: transparent; }
+.card[aria-checked="true"] .tick { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+.card .body { padding: 8px 10px 10px; display: grid; gap: 4px; align-content: start; min-width: 0; }
+.card .zh { font-weight: 500; line-height: 1.35; }
+.card .en { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+.card .meta { display: flex; flex-wrap: wrap; gap: 4px 8px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.lic { font-size: 11px; font-weight: 500; padding: 0 6px; border-radius: 4px; border: 1px solid currentColor; }
+.lic.cc0 { color: var(--cc0); } .lic.by { color: var(--ccby); }
+.heavy { color: var(--warn); }
+.card .open { font-size: 12px; color: var(--accent); text-decoration: none; justify-self: start; }
+.card .open:hover { text-decoration: underline; }
+
+.more { display: flex; flex-wrap: wrap; gap: 8px; padding-block: 8px 4px; }
+.more a { font-size: 13px; color: var(--accent); text-decoration: none; padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); }
+
+footer.pick { position: sticky; bottom: 0; z-index: 5; background: var(--ink); color: var(--bg); margin-top: 30px; }
+footer.pick .wrap { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding-block: 12px max(12px, env(safe-area-inset-bottom, 0px)); }
+footer.pick .count { font-variant-numeric: tabular-nums; }
+footer.pick .names { flex: 1 1 240px; min-width: 0; font-size: 12px; opacity: 0.75; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+footer.pick button { font: inherit; font-size: 13px; padding: 6px 14px; border-radius: 8px; border: 0; cursor: pointer; background: var(--accent); color: var(--ink); }
+footer.pick button.ghost { background: transparent; color: var(--bg); border: 1px solid color-mix(in srgb, var(--bg) 40%, transparent); }
+.empty { padding: 28px 0; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .card { transition: none; } }
+@media (max-width: 480px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } header.top h1 { font-size: 24px; } }
+</style>
+</head>
+<body>
+<header class="top wrap">
+  <div class="eyebrow">Study · asset shortlist</div>
+  <h1>书房素材候选：点卡片勾选，选完复制清单发给我</h1>
+  <p>全部是可以免费用在个人网站上的模型和材质，按书房里的位置分组。缩略图直接从素材站加载，这一页不会下载任何文件。勾选会记在这个浏览器里，刷新也还在。</p>
+  <div class="rules">
+    <span><b>CC0</b>：随便用，不用署名</span>
+    <span><b>CC-BY</b>：可以用，网站上写一行作者署名</span>
+    <span><b>下载</b>：原始文件大小（1K 贴图版）；导入后会减面、只留颜色贴图，网页里实际会小很多</span>
+    <span class="heavy"><b class="heavy">偏重</b>：面数或文件很大，用的话我会先简化</span>
+  </div>
+</header>
+
+<div class="bar">
+  <div class="wrap">
+    <span class="label">来源</span>
+    <div class="chips" id="f-src"></div>
+    <span class="label">许可证</span>
+    <div class="chips" id="f-lic"></div>
+    <div class="chips"><button class="chip" id="f-picked" aria-pressed="false">只看已选</button></div>
+  </div>
+</div>
+
+<main class="wrap" id="main"></main>
+
+<footer class="pick">
+  <div class="wrap">
+    <span class="count" id="count">还没有勾选</span>
+    <span class="names" id="names"></span>
+    <button class="ghost" id="clear" type="button">清空</button>
+    <button id="copy" type="button">复制清单</button>
+  </div>
+</footer>
+
+<script>
+const DATA = {"ph": [{"group": "书桌与桌子", "id": "WoodenTable_02", "name": "Wooden Table 02", "note": "小圆木凳，可当边几", "poly": 1514, "dims": [30, 30, 42], "mb1k": 0.5, "mb2k": 1.6, "authors": ["Fran Calvente"]}, {"group": "书桌与桌子", "id": "gallinera_table", "name": "Gallinera Table", "note": "矮木柜桌（下面带柜门）", "poly": 5528, "dims": [83, 52, 49], "mb1k": 1.8, "mb2k": 5.9, "authors": ["Ulan Cabanilla"]}, {"group": "书桌与桌子", "id": "painted_wooden_table", "name": "Painted Wooden Table", "note": "漆木长桌，面数极低", "poly": 600, "dims": [241, 114, 96], "mb1k": 1.8, "mb2k": 7.4, "authors": ["Kirill Sannikov"]}, {"group": "书桌与桌子", "id": "chinese_console_table", "name": "Chinese Console Table", "note": "雕花条案", "poly": 13648, "dims": [172, 34, 66], "mb1k": 2.8, "mb2k": 8.4, "authors": ["Kirill Sannikov"]}, {"group": "书桌与桌子", "id": "gothic_coffee_table", "name": "Gothic Coffee Table", "note": "哥特雕花矮桌", "poly": 23836, "dims": [144, 144, 56], "mb1k": 3.3, "mb2k": 8.9, "authors": ["Ulan Cabanilla"]}, {"group": "椅子", "id": "ArmChair_01", "name": "Arm Chair 01", "note": "维多利亚雕花扶手椅", "poly": 5626, "dims": [85, 77, 107], "mb1k": 0.8, "mb2k": 2.8, "authors": ["Kirill Sannikov"]}, {"group": "椅子", "id": "WoodenChair_01", "name": "Wooden Chair 01", "note": "哥特木椅", "poly": 19992, "dims": [69, 66, 227], "mb1k": 1.1, "mb2k": 2.3, "authors": ["Jake Mobley"]}, {"group": "椅子", "id": "GreenChair_01", "name": "Green Chair 01", "note": "绿色软包椅", "poly": 4213, "dims": [67, 66, 106], "mb1k": 0.6, "mb2k": 2.0, "authors": ["Kirill Sannikov"]}, {"group": "椅子", "id": "Rockingchair_01", "name": "Rockingchair 01", "note": "摇椅", "poly": 11866, "dims": [71, 83, 99], "mb1k": 0.8, "mb2k": 1.8, "authors": ["Jorge Camacho"]}, {"group": "椅子", "id": "gallinera_chair", "name": "Gallinera Chair", "note": "老式木椅", "poly": 11560, "dims": [58, 60, 103], "mb1k": 2.4, "mb2k": 7.7, "authors": ["Ulan Cabanilla"]}, {"group": "书架与柜子", "id": "wooden_bookshelf_worn", "name": "Wooden Bookshelf Worn", "note": "旧木书架", "poly": 10106, "dims": [137, 58, 206], "mb1k": 2.8, "mb2k": 10.3, "authors": ["Ulan Cabanilla"]}, {"group": "书架与柜子", "id": "GothicCabinet_01", "name": "Gothic Cabinet 01", "note": "哥特立柜", "poly": 12170, "dims": [172, 113, 236], "mb1k": 1.0, "mb2k": 2.1, "authors": ["Kirill Sannikov"]}, {"group": "书架与柜子", "id": "vintage_cabinet_01", "name": "Vintage Cabinet 01", "note": "复古玻璃柜（面数偏高）", "poly": 61096, "dims": [202, 67, 224], "mb1k": 2.9, "mb2k": 5.0, "authors": ["Rico Cilliers"]}, {"group": "书架与柜子", "id": "ClassicConsole_01", "name": "Classic Console 01", "note": "维多利亚边桌", "poly": 7566, "dims": [154, 59, 95], "mb1k": 0.7, "mb2k": 2.0, "authors": ["Kirill Sannikov"]}, {"group": "书架与柜子", "id": "GothicCommode_01", "name": "Gothic Commode 01", "note": "哥特抽屉柜", "poly": 3897, "dims": [120, 58, 121], "mb1k": 0.6, "mb2k": 1.7, "authors": ["Kirill Sannikov"]}, {"group": "书架与柜子", "id": "ClassicNightstand_01", "name": "Classic Nightstand 01", "note": "维多利亚床头柜", "poly": 2002, "dims": [57, 42, 70], "mb1k": 0.4, "mb2k": 1.4, "authors": ["Kirill Sannikov"]}, {"group": "书架与柜子", "id": "WoodenTable_03", "name": "Wooden Table 03", "note": "旧木抽屉柜（灰漆）", "poly": 2298, "dims": [133, 56, 83], "mb1k": 0.6, "mb2k": 1.9, "authors": ["Gabriel Radić"]}, {"group": "书架与柜子", "id": "vintage_wooden_drawer_01", "name": "Vintage Wooden Drawer 01", "note": "大号多格抽屉柜（像药铺柜台）", "poly": 5184, "dims": [172, 101, 109], "mb1k": 2.1, "mb2k": 6.9, "authors": ["James Ray Cock"]}, {"group": "书", "id": "book_encyclopedia_set_01", "name": "Book Encyclopedia Set 01", "note": "一排百科全书", "poly": 67306, "dims": [55, 16, 24], "mb1k": 3.3, "mb2k": 4.7, "authors": ["John Malcolm"]}, {"group": "书", "id": "decorative_book_set_01", "name": "Decorative Book Set 01", "note": "装饰书（面数高）", "poly": 112560, "dims": [251, 32, 29], "mb1k": 74.7, "mb2k": 218.6, "authors": ["James Ray Cock"]}, {"group": "灯与蜡烛", "id": "vintage_oil_lamp", "name": "Vintage Oil Lamp", "note": "煤油灯（可做书桌灯）", "poly": 7208, "dims": [22, 22, 80], "mb1k": 2.1, "mb2k": 6.6, "authors": ["Monsta3D"]}, {"group": "灯与蜡烛", "id": "wooden_candlestick", "name": "Wooden Candlestick", "note": "木烛台", "poly": 3328, "dims": [10, 10, 22], "mb1k": 8.4, "mb2k": 14.8, "authors": ["Josh Dean"]}, {"group": "灯与蜡烛", "id": "brass_candleholders", "name": "Brass Candleholders", "note": "黄铜烛台（面数偏高）", "poly": 41936, "dims": [105, 36, 84], "mb1k": 9.5, "mb2k": 31.7, "authors": ["Tina"]}, {"group": "灯与蜡烛", "id": "Lantern_01", "name": "Lantern 01", "note": "铁皮马灯", "poly": 33902, "dims": [12, 10, 29], "mb1k": 1.4, "mb2k": 3.0, "authors": ["Rajil Jose Macatangay"]}, {"group": "灯与蜡烛", "id": "wooden_lantern_01", "name": "Wooden Lantern 01", "note": "木提灯", "poly": 8321, "dims": [22, 23, 53], "mb1k": 3.8, "mb2k": 14.0, "authors": ["James Ray Cock"]}, {"group": "灯与蜡烛", "id": "lantern_chandelier_01", "name": "Lantern Chandelier 01", "note": "维多利亚吊灯式提灯", "poly": 5971, "dims": [58, 57, 88], "mb1k": 1.5, "mb2k": 4.2, "authors": ["Kirill Sannikov"]}, {"group": "灯与蜡烛", "id": "brass_diya_lantern", "name": "Brass Diya Lantern", "note": "黄铜油灯", "poly": 12742, "dims": [12, 12, 38], "mb1k": 2.0, "mb2k": 5.5, "authors": ["Bhargav Kubal"]}, {"group": "桌面小物", "id": "vintage_microscope", "name": "Vintage Microscope", "note": "黄铜显微镜", "poly": 20631, "dims": [11, 18, 40], "mb1k": 2.3, "mb2k": 5.8, "authors": ["Luis José Fernández Rodríguez"]}, {"group": "桌面小物", "id": "magnifying_glass_01", "name": "Magnifying Glass 01", "note": "放大镜", "poly": 7240, "dims": [13, 3, 27], "mb1k": 0.5, "mb2k": 1.2, "authors": ["Nazar Borodavka"]}, {"group": "桌面小物", "id": "seadogs_compass", "name": "Seadogs Compass", "note": "航海罗盘", "poly": 11645, "dims": [8, 15, 9], "mb1k": 2.7, "mb2k": 8.4, "authors": ["Benny Weimer"]}, {"group": "桌面小物", "id": "pocket_watch", "name": "Pocket Watch", "note": "怀表", "poly": 15615, "dims": [6, 2, 8], "mb1k": 2.1, "mb2k": 6.5, "authors": ["PierreB3D"]}, {"group": "桌面小物", "id": "vintage_binocular", "name": "Vintage Binoculars", "note": "双筒望远镜", "poly": 19362, "dims": [19, 20, 7], "mb1k": 2.7, "mb2k": 8.0, "authors": ["Luke"]}, {"group": "桌面小物", "id": "mantel_clock_01", "name": "Mantel Clock 01", "note": "雕花座钟", "poly": 29742, "dims": [48, 25, 16], "mb1k": 2.4, "mb2k": 7.0, "authors": ["Yann Kervran", "Rico Cilliers"]}, {"group": "桌面小物", "id": "brass_goblets", "name": "Brass Goblets", "note": "黄铜高脚杯", "poly": 9600, "dims": [45, 30, 27], "mb1k": 4.8, "mb2k": 17.3, "authors": ["Tina"]}, {"group": "桌面小物", "id": "tea_set_01", "name": "Tea Set 01", "note": "维多利亚茶具", "poly": 40296, "dims": [92, 48, 16], "mb1k": 2.3, "mb2k": 5.2, "authors": ["James Ray Cock", "Rico Cilliers", "Jurita Burger"]}, {"group": "桌面小物", "id": "jug_01", "name": "Jug 01", "note": "花瓷水壶", "poly": 5770, "dims": [28, 17, 21], "mb1k": 1.2, "mb2k": 4.8, "authors": ["Kuutti Siitonen"]}, {"group": "桌面小物", "id": "antique_ceramic_vase_01", "name": "Antique Ceramic Vase 01", "note": "古董瓷瓶", "poly": 9408, "dims": [26, 26, 44], "mb1k": 0.5, "mb2k": 1.2, "authors": ["James Ray Cock"]}, {"group": "桌面小物", "id": "brass_vase_03", "name": "Brass Vase 03", "note": "黄铜小瓶", "poly": 2616, "dims": [8, 8, 20], "mb1k": 1.6, "mb2k": 5.2, "authors": ["Rico Cilliers"]}, {"group": "桌面小物", "id": "chess_set", "name": "Chess Set", "note": "国际象棋（面数高）", "poly": 76920, "dims": [55, 55, 11], "mb1k": 7.0, "mb2k": 19.7, "authors": ["Riley Queen"]}, {"group": "桌面小物", "id": "Camera_01", "name": "Camera 01", "note": "老式相机", "poly": 26987, "dims": [21, 26, 8], "mb1k": 2.4, "mb2k": 6.2, "authors": ["Rajil Jose Macatangay"]}, {"group": "可以替代电视 / 电脑的", "id": "ornate_mirror_01", "name": "Ornate Mirror 01", "note": "雕花镜：作品可以\"显现\"在镜子里", "poly": 14246, "dims": [49, 3, 74], "mb1k": 0.7, "mb2k": 1.3, "authors": ["James Ray Cock"]}, {"group": "可以替代电视 / 电脑的", "id": "filmstrip_projector_8mm", "name": "Filmstrip Projector 8mm", "note": "8mm 放映机：作品投到墙上", "poly": 32697, "dims": [25, 60, 35], "mb1k": 3.1, "mb2k": 7.6, "authors": ["PeterM"]}, {"group": "可以替代电视 / 电脑的", "id": "vintage_grandfather_clock_01", "name": "Vintage Grandfather Clock 01", "note": "落地大钟", "poly": 12604, "dims": [100, 80, 219], "mb1k": 2.4, "mb2k": 7.1, "authors": ["Yann Kervran", "James Ray Cock"]}, {"group": "可以替代电视 / 电脑的", "id": "treasure_chest", "name": "Treasure Chest", "note": "宝箱（面数很高）", "poly": 103330, "dims": [96, 52, 62], "mb1k": 5.5, "mb2k": 13.0, "authors": ["Rico Cilliers"]}, {"group": "墙上", "id": "fancy_picture_frame_01", "name": "Fancy Picture Frame 01", "note": "雕花画框", "poly": 938, "dims": [60, 2, 46], "mb1k": 0.7, "mb2k": 2.7, "authors": ["Rob Tuytel", "Rico Cilliers"]}, {"group": "墙上", "id": "fancy_picture_frame_02", "name": "Fancy Picture Frame 02", "note": "雕花画框 2", "poly": 35102, "dims": [66, 9, 77], "mb1k": 1.7, "mb2k": 4.2, "authors": ["Rob Tuytel", "Rico Cilliers"]}, {"group": "墙上", "id": "hanging_picture_frame_03", "name": "Hanging Picture Frame 03", "note": "椭圆相框（老照片）", "poly": 24348, "dims": [39, 3, 50], "mb1k": 1.3, "mb2k": 2.7, "authors": ["James Ray Cock"]}, {"group": "植物与其他", "id": "potted_plant_04", "name": "Potted Plant 04", "note": "小盆芦荟", "poly": 6097, "dims": [17, 19, 27], "mb1k": 2.1, "mb2k": 6.3, "authors": ["James Ray Cock"]}, {"group": "植物与其他", "id": "potted_plant_02", "name": "Potted Plant 02", "note": "大盆绿植（面数高）", "poly": 69806, "dims": [70, 66, 84], "mb1k": 2.6, "mb2k": 4.9, "authors": ["Rico Cilliers"]}, {"group": "植物与其他", "id": "planter_pot_clay", "name": "Planter Pot Clay", "note": "陶土花盆", "poly": 3080, "dims": [27, 26, 22], "mb1k": 1.8, "mb2k": 6.0, "authors": ["Amal Kumar"]}, {"group": "植物与其他", "id": "concrete_cat_statue", "name": "Concrete Cat Statue", "note": "猫雕像", "poly": 11950, "dims": [15, 25, 28], "mb1k": 3.1, "mb2k": 11.0, "authors": ["Rico Cilliers", "Riley Queen"]}, {"group": "植物与其他", "id": "gothic_statue", "name": "Gothic Statue", "note": "哥特雕像", "poly": 27739, "dims": [148, 156, 174], "mb1k": 4.0, "mb2k": 11.1, "authors": ["Benny Weimer"]}, {"group": "植物与其他", "id": "throw_pillows_01", "name": "Throw Pillows 01", "note": "靠垫", "poly": 6362, "dims": [102, 63, 45], "mb1k": 1.2, "mb2k": 4.5, "authors": ["Serhii Khromov"]}, {"group": "植物与其他", "id": "wicker_basket_01", "name": "Wicker Basket 01", "note": "藤编篮", "poly": 22276, "dims": [38, 30, 12], "mb1k": 2.7, "mb2k": 8.4, "authors": ["Kuutti Siitonen"]}], "tex": [{"group": "地板", "id": "herringbone_parquet", "name": "Herringbone Parquet", "note": "人字拼木地板"}, {"group": "地板", "id": "diagonal_parquet", "name": "Diagonal Parquet", "note": "斜拼木地板"}, {"group": "地板", "id": "rectangular_parquet", "name": "Rectangular Parquet", "note": "方块拼花地板"}, {"group": "地板", "id": "old_wooden_floor_03", "name": "Old Wooden Floor 03", "note": "旧木地板"}, {"group": "地板", "id": "dark_wooden_planks", "name": "Dark Wooden Planks", "note": "深色木地板"}, {"group": "地板", "id": "wood_floor_worn", "name": "Wood Floor Worn", "note": "磨旧的木地板"}, {"group": "地板", "id": "slate_floor_03", "name": "Slate Floor 03", "note": "石板地面"}, {"group": "地板", "id": "monastery_stone_floor", "name": "Monastery Stone Floor", "note": "修道院石地面"}, {"group": "墙面", "id": "castle_brick_02_white", "name": "Castle Brick 02 White", "note": "白色城堡砖墙"}, {"group": "墙面", "id": "plastered_stone_wall", "name": "Plastered Stone Wall", "note": "抹灰石墙"}, {"group": "墙面", "id": "white_stucco", "name": "White Stucco", "note": "白灰泥墙"}, {"group": "墙面", "id": "worn_plaster_wall", "name": "Worn Plaster Wall", "note": "旧灰泥墙"}, {"group": "墙面", "id": "patterned_plaster_wall", "name": "Patterned Plaster Wall", "note": "花纹灰泥墙"}, {"group": "墙面", "id": "decrepit_wallpaper", "name": "Decrepit Wallpaper", "note": "旧墙纸"}, {"group": "墙面", "id": "stone_wall_04", "name": "Stone Wall 04", "note": "石墙"}, {"group": "墙面", "id": "medieval_red_brick", "name": "Medieval Red Brick", "note": "中世纪红砖"}, {"group": "墙面", "id": "raw_plank_wall", "name": "Raw Plank Wall", "note": "木板墙"}, {"group": "布料 / 皮革 / 木纹", "id": "brown_leather", "name": "Brown Leather", "note": "棕色皮革（书皮、椅面）"}, {"group": "布料 / 皮革 / 木纹", "id": "velour_velvet", "name": "Velour Velvet", "note": "天鹅绒（窗帘、桌布）"}, {"group": "布料 / 皮革 / 木纹", "id": "quatrefoil_jacquard_fabric", "name": "Quatrefoil Jacquard Fabric", "note": "提花布（地毯）"}, {"group": "布料 / 皮革 / 木纹", "id": "poly_wool_herringbone", "name": "Poly Wool Herringbone", "note": "人字纹呢子"}, {"group": "布料 / 皮革 / 木纹", "id": "smoked_walnut_veneer", "name": "Smoked Walnut Veneer", "note": "烟熏胡桃木（书桌面）"}, {"group": "布料 / 皮革 / 木纹", "id": "walnut_veneer", "name": "Walnut Veneer", "note": "胡桃木"}], "sf": [{"group": "药水瓶", "lic": "CC Attribution", "name": "Mermaid Potion", "faces": 7572, "url": "https://sketchfab.com/3d-models/none-2363db11631045dea8f84c8421578002", "user": "Sharon Kunne", "thumb": "https://media.sketchfab.com/models/2363db11631045dea8f84c8421578002/thumbnails/efac375765a34b13ade778d51fde3052/df620ac4aaa44445a0f24a809424de66.jpeg", "uid": "2363db11631045dea8f84c8421578002"}, {"group": "药水瓶", "lic": "CC Attribution", "name": "Magic Potion", "faces": 25346, "url": "https://sketchfab.com/3d-models/none-40dcaf2c70d74406801f4407732f5c43", "user": "Francesca Cepparulo_3D", "thumb": "https://media.sketchfab.com/models/40dcaf2c70d74406801f4407732f5c43/thumbnails/dad81d536d30484ab33df98f509d52da/3ee7fdbf083b4a7b955116667244f984.jpeg", "uid": "40dcaf2c70d74406801f4407732f5c43"}, {"group": "药水瓶", "lic": "CC Attribution", "name": "Basic Bottle", "faces": 46086, "url": "https://sketchfab.com/3d-models/none-b2d9a692c15e4ad980c384fe2d6a8f8c", "user": "Blender3D", "thumb": "https://media.sketchfab.com/models/b2d9a692c15e4ad980c384fe2d6a8f8c/thumbnails/c848ee0f9aa6462e9e7b87754b062efd/80f980bff6d949cd8062db5eef333536.jpeg", "uid": "b2d9a692c15e4ad980c384fe2d6a8f8c"}, {"group": "药水瓶", "lic": "CC Attribution", "name": "4 Colour Alchemist Potions", "faces": 2088, "url": "https://sketchfab.com/3d-models/none-8012a4702dbe4322a0bfb77a46e29a5c", "user": "Incg5764", "thumb": "https://media.sketchfab.com/models/8012a4702dbe4322a0bfb77a46e29a5c/thumbnails/67c2ae002673461fbd3b049b14468ed3/c9722715eda84647b2eb7857e85dcbb4.jpeg", "uid": "8012a4702dbe4322a0bfb77a46e29a5c"}, {"group": "水晶球", "lic": "CC Attribution", "name": "Crystal Ball", "faces": 5754, "url": "https://sketchfab.com/3d-models/none-23e1b3d8c0f843e0960c673d932712f2", "user": "Yanez Designs", "thumb": "https://media.sketchfab.com/models/23e1b3d8c0f843e0960c673d932712f2/thumbnails/d5e08e939d024bc6b880e31ec94bdc48/bfbd060ca6114cfe8fea8d7562132092.jpeg", "uid": "23e1b3d8c0f843e0960c673d932712f2"}, {"group": "水晶球", "lic": "CC Attribution", "name": "Crystal Ball", "faces": 56615, "url": "https://sketchfab.com/3d-models/none-30618a3f909a4376af013a1d1de1cbba", "user": "Randall_3D", "thumb": "https://media.sketchfab.com/models/30618a3f909a4376af013a1d1de1cbba/thumbnails/c18dd775458947bd90b59c9d3e1c627e/03bf62f84f6946f993b731edb246714c.jpeg", "uid": "30618a3f909a4376af013a1d1de1cbba"}, {"group": "水晶球", "lic": "CC Attribution", "name": "Crystal ball", "faces": 27296, "url": "https://sketchfab.com/3d-models/none-d6d5e784e727471fb4ac62025d156bc4", "user": "SamRi", "thumb": "https://media.sketchfab.com/models/d6d5e784e727471fb4ac62025d156bc4/thumbnails/226aaad3a6af4720a8a43f41402ec238/e3674884ebd742cfb9ed42cd29cfee88.jpeg", "uid": "d6d5e784e727471fb4ac62025d156bc4"}, {"group": "水晶球", "lic": "CC Attribution", "name": "Magic crystal ball", "faces": 1888, "url": "https://sketchfab.com/3d-models/none-0d241e81ec6c446aafeb941492915909", "user": "terpsichore", "thumb": "https://media.sketchfab.com/models/0d241e81ec6c446aafeb941492915909/thumbnails/74fc72ec2a1448ceacf96c3f82e57c13/e9006a8d75d94474adf0a4a5712f6036.jpeg", "uid": "0d241e81ec6c446aafeb941492915909"}, {"group": "沙漏", "lic": "CC Attribution", "name": "Hourglass", "faces": 69000, "url": "https://sketchfab.com/3d-models/none-a453e90d47b74260b5e5ccd5a965fe3e", "user": "• Less •", "thumb": "https://media.sketchfab.com/models/a453e90d47b74260b5e5ccd5a965fe3e/thumbnails/1490652e85ea438cbffce38e7bc2d883/bc48463eea764924be69df9e78405660.jpeg", "uid": "a453e90d47b74260b5e5ccd5a965fe3e"}, {"group": "沙漏", "lic": "CC Attribution", "name": "6 Medieval Fantasy Study Props", "faces": 16860, "url": "https://sketchfab.com/3d-models/none-3aaefdd3ea0f4b31954ce74a2142b92b", "user": "Alexander Patterson", "thumb": "https://media.sketchfab.com/models/3aaefdd3ea0f4b31954ce74a2142b92b/thumbnails/f1e2c59ac22045bfbcddc2e003d95a65/0c55bcc63d0b4e3ebaaf7e937b0ef374.jpeg", "uid": "3aaefdd3ea0f4b31954ce74a2142b92b", "note": "书房道具包（6 件，点进去看是哪些）"}, {"group": "沙漏", "lic": "CC Attribution", "name": "Hourglass", "faces": 7154, "url": "https://sketchfab.com/3d-models/none-59538eb3cf054896b3aa97249746a53c", "user": "Natalie Crabtree", "thumb": "https://media.sketchfab.com/models/59538eb3cf054896b3aa97249746a53c/thumbnails/46c0e3a7240d42c1b6899677bab4be20/accfb15991af427b946a202727283427.jpeg", "uid": "59538eb3cf054896b3aa97249746a53c"}, {"group": "沙漏", "lic": "CC Attribution", "name": "Snake Hourglass", "faces": 68280, "url": "https://sketchfab.com/3d-models/none-7c2b84be4d96469795c8c98c4ffb6ce1", "user": "M_Voch", "thumb": "https://media.sketchfab.com/models/7c2b84be4d96469795c8c98c4ffb6ce1/thumbnails/b2b0ed7861f14181acb2f1cd9309099b/4ce47649ba244ab7adeefde45f4141ee.jpeg", "uid": "7c2b84be4d96469795c8c98c4ffb6ce1"}, {"group": "地球仪", "lic": "CC Attribution", "name": "Antique Globe", "faces": 6786, "url": "https://sketchfab.com/3d-models/none-78b47132c6be42bcb664545a69b380d9", "user": "Matthew Collings", "thumb": "https://media.sketchfab.com/models/78b47132c6be42bcb664545a69b380d9/thumbnails/1c42c6ca9bd748a98cbc47633dd6f86a/ef5a1c6b048e4bfc967ac06fe54ce4c8.jpeg", "uid": "78b47132c6be42bcb664545a69b380d9"}, {"group": "地球仪", "lic": "CC Attribution", "name": "Golden Globe Decoration", "faces": 10076, "url": "https://sketchfab.com/3d-models/none-328498b205c64897a78d24ddb8a73703", "user": "Nicholas-3D", "thumb": "https://media.sketchfab.com/models/328498b205c64897a78d24ddb8a73703/thumbnails/4bbf5e7032cc41d0b8ffd6b0c6365ca5/b5ff429fccca4fc4ab73e2b22aaa24b2.jpeg", "uid": "328498b205c64897a78d24ddb8a73703"}, {"group": "地球仪", "lic": "CC Attribution", "name": "Game-Ready Antique Globe", "faces": 18902, "url": "https://sketchfab.com/3d-models/none-07c3e5fa70174f41b6a8298471ab27d7", "user": "Okapiguy", "thumb": "https://media.sketchfab.com/models/07c3e5fa70174f41b6a8298471ab27d7/thumbnails/c4031cac0d884b8cb33c7a8150025672/fb89dc3b28c64e4ebae6e24ce27d4b2a.jpeg", "uid": "07c3e5fa70174f41b6a8298471ab27d7"}, {"group": "地球仪", "lic": "CC Attribution", "name": "Globe", "faces": 2228, "url": "https://sketchfab.com/3d-models/none-2d40c8805443463283c1b1547e50e650", "user": "padmadev2005", "thumb": "https://media.sketchfab.com/models/2d40c8805443463283c1b1547e50e650/thumbnails/e06f722f2d684d9698a7626350d45b83/b483ae9e7ab34eaf86646a35b34173d9.jpeg", "uid": "2d40c8805443463283c1b1547e50e650"}, {"group": "头骨", "lic": "CC Attribution", "name": "Skull downloadable", "faces": 31016, "url": "https://sketchfab.com/3d-models/none-1a9db900738d44298b0bc59f68123393", "user": "martinjario", "thumb": "https://media.sketchfab.com/models/1a9db900738d44298b0bc59f68123393/thumbnails/4e89bc3e587f42e9afe9c65ff27ba783/36614b281e084282b46acc03a2aff5e2.jpeg", "uid": "1a9db900738d44298b0bc59f68123393"}, {"group": "羽毛笔和墨水瓶", "lic": "CC Attribution", "name": "Inkwell glass with quill pen Victorian style", "faces": 400, "url": "https://sketchfab.com/3d-models/none-64812fa9b17248e0aacb1800a278972b", "user": "Rylae Shylna", "thumb": "https://media.sketchfab.com/models/64812fa9b17248e0aacb1800a278972b/thumbnails/d3c61b3199bc47dba903e81532ac7d98/2a9de68bf66b47119589fa0380535dac.jpeg", "uid": "64812fa9b17248e0aacb1800a278972b"}, {"group": "羽毛笔和墨水瓶", "lic": "CC Attribution", "name": "Quill Pen and Ink Set", "faces": 19109, "url": "https://sketchfab.com/3d-models/none-9ffd27cbd46a46e99205a23da36dd59c", "user": "Taj Eddine Marmoul", "thumb": "https://media.sketchfab.com/models/9ffd27cbd46a46e99205a23da36dd59c/thumbnails/1f77fca90fcf476c9c8695efb7e0898b/448bba3ac8ac4080af875802eae2b6cc.jpeg", "uid": "9ffd27cbd46a46e99205a23da36dd59c"}, {"group": "羽毛笔和墨水瓶", "lic": "CC Attribution", "name": "Quill, Parchment & Inkwell Objects", "faces": 925, "url": "https://sketchfab.com/3d-models/none-8216aa35fc924b12babdd9195cacc354", "user": "Kade.Wolfe", "thumb": "https://media.sketchfab.com/models/8216aa35fc924b12babdd9195cacc354/thumbnails/19019df5d77a49319d4c7fe727d6f33b/5b1e83b82a4646a0b050aecdd00bb175.jpeg", "uid": "8216aa35fc924b12babdd9195cacc354"}, {"group": "羽毛笔和墨水瓶", "lic": "CC Attribution", "name": "Antique Pen and Inkwell", "faces": 4148, "url": "https://sketchfab.com/3d-models/none-29cdbaa24ab1416caa08233936abe3b7", "user": "PixelParty", "thumb": "https://media.sketchfab.com/models/29cdbaa24ab1416caa08233936abe3b7/thumbnails/f30d308335334ad0be46907fdffb0c1d/347557ced2dd47419fd4bf90d577d44f.jpeg", "uid": "29cdbaa24ab1416caa08233936abe3b7"}, {"group": "黄铜望远镜", "lic": "CC Attribution", "name": "antique brass compass telescope", "faces": 18730, "url": "https://sketchfab.com/3d-models/none-657201873c364634833bdba71af3ecb3", "user": "juan-miguelbauwens", "thumb": "https://media.sketchfab.com/models/657201873c364634833bdba71af3ecb3/thumbnails/26dcb2ef54fa4280809ff51303dc1bce/440eb9156fbb4511a1943499341c16b4.jpeg", "uid": "657201873c364634833bdba71af3ecb3"}, {"group": "黄铜望远镜", "lic": "CC Attribution", "name": "Vintage Spyglass Telescope", "faces": 14010, "url": "https://sketchfab.com/3d-models/none-bc3c97e0fb3146fab449d57db70d0fa4", "user": "cyberreno", "thumb": "https://media.sketchfab.com/models/bc3c97e0fb3146fab449d57db70d0fa4/thumbnails/05faac79869a426ea8bfa7c83188fce2/476871a13a314aa3926e595253327435.jpeg", "uid": "bc3c97e0fb3146fab449d57db70d0fa4"}, {"group": "黄铜望远镜", "lic": "CC Attribution", "name": "Old telescope", "faces": 52486, "url": "https://sketchfab.com/3d-models/none-966c5272a69145118aba932226f140ff", "user": "Artyooooom", "thumb": "https://media.sketchfab.com/models/966c5272a69145118aba932226f140ff/thumbnails/16884480068d4c19854a0fa9eb77676a/e5796d813c9e4b3ca9f307be74674e0d.jpeg", "uid": "966c5272a69145118aba932226f140ff"}, {"group": "坩埚", "lic": "CC0 Public Domain", "name": "1960.288 Tripod Cauldron (Ding)", "faces": 15000, "url": "https://sketchfab.com/3d-models/none-087210e905254535b31d1ee9edf8f7fc", "user": "Cleveland Museum of Art", "thumb": "https://media.sketchfab.com/models/087210e905254535b31d1ee9edf8f7fc/thumbnails/fc7e97e615314db0a25993841ef2e29b/04c69126bbe841b6a875efc500cdef2d.jpeg", "uid": "087210e905254535b31d1ee9edf8f7fc", "note": "青铜鼎（博物馆扫描，不太像坩埚）"}, {"group": "坩埚", "lic": "CC Attribution", "name": "Old Forged Fire Cauldron", "faces": 4316, "url": "https://sketchfab.com/3d-models/none-1ecacae62f8e47a887c324a542ef6dbe", "user": "Incg5764", "thumb": "https://media.sketchfab.com/models/1ecacae62f8e47a887c324a542ef6dbe/thumbnails/44cd07a7ff724839a08733d34229d385/8b1dad44169446f4a29fd37a8998693e.jpeg", "uid": "1ecacae62f8e47a887c324a542ef6dbe"}, {"group": "坩埚", "lic": "CC Attribution", "name": "Cauldron", "faces": 8896, "url": "https://sketchfab.com/3d-models/none-969634fbc14f40feb263409aa3c3ed5d", "user": "Darren McNerney 3D", "thumb": "https://media.sketchfab.com/models/969634fbc14f40feb263409aa3c3ed5d/thumbnails/fd2b27595247492dbac69096d264beec/c386d268dc2a4b3db90ea9012cb7fc71.jpeg", "uid": "969634fbc14f40feb263409aa3c3ed5d"}, {"group": "坩埚", "lic": "CC Attribution", "name": "Cauldron : The Witch's House", "faces": 4880, "url": "https://sketchfab.com/3d-models/none-4604543653494c789f6ab7a981bf8996", "user": "ReinoFeanor", "thumb": "https://media.sketchfab.com/models/4604543653494c789f6ab7a981bf8996/thumbnails/773d95b9924641f6be7e2bf45f1bb3c5/8baebd82fe39496a83e4aba8b657d8ad.jpeg", "uid": "4604543653494c789f6ab7a981bf8996"}, {"group": "卷轴 / 羊皮纸", "lic": "CC Attribution", "name": "Old Map 3D Model", "faces": 1966, "url": "https://sketchfab.com/3d-models/none-c8f056e093f74be99b2e83034099c40a", "user": "Johana-PS", "thumb": "https://media.sketchfab.com/models/c8f056e093f74be99b2e83034099c40a/thumbnails/d9d29565d9cb40e1a731d30751d7578e/2c91c47550c040d3a18bf6dd14aed59e.jpeg", "uid": "c8f056e093f74be99b2e83034099c40a", "note": "旧地图"}, {"group": "卷轴 / 羊皮纸", "lic": "CC Attribution", "name": "Scroll", "faces": 1140, "url": "https://sketchfab.com/3d-models/none-7450e494eb654e9b937bb52724220e77", "user": "FlukierJupiter", "thumb": "https://media.sketchfab.com/models/7450e494eb654e9b937bb52724220e77/thumbnails/1ab98c982ee946d2a2bb147ec6131436/256x144.jpeg", "uid": "7450e494eb654e9b937bb52724220e77"}, {"group": "蜡烛", "lic": "CC0 Public Domain", "name": "Candlestick of the so-called “Swan Set”", "faces": 19496, "url": "https://sketchfab.com/3d-models/none-576b8819466a4775815379687602a788", "user": "Virtual Museums of Małopolska", "thumb": "https://media.sketchfab.com/models/576b8819466a4775815379687602a788/thumbnails/859cab86b58b472a87b9838d31881ada/448x252.jpeg", "uid": "576b8819466a4775815379687602a788", "note": "烛台（博物馆扫描）"}, {"group": "蜡烛", "lic": "CC0 Public Domain", "name": "Candle Holder, 17th C CE", "faces": 62044, "url": "https://sketchfab.com/3d-models/none-c0308e640f7d4b3ca75cf1072b418bb9", "user": "Minneapolis Institute of Art", "thumb": "https://media.sketchfab.com/models/c0308e640f7d4b3ca75cf1072b418bb9/thumbnails/18862df90d20471f8a72a5c29eaef86f/270e553263944c64aa0d145045f271fb.jpeg", "uid": "c0308e640f7d4b3ca75cf1072b418bb9", "note": "烛台（博物馆扫描）"}, {"group": "蜡烛", "lic": "CC0 Public Domain", "name": "2018.203.1 Candle Stand (torchère)", "faces": 80000, "url": "https://sketchfab.com/3d-models/none-f228c7780e8749bf9755fa733c231fd5", "user": "Cleveland Museum of Art", "thumb": "https://media.sketchfab.com/models/f228c7780e8749bf9755fa733c231fd5/thumbnails/2f0eeee05b0b47d7b25d2c2254e70ca4/7c34622f9a6b4599981a0b34fb5005fd.jpeg", "uid": "f228c7780e8749bf9755fa733c231fd5", "note": "落地烛台（博物馆扫描）"}, {"group": "蜡烛", "lic": "CC0 Public Domain", "name": "2018.203.2 Candle Stand (torchère)", "faces": 80000, "url": "https://sketchfab.com/3d-models/none-349dd54918cc406facd4df3b79daf105", "user": "Cleveland Museum of Art", "thumb": "https://media.sketchfab.com/models/349dd54918cc406facd4df3b79daf105/thumbnails/6e68cf31ec9843149e97dd97858bab6a/91677d876cab4ea5a299b70aadd2dcf7.jpeg", "uid": "349dd54918cc406facd4df3b79daf105", "note": "落地烛台（博物馆扫描）"}, {"group": "魔法书", "lic": "CC Attribution", "name": "Antique Book Set", "faces": 21240, "url": "https://sketchfab.com/3d-models/none-a7e1164cca004a65ab53ce0e8553586c", "user": "FrodoUndead", "thumb": "https://media.sketchfab.com/models/a7e1164cca004a65ab53ce0e8553586c/thumbnails/5b95f6a006f94783912675075f2f986d/850c9bf2a5254029936f5995c6e81c36.jpeg", "uid": "a7e1164cca004a65ab53ce0e8553586c"}, {"group": "魔法书", "lic": "CC Attribution", "name": "Elegan old book pack", "faces": 14719, "url": "https://sketchfab.com/3d-models/none-4cc9ecf0531b463dada8262851ca87f8", "user": "3D_for_everyone", "thumb": "https://media.sketchfab.com/models/4cc9ecf0531b463dada8262851ca87f8/thumbnails/df731c8a8f7442c0ab2478e810ccfc9c/6521476e5048414a8710c39bbcb33a2d.jpeg", "uid": "4cc9ecf0531b463dada8262851ca87f8"}, {"group": "魔法书", "lic": "CC Attribution", "name": "Book Open", "faces": 482, "url": "https://sketchfab.com/3d-models/none-bcc69dacd1bc4eadaf4b9fc0d6e2430b", "user": "FlukierJupiter", "thumb": "https://media.sketchfab.com/models/bcc69dacd1bc4eadaf4b9fc0d6e2430b/thumbnails/73880e7c1a6d4636a7f8f4dada6d42ad/5d2b17ab0aea4096b5a4a8401839b6af.jpeg", "uid": "bcc69dacd1bc4eadaf4b9fc0d6e2430b"}, {"group": "魔法书", "lic": "CC Attribution", "name": "Medieval Open Book 1", "faces": 514, "url": "https://sketchfab.com/3d-models/none-b30b6a9018f842e7b12622387979b0fa", "user": "J0Y", "thumb": "https://media.sketchfab.com/models/b30b6a9018f842e7b12622387979b0fa/thumbnails/636b485bd7ef49cfb3005b76417b6f8b/62373b0a5d1b44a48a9224e84d1ad410.jpeg", "uid": "b30b6a9018f842e7b12622387979b0fa"}, {"group": "星盘", "lic": "CC Attribution", "name": "Planispheric astrolabe", "faces": 32021, "url": "https://sketchfab.com/3d-models/none-f6dac1748e964711ad4331767317d7b9", "user": "Virtual Museums of Małopolska", "thumb": "https://media.sketchfab.com/models/f6dac1748e964711ad4331767317d7b9/thumbnails/4ca2f17701a843e2932cfeed433f1ad2/4b570dbecee244cb864dddcfcd05b0da.jpeg", "uid": "f6dac1748e964711ad4331767317d7b9"}, {"group": "药剂罐", "lic": "CC Attribution", "name": "Jar of Crystals", "faces": 12276, "url": "https://sketchfab.com/3d-models/none-a9709a4cae864de4a1738519376621f6", "user": "crystal_3D", "thumb": "https://media.sketchfab.com/models/a9709a4cae864de4a1738519376621f6/thumbnails/01106e725a6f4e8cb17ec22e648f52b2/96b63f2023ce4c38b8e9e9c266f0dde2.jpeg", "uid": "a9709a4cae864de4a1738519376621f6", "note": "一罐水晶"}, {"group": "天球仪 / 浑天仪", "lic": "CC Attribution", "name": "Armillary sphere", "faces": 19804, "url": "https://sketchfab.com/3d-models/none-534e240ac6b0412cb526dd2b14bf8909", "user": "KRei", "thumb": "https://media.sketchfab.com/models/534e240ac6b0412cb526dd2b14bf8909/thumbnails/7a85ebc5a67c46f6abf1775cb3cc2e80/22d7a76ddfe64314846aca3c17123099.jpeg", "uid": "534e240ac6b0412cb526dd2b14bf8909"}, {"group": "天球仪 / 浑天仪", "lic": "CC Attribution", "name": "Armillary Sphere", "faces": 18032, "url": "https://sketchfab.com/3d-models/none-22e92fc349eb4f8f9091d9d081d57177", "user": "ChloeRobynSmith", "thumb": "https://media.sketchfab.com/models/22e92fc349eb4f8f9091d9d081d57177/thumbnails/b0407771351a4dbb8409bd878bfaa76e/df8d4626f969470180a3b41fe6d140eb.jpeg", "uid": "22e92fc349eb4f8f9091d9d081d57177"}], "sfq": [["药水瓶", "potion bottle"], ["水晶球", "crystal ball"], ["沙漏", "hourglass"], ["地球仪", "antique globe"], ["羽毛笔和墨水瓶", "quill inkwell"], ["望远镜", "brass telescope"], ["坩埚", "cauldron"], ["卷轴", "scroll parchment"], ["魔法书", "old book"], ["星盘", "astrolabe"], ["浑天仪", "armillary sphere"], ["蜡烛", "candle"], ["药剂罐", "apothecary jar"], ["壁炉", "fireplace"], ["书桌", "antique writing desk"]]};
+const SRC = [
+  { key: 'ph', title: 'Poly Haven 模型', short: 'Poly Haven 模型', blurb: '写实扫描级质量，全部 CC0。家具、灯、桌面小物都有，奇幻道具很少。' },
+  { key: 'tex', title: 'Poly Haven 材质', short: '材质', blurb: '地板、墙、布料、木纹。只用颜色贴图，光照由我们自己烘焙。' },
+  { key: 'sf', title: 'Sketchfab', short: 'Sketchfab', blurb: '用来补 Poly Haven 没有的奇幻道具。CC0 很少，大多是 CC-BY；质量参差，以缩略图为准，点进去可以 3D 转着看。' },
+];
+const KEY = 'study-asset-picks-v1';
+let picks = new Set();
+try { picks = new Set(JSON.parse(localStorage.getItem(KEY) || '[]')); } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify([...picks])); } catch (e) {} };
+const state = { src: new Set(SRC.map((s) => s.key)), lic: new Set(['cc0', 'by']), picked: false };
+
+const items = [
+  ...DATA.ph.map((m) => ({ ...m, src: 'ph', key: 'ph:' + m.id, lic: 'cc0', img: `https://cdn.polyhaven.com/asset_img/thumbs/${m.id}.png?width=320&height=320`, href: `https://polyhaven.com/a/${m.id}`, heavy: m.poly > 40000 || m.mb1k > 5 })),
+  ...DATA.tex.map((m) => ({ ...m, src: 'tex', key: 'tex:' + m.id, lic: 'cc0', img: `https://cdn.polyhaven.com/asset_img/thumbs/${m.id}.png?width=320&height=320`, href: `https://polyhaven.com/a/${m.id}` })),
+  ...DATA.sf.map((m) => ({ ...m, src: 'sf', key: 'sf:' + m.uid, id: m.uid, lic: m.lic.startsWith('CC0') ? 'cc0' : 'by', img: m.thumb, href: m.url, heavy: m.faces > 40000 })),
+];
+const byKey = new Map(items.map((i) => [i.key, i]));
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const k = (n) => (n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 1) + 'k' : String(n));
+
+function card(i) {
+  const lic = `<span class="lic ${i.lic}">${i.lic === 'cc0' ? 'CC0' : 'CC-BY'}</span>`;
+  let meta = '';
+  if (i.src === 'ph') meta = `${lic}<span>${k(i.poly)} 面</span><span>下载 ${i.mb1k} MB</span>${i.dims?.length ? `<span>${i.dims.join('×')} cm</span>` : ''}`;
+  else if (i.src === 'tex') meta = `${lic}<span>无缝材质</span>`;
+  else meta = `${lic}<span>${k(i.faces)} 面</span><span>作者 ${esc(i.user)}</span>`;
+  if (i.heavy) meta += `<span class="heavy">偏重</span>`;
+  const zh = esc(i.note || i.group);
+  const en = i.src === 'sf' ? esc(i.name) : esc(i.name);
+  return `<div class="card ${i.src}" role="checkbox" tabindex="0" aria-checked="${picks.has(i.key)}" data-key="${esc(i.key)}">
+    <div class="img"><img loading="lazy" src="${esc(i.img)}" alt="${en}"></div>
+    <span class="tick" aria-hidden="true">✓</span>
+    <div class="body"><div class="zh">${zh}</div><div class="en">${en}</div><div class="meta">${meta}</div>
+      <a class="open" href="${esc(i.href)}" target="_blank" rel="noopener">在 ${i.src === 'sf' ? 'Sketchfab' : 'Poly Haven'} 打开 ↗</a></div>
+  </div>`;
+}
+
+function render() {
+  const show = (i) => state.src.has(i.src) && state.lic.has(i.lic) && (!state.picked || picks.has(i.key));
+  let html = '<nav class="toc">';
+  for (const s of SRC) if (state.src.has(s.key)) html += `<a href="#s-${s.key}">${s.title}</a>`;
+  html += '</nav>';
+  let any = false;
+  for (const s of SRC) {
+    if (!state.src.has(s.key)) continue;
+    const list = items.filter((i) => i.src === s.key && show(i));
+    if (!list.length) continue;
+    any = true;
+    const groups = [...new Set(list.map((i) => i.group))];
+    html += `<section class="src" id="s-${s.key}"><h2>${s.title}<small>${list.length} 个</small></h2><p>${s.blurb}</p>`;
+    for (const g of groups) {
+      const gl = list.filter((i) => i.group === g);
+      html += `<div class="group"><h3>${esc(g)}<span>${gl.length}</span></h3><div class="grid">${gl.map(card).join('')}</div></div>`;
+    }
+    if (s.key === 'sf' && !state.picked) {
+      html += `<div class="group"><h3>想多看一些<span>Sketchfab 搜索，进去后在左侧 License 里勾 CC0 和 CC Attribution</span></h3><div class="more">` +
+        DATA.sfq.map(([zh, q]) => `<a href="https://sketchfab.com/search?features=downloadable&type=models&q=${encodeURIComponent(q)}" target="_blank" rel="noopener">${esc(zh)} ↗</a>`).join('') + '</div></div>';
+    }
+    html += '</section>';
+  }
+  if (!any) html += '<p class="empty">这组筛选下没有素材。把上面的来源或许可证多勾几个，或者关掉"只看已选"。</p>';
+  document.getElementById('main').innerHTML = html;
+  updateFooter();
+}
+
+function updateFooter() {
+  const n = picks.size;
+  document.getElementById('count').textContent = n ? `已选 ${n} 项` : '还没有勾选';
+  document.getElementById('names').textContent = [...picks].map((key) => byKey.get(key)).filter(Boolean).map((i) => i.note || i.group).join('、');
+}
+
+function toggle(el) {
+  const key = el.dataset.key;
+  picks.has(key) ? picks.delete(key) : picks.add(key);
+  el.setAttribute('aria-checked', String(picks.has(key)));
+  save();
+  if (state.picked && !picks.has(key)) render(); else updateFooter();
+}
+document.getElementById('main').addEventListener('click', (e) => {
+  if (e.target.closest('a')) return;
+  const c = e.target.closest('.card');
+  if (c) toggle(c);
+});
+document.getElementById('main').addEventListener('keydown', (e) => {
+  const c = e.target.closest('.card');
+  if (c && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); toggle(c); }
+});
+
+function chips(id, opts, set) {
+  const box = document.getElementById(id);
+  box.innerHTML = opts.map(([v, label]) => `<button class="chip" data-v="${v}" aria-pressed="${set.has(v)}">${label}</button>`).join('');
+  box.addEventListener('click', (e) => {
+    const b = e.target.closest('.chip'); if (!b) return;
+    const v = b.dataset.v;
+    set.has(v) ? set.delete(v) : set.add(v);
+    b.setAttribute('aria-pressed', String(set.has(v)));
+    render();
+  });
+}
+chips('f-src', SRC.map((s) => [s.key, s.short]), state.src);
+chips('f-lic', [['cc0', 'CC0'], ['by', 'CC-BY']], state.lic);
+document.getElementById('f-picked').addEventListener('click', (e) => {
+  state.picked = !state.picked;
+  e.currentTarget.setAttribute('aria-pressed', String(state.picked));
+  render();
+});
+
+function listText() {
+  const rows = [...picks].map((key) => byKey.get(key)).filter(Boolean);
+  if (!rows.length) return '';
+  const order = { ph: 0, tex: 1, sf: 2 };
+  rows.sort((a, b) => order[a.src] - order[b.src]);
+  return '我选的素材：\n' + rows.map((i) => i.src === 'sf'
+    ? `- [Sketchfab ${i.lic === 'cc0' ? 'CC0' : 'CC-BY'}] ${i.note || i.group}：${i.name}（${i.user}） ${i.href}`
+    : `- [${i.src === 'ph' ? 'Poly Haven 模型' : 'Poly Haven 材质'}] ${i.note}：${i.id}`).join('\n');
+}
+window.__picks = () => listText(); // 在 app 的内置浏览器里选的话，Claude 可以直接读这个
+const copyBtn = document.getElementById('copy');
+copyBtn.addEventListener('click', async () => {
+  const t = listText();
+  if (!t) { copyBtn.textContent = '先勾选几项'; setTimeout(() => (copyBtn.textContent = '复制清单'), 1400); return; }
+  try { await navigator.clipboard.writeText(t); copyBtn.textContent = '已复制，粘贴给 Claude'; }
+  catch (e) { prompt('复制下面的清单：', t); }
+  setTimeout(() => (copyBtn.textContent = '复制清单'), 2000);
+});
+document.getElementById('clear').addEventListener('click', () => { picks.clear(); save(); render(); });
+render();
+</script>
+</body>
+</html>

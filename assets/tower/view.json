@@ -1,0 +1,17 @@
+{
+  "hfov": 70.0,
+  "aspect": 1.0,
+  "cards": [
+    {
+      "file": "view_far.jpg",
+      "dist": 30.0
+    },
+    {
+      "file": "view_near.webp",
+      "dist": 8.0,
+      "alpha": true
+    }
+  ],
+  "full": "view_full.jpg",
+  "built": "20261105-032757"
+}

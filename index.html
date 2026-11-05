@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SceneCV · 走进你的简历</title>
+<meta name="description" content="SceneCV：可探索的 3D 场景化简历模板，在书桌房间或塔楼书房中呈现介绍、作品、书单与联系方式。">
+<script>document.documentElement.classList.add('js')</script>
+<link rel="stylesheet" href="css/style.css">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+
+<!--
+  内容层：网站的真实内容都写在这里（以后可以换成 CMS / Markdown 生成）。
+  3D 房间启动时从这里读数据；设备跑不动 3D 时，这一层本身就是静态版网站。
+-->
+<main id="content">
+  <header class="hero">
+    <h1 data-name>你的名字</h1>
+    <p class="tagline">一句话介绍自己：做什么、在哪里、关心什么。</p>
+    <p class="notice" id="try-room" hidden>你的设备可能跑不动 3D 版，所以先显示静态版。<a href="?room=1">仍然试试 3D 版 →</a></p>
+  </header>
+
+  <section id="about">
+    <h2>关于我</h2>
+    <p>这里是一段自我介绍。可以写你现在在做什么，过去做过什么，以及你为什么对这些事情感兴趣。</p>
+    <p>第二段可以写写兴趣爱好、正在学习的东西，或者你希望别人因为什么事情来联系你。</p>
+    <p>这段文字在 3D 版里会一个字一个字地显现出来：书桌房间里打在旧电脑的屏幕上，塔楼里浮现在水晶球上方。</p>
+  </section>
+
+  <section id="work">
+    <h2>作品</h2>
+    <!-- 每个 li 是一盘录像带：data-tape 选画面效果（bars / synth / bounce / rain），data-color 是标签颜色 -->
+    <ol class="tapes">
+      <li data-tape="bars" data-color="#e8b04a">
+        <a href="https://example.com/project-a">项目 A</a> <span class="years">2025–至今</span>
+        <p>一句话描述这个项目：它是什么、你在里面做了什么。</p>
+      </li>
+      <li data-tape="synth" data-color="#e0577a">
+        <a href="https://example.com/project-b">项目 B</a> <span class="years">2024</span>
+        <p>另一个项目的简介。电视画面和房间的光会跟着这盘带子的颜色变化。</p>
+      </li>
+      <li data-tape="bounce" data-color="#4fa3e0">
+        <a href="https://example.com/project-c">项目 C</a> <span class="years">2023</span>
+        <p>每盘带子的画面都是一个独立的 JS 模块，画在一块 2D canvas 上。</p>
+      </li>
+      <li data-tape="rain" data-color="#59c27a">
+        <a href="https://example.com/project-d">项目 D</a> <span class="years">2022</span>
+        <p>想加新作品，只要在 HTML 里多写一个 li。</p>
+      </li>
+    </ol>
+  </section>
+
+  <section id="shelf">
+    <h2>书架</h2>
+    <!-- 在读 / 推荐的书。3D 版里点左墙的书架会显示这份书单；没有链接的书可以不写 a，直接写书名 -->
+    <ul class="books">
+      <li><a href="https://example.com/book-a">书名 A</a> <span class="by">作者 A</span>
+        <p>一句话：为什么推荐这本书。</p></li>
+      <li><a href="https://example.com/book-b">书名 B</a> <span class="by">作者 B</span>
+        <p>正在读，读完了写一篇笔记。</p></li>
+      <li><a href="https://example.com/book-c">书名 C</a> <span class="by">作者 C</span>
+        <p>想加一本书，就在这里多写一个 li。</p></li>
+    </ul>
+  </section>
+
+  <section id="online">
+    <h2>联系</h2>
+    <ul class="links">
+      <li><a href="https://example.com/github">GitHub</a> <span>@your-name</span></li>
+      <li><a href="https://example.com/x">X / Twitter</a> <span>@your-name</span></li>
+      <li><a href="https://example.com/mail">邮箱</a> <span>you@example.com</span></li>
+    </ul>
+  </section>
+</main>
+
+<div id="room" hidden>
+  <canvas id="gl" aria-hidden="true"></canvas>
+  <div id="loading" class="loading" role="status"><div class="bar"><i></i></div><p>正在布置房间… <b>0%</b></p></div>
+  <div id="hint" class="hint" aria-hidden="true"></div>
+  <button id="back" class="back" type="button" hidden>← 返回</button>
+  <aside id="panel" class="panel" hidden></aside>
+  <div id="help" class="help">点击物件探索 · 拖动环顾四周 · <a href="?plain=1">纯文字版</a></div>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

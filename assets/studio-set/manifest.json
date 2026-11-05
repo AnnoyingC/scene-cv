@@ -1,0 +1,26 @@
+{
+  "name": "City Studio desktop set",
+  "units": "metres",
+  "blender_front": "-Y",
+  "gltf_front": "+Z",
+  "original_procedural_model": true,
+  "triangles": 24476,
+  "meshes": 23,
+  "groups": [
+    "Display",
+    "Computer",
+    "Keyboard",
+    "Mouse"
+  ],
+  "screen_mesh": "Screen",
+  "screen_size": [
+    0.716,
+    0.40275
+  ],
+  "screen_center_gltf": [
+    0,
+    0.33,
+    -0.1034
+  ],
+  "note": "Standalone assets, no baked room lightmaps. Use PBR or rebake when integrating."
+}
