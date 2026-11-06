@@ -18,7 +18,6 @@ import { BakedRoom, loadBaked, tvLight } from './baked.js';
 import { waterMaterial, orbMaterial, flameMaterial, gemMaterial, OrbText, RIPPLES } from './magic.js';
 import { BasinMagic } from './basin.js';
 import { TowerBanners } from './tower-banners.js';
-import { TowerCat } from './tower-cat.js';
 import { PaperFire } from './paper-fire.js';
 
 const BASE = new URL('../assets/tower/', import.meta.url).href;
@@ -36,7 +35,6 @@ const BASIN_GAIN = 0.3; // 项目画面只给常亮的冥想盆底光添加一�
 // 绿火：烘焙好的壁炉光是橙色的（约 #ff8a3a），乘上这个系数就变成绿光（不是颜色本身，是对橙光的校正）
 const FIRE_GREEN = new THREE.Color(0.2, 1.85, 1.9);
 const EMBER_GREEN = new THREE.Color('#2dff6a');
-const CAT_FIRE = new THREE.Color('#ffbb77'), CAT_GREEN = new THREE.Color('#5dff8c');
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)');
 
 export async function start(content, { nav = null } = {}) {
@@ -86,9 +84,7 @@ export async function start(content, { nav = null } = {}) {
   const WU = water.material.uniforms;
   const basinMagic = new BasinMagic(W);
   scene.add(basinMagic.group);
-  const cat = await TowerCat.load(W, { scene, renderer, room }).catch((error) => { console.warn('知知暂时没能加载', error); return null; });
-  if (cat) scene.add(cat.group);
-  function startRitual(i) { basinMagic.trigger(projects[i].color); cat?.noticeBasin(); }
+  function startRitual(i) { basinMagic.trigger(projects[i].color); }
   const basinGlow = new THREE.Color('#83ddff');
   const basinStone = room.byMat.get('basin_stone') || [];
   let ripN = 0;
@@ -491,7 +487,7 @@ export async function start(content, { nav = null } = {}) {
     const rows = list.filter((a) => used.has(a.id)).map((a) => `<li><a href="${esc(a.url)}" target="_blank" rel="noopener">
       <b>${esc(a.zh || a.title)}</b><span>${esc(a.title)} · ${esc((a.authors || []).join('、'))} · ${esc(a.license)}</span></a></li>`).join('');
     credits = `<div class="kicker">素材致谢</div><h2>家具、灯和小物件</h2>
-      <p>家具来自 Poly Haven。知知的三维网格、骨骼与动作以桌宠形象为参考重新制作；墙、地板、水盆、书桌和其余小物件也是原创的。</p>
+      <p>家具来自 Poly Haven。墙、地板、水盆、书桌和其余小物件是原创的。</p>
       <ul class="list">${rows}</ul>
       <div class="ctl"><button type="button" data-cmd="close">关闭</button></div>`;
     if (view === 'credits') renderPanel();
@@ -499,7 +495,7 @@ export async function start(content, { nav = null } = {}) {
 
   // ---------- 拾取 ----------
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
-  const pickables = [room.root, water, orb, textPlane, ...gems.filter(Boolean).map((g) => g.group), ...(cat ? [cat.group] : [])];
+  const pickables = [room.root, water, orb, textPlane, ...gems.filter(Boolean).map((g) => g.group)];
   const shown = (o) => { for (; o; o = o.parent) if (!o.visible) return false; return true; };
   function pick(x, y) {
     const r = canvas.getBoundingClientRect();
@@ -518,7 +514,6 @@ export async function start(content, { nav = null } = {}) {
     return null;
   }
   function hintText(h) {
-    if (h.kind === 'pet') return '知知 · 打个招呼';
     if (h.kind === 'gem') return `◆ ${projects[h.i].title}`;
     if (h.kind === 'fire') return light.fireT ? '壁炉 · 熄火' : '壁炉 · 生火';
     if (h.kind === 'candles') return light.candlesT ? '蜡烛 · 熄灭' : '蜡烛 · 点亮';
@@ -549,7 +544,6 @@ export async function start(content, { nav = null } = {}) {
     const h = pick(x, y), before = view;
     if (!h) { if (view !== 'home') go('home'); return; }
     if (h.kind === 'gem') { dropGem(h.i); go('work'); }
-    else if (h.kind === 'pet') cat?.pet();
     else if (h.kind === 'fire') light.fireT = light.fireT ? 0 : 1;
     else if (h.kind === 'candles') light.candlesT = light.candlesT ? 0 : 1;
     else if (h.kind === 'about' && view === 'about') orbText.finish();
@@ -717,8 +711,6 @@ export async function start(content, { nav = null } = {}) {
     moveChess(t);
     updateCamera(dt);
     camera.updateMatrixWorld();
-    cat?.fire.color.copy(CAT_FIRE).lerp(CAT_GREEN, fx.green);
-    cat?.update(t, dt, { camera, view: overview() ? 'home' : view, fire: fireLv, candles: candleLv, basin: 0.5 + basinMagic.power });
     if (render) composer.render(dt);
   }
 
@@ -739,7 +731,7 @@ export async function start(content, { nav = null } = {}) {
   renderer.setAnimationLoop(frame);
 
   window.__room = {
-    go, dropGem, cmd, tick, pick, look, light, camera, renderer, composer, room, tv, orbText, gems, chess, water, orb, basinMagic, banners, cat, paperFire, burnLink,
+    go, dropGem, cmd, tick, pick, look, light, camera, renderer, composer, room, tv, orbText, gems, chess, water, orb, basinMagic, banners, paperFire, burnLink,
     get view() { return view; }, get loaded() { return loaded; }, get hover() { return hover; },
     hoverAt: (x, y) => setHover(pick(x, y), x, y), clickAt: (x, y) => click(x, y, true),
   };

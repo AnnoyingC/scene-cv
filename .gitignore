@@ -48,3 +48,6 @@ coverage/
 # Local screenshots, comparisons and validation reports
 output/
 .playwright-cli/
+
+# 3D pets never go into the public repo (models, Blender files, reference images)
+assets/pets/
