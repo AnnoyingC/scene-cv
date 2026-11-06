@@ -77,7 +77,8 @@ export async function loadBaked(base, { onProgress, glb = 'room.glb' } = {}) {
 }
 
 // ---------- 着色器（按光照层列表生成）----------
-// 宏：USE_UV1 = 光照贴图用第二套 UV；USE_ALBEDO_MAP = 有颜色贴图；USE_DECAL = 贴花（记事本 / 羊皮纸上的字）
+// 宏：USE_UV1 = 光照贴图用第二套 UV；USE_ALBEDO_MAP = 有颜色贴图；USE_DECAL = 贴花（记事本 / 羊皮纸上的字）；
+// USE_CUTOUT = 镂空（颜色贴图的透明部分不画，比如植物的叶片卡片；只有 manifest.cutout 里列出的材质才开）
 function shaders(layers) {
   const vert = /* glsl */`
   varying vec2 vUv;
@@ -137,7 +138,11 @@ function shaders(layers) {
     float h = max(hi, hb * hiK); // hi：单个物件自己的高亮（录像带、水晶）；hb：热点盒子
     vec3 base = mix(vec3(0.75), albedo, useAlbedo);
     #ifdef USE_ALBEDO_MAP
-      base *= mix(vec3(1.0), texture2D(albedoMap, vMapUv).rgb, useAlbedo);
+      vec4 tex = texture2D(albedoMap, vMapUv);
+      #ifdef USE_CUTOUT
+        if (tex.a < 0.5) discard;
+      #endif
+      base *= mix(vec3(1.0), tex.rgb, useAlbedo);
     #endif
     #ifdef USE_DECAL
       base *= texture2D(decal, vDecal).rgb;
@@ -184,6 +189,7 @@ export class BakedRoom {
     });
 
     const tints = manifest.tints || {}, glass = manifest.glass || {};
+    const cutout = new Set(manifest.cutout || []); // 镂空的材质（叶片），没列的照旧
     this.byMat = new Map(); // 材质名 → [mesh]
     this.emitters = [];     // { name, mat, base, power, layer }
     gltf.scene.updateMatrixWorld(true);
@@ -201,7 +207,7 @@ export class BakedRoom {
         if (map) map.anisotropy = aniso;
         // 颜色：有贴图的素材 = 贴图（× 烘焙脚本记下的染色）；没贴图的 = 材质色
         const color = tints[name] ? new THREE.Color(tints[name]) : map ? new THREE.Color(1, 1, 1) : src.color;
-        const mat = o.material = this.material(color, { map, uv1: !!o.geometry.attributes.uv1 });
+        const mat = o.material = this.material(color, { map, uv1: !!o.geometry.attributes.uv1, cutout: !!map && cutout.has(name) });
         if (glass[name] != null) {
           mat.transparent = true;
           mat.depthWrite = false;
@@ -217,13 +223,15 @@ export class BakedRoom {
     this.cards = this.windowCards(view, manifest.window, cards, aniso);
   }
 
-  // decal：贴花内容；map：颜色贴图；uv1：光照贴图用第二套 UV
-  material(color, { decal = null, map = null, uv1 = false } = {}) {
+  // decal：贴花内容；map：颜色贴图；uv1：光照贴图用第二套 UV；cutout：贴图透明的地方镂空，两面都画（叶片只有一层）
+  material(color, { decal = null, map = null, uv1 = false, cutout = false } = {}) {
     const defines = {};
     if (decal) defines.USE_DECAL = '';
     if (map) defines.USE_ALBEDO_MAP = '';
     if (uv1) defines.USE_UV1 = '';
+    if (cutout) defines.USE_CUTOUT = '';
     return new THREE.ShaderMaterial({
+      side: cutout ? THREE.DoubleSide : THREE.FrontSide,
       uniforms: {
         ...this.U, albedo: { value: color.clone() }, hi: { value: 0 }, opacity: { value: 1 }, emissive: { value: new THREE.Color(0) },
         ...(decal ? { decal: { value: decal } } : {}), ...(map ? { albedoMap: { value: map } } : {}),

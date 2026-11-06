@@ -4,6 +4,7 @@
 # 整理的内容：
 #   - 每个子物件把世界变换乘进顶点，只留颜色贴图用的那套 UV（改名 UVMap），去掉顶点色
 #   - 材质只留颜色贴图（缩小），金属度 0、粗糙度 0.8、不透明、不发光；名字加前缀，免得和房间的材质重名
+#     例外：cutout 里的材质（植物的叶片卡片）保留贴图的透明通道，烘焙时光能从镂空处漏过去，网页里镂空的地方不画
 #   - 可选：按名字丢掉子物件、按比例减面、按包围盒删掉 / 换色某些"连在一起的面"（屏幕玻璃、灯泡）
 # 坐标：参数和返回值都是 three.js 的写法（Y 向上，米）；Blender 里是 Z 向上，用 C / CI 换算。
 import os
@@ -56,8 +57,9 @@ def uv_name_for(mt, me):
     return me.uv_layers[0].name if me.uv_layers else None
 
 
-def fix_material(mt, name, size):
-    """烘焙和网页只需要颜色：保留颜色贴图（缩到 size），其它贴图、金属度、透明、发光都去掉。"""
+def fix_material(mt, name, size, cutout=False):
+    """烘焙和网页只需要颜色：保留颜色贴图（缩到 size），其它贴图、金属度、透明、发光都去掉。
+    cutout：颜色贴图的透明通道接到 Alpha（叶片卡片）；glTF 导出器看到 Alpha 接了贴图，会把这张图存成带透明的 PNG。"""
     mt.name = name
     nt = mt.node_tree
     b = principled(mt)
@@ -77,6 +79,8 @@ def fix_material(mt, name, size):
         uvn.uv_map = 'UVMap'
         nt.links.new(uvn.outputs[0], tex.inputs['Vector'])
         nt.links.new(tex.outputs['Color'], b.inputs['Base Color'])
+        if cutout:
+            nt.links.new(tex.outputs['Alpha'], b.inputs['Alpha'])
         b.inputs['Base Color'].default_value = (1, 1, 1, 1)
         img = tex.image
         if max(img.size) > size:
@@ -140,7 +144,7 @@ def _islands(bm):
 class Asset:
     """一个素材文件。pieces：子物件名 → 网格（Blender 坐标，素材自己的原点和单位）。"""
 
-    def __init__(self, source, prefix, texsize=512, drop=(), decimate=None):
+    def __init__(self, source, prefix, texsize=512, drop=(), decimate=None, cutout=()):
         self.source, self.prefix = source, prefix
         path = asset_path(source)
         before, mats_before = set(bpy.data.objects), set(bpy.data.materials)
@@ -170,9 +174,15 @@ class Asset:
             for name in self.names([pat]):
                 self.pieces[name] = self._decimate(self.pieces[name], ratio)
         used = {m for me in self.pieces.values() for m in me.materials if m}
+        self.mat = {}  # 原来的材质名 → 新名字
         for i, mt in enumerate(sorted(set(bpy.data.materials) - mats_before, key=lambda m: m.name)):
             if mt in used:
-                fix_material(mt, f'{prefix}.{i}', texsize)
+                old = mt.name
+                fix_material(mt, f'{prefix}.{i}', texsize, cutout=any(fnmatch(old, p) for p in cutout))
+                self.mat[old] = mt.name
+        self.cutout = [new for old, new in self.mat.items() if any(fnmatch(old, p) for p in cutout)]  # 写进 manifest.cutout
+        if cutout and not self.cutout:
+            raise SystemExit(f'[vendor] {prefix}: 没有材质匹配 cutout={cutout}（有 {list(self.mat)}）')
         for img in set(bpy.data.images) - imgs_before:  # 没被留下来的材质用到的贴图：删掉，免得导出时带上
             if img.users == 0:
                 bpy.data.images.remove(img)
@@ -226,6 +236,26 @@ class Asset:
             raise SystemExit(f'[vendor] {self.prefix}/{piece}: 在 {lo}..{hi} 里没找到面')
         return np.unique(np.array(pts), axis=0)
 
+    def drop_faces(self, material):
+        """删掉用了某个材质（原来的名字）的面，比如画框的玻璃。"""
+        mt = bpy.data.materials.get(self.mat.get(material, ''))
+        if mt is None:
+            raise SystemExit(f'[vendor] {self.prefix}: 没有材质 {material}（有 {list(self.mat)}）')
+        n = 0
+        for me in self.pieces.values():
+            if mt.name not in me.materials:
+                continue
+            mi = list(me.materials).index(mt)
+            bm = bmesh.new()
+            bm.from_mesh(me)
+            hit = [f for f in bm.faces if f.material_index == mi]
+            n += len(hit)
+            bmesh.ops.delete(bm, geom=hit, context='FACES')
+            bm.to_mesh(me)
+            bm.free()
+            me.materials.pop(index=mi)  # 后面的材质编号会自动往前挪
+        print(f'[vendor] {self.prefix}: 删掉 {material} 的 {n} 个面')
+
     def bounds(self, pieces=None):
         co = np.concatenate([_co3(self.pieces[n]) for n in self.names(pieces)])
         return co.min(0), co.max(0)
@@ -259,18 +289,20 @@ def world_points(obs):
     return np.concatenate([_co3(o.data) for o in obs])
 
 
-def screen_grid(obs, material, frac=0.9, nx=16, ny=12):
-    """显像管玻璃（obs 里材质是 material 的面，摆好以后朝 +z）→ 贴在上面的 4:3 画面：
+def screen_grid(obs, material, frac=0.9, nx=16, ny=12, rot=0.0):
+    """显像管玻璃（obs 里材质是 material 的面，摆好以后朝 +z 绕 Y 轴转 rot 的方向）→ 贴在上面的 4:3 画面：
     宽 = 玻璃宽度 × frac，中心 = 玻璃中心；在 (nx+1)×(ny+1) 个点上从正前方打射线量玻璃的深度。
-    返回 pos（画面中心，z 在玻璃上）、size、grid、depth（相对 pos.z，按 three 的 PlaneGeometry 顶点顺序：从上往下一行行，每行从左到右）、
-    normal（中心的法线，给屏幕光源和镜头用）。"""
+    返回 pos（画面中心，在玻璃上，世界坐标）、size、grid、depth（沿屏幕自己的 z，相对 pos，按 three 的 PlaneGeometry 顶点顺序：
+    从上往下一行行，每行从左到右）、normal（中心的法线，世界坐标，给屏幕光源和镜头用）、rot（浏览器把平面绕 Y 轴转这么多）。"""
     from mathutils.bvhtree import BVHTree
+    R = Matrix.Rotation(rot, 3, 'Y')  # three 的绕 Y 转 rot（+z → (sin, 0, cos)）；先转回正对 +z 再量
+    Ri = R.inverted()
     verts, polys = [], []
     for ob in obs:
         me = ob.data
         idx = {i for i, m in enumerate(me.materials) if m == material}
         base = len(verts)
-        verts.extend(Vector((v.co.x, v.co.z, -v.co.y)) for v in me.vertices)  # Blender → three
+        verts.extend(Ri @ Vector((v.co.x, v.co.z, -v.co.y)) for v in me.vertices)  # Blender → three → 屏幕自己的坐标
         polys.extend([base + k for k in p.vertices] for p in me.polygons if p.material_index in idx)
     used = np.array([tuple(verts[k]) for poly in polys for k in poly])
     if not len(used):
@@ -296,8 +328,9 @@ def screen_grid(obs, material, frac=0.9, nx=16, ny=12):
     z0 = float(zs[ny // 2, nx // 2])
     dzdx = (zs[ny // 2, nx // 2 + 1] - zs[ny // 2, nx // 2 - 1]) / (2 * w / nx)
     dzdy = (zs[ny // 2 - 1, nx // 2] - zs[ny // 2 + 1, nx // 2]) / (2 * h / ny)
-    normal = Vector((-dzdx, -dzdy, 1)).normalized()
-    return dict(pos=(float(cx), float(cy), z0), size=(float(w), float(h)), grid=(nx, ny),
+    normal = R @ Vector((-dzdx, -dzdy, 1)).normalized()
+    pos = R @ Vector((float(cx), float(cy), z0))
+    return dict(pos=tuple(pos), size=(float(w), float(h)), grid=(nx, ny), rot=float(rot),
                 depth=[float(z - z0) for z in zs.ravel()], normal=tuple(normal), glass=(float(hi[0] - lo[0]), float(hi[1] - lo[1])),
                 miss=miss, sag=float(z0 - np.nanmin(zs)))
 
