@@ -6,7 +6,7 @@
 //   - 书桌上的羊皮纸 = 联系方式；左墙书架 = 书单
 //   - 点壁炉 / 蜡烛：熄火、生火（切的是光照层的系数）
 //   - 棋盘上两枚棋子自己来回走
-//   - #about #work #shelf #online 是真实 URL；页面底部有"素材致谢"
+//   - #about #work #shelf #online 是真实 URL；页面底部的"素材致谢"是 #credits（和书桌房间同一个路由：镜头不动，只开面板）
 import * as THREE from 'three';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
@@ -44,7 +44,7 @@ export async function start(content, { nav = null } = {}) {
   $('room').hidden = false;
   const canvas = $('gl'), hintEl = $('hint'), backBtn = $('back'), panel = $('panel'), help = $('help'), loading = $('loading');
   const baseTitle = content.name || document.title;
-  const TITLES = { home: baseTitle, about: `关于我 · ${baseTitle}`, work: `作品 · ${baseTitle}`, shelf: `书架 · ${baseTitle}`, online: `联系 · ${baseTitle}` };
+  const TITLES = { home: baseTitle, about: `关于我 · ${baseTitle}`, work: `作品 · ${baseTitle}`, shelf: `书架 · ${baseTitle}`, online: `联系 · ${baseTitle}`, credits: `素材致谢 · ${baseTitle}` };
 
   // ---------- 渲染器 ----------
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
@@ -336,7 +336,7 @@ export async function start(content, { nav = null } = {}) {
   }
   function startFly() {
     const from = { pos: cur.pos.clone(), yaw: cur.yaw, pitch: cur.pitch, fov: cur.fov };
-    const d = from.pos.distanceTo((view === 'home' ? homePose(pose()) : focusPose(view, pose())).pos);
+    const d = from.pos.distanceTo((overview() ? homePose(pose()) : focusPose(view, pose())).pos);
     fly = { from, t: 0, dur: clamp(0.9 + d * 0.25, 1, 1.7) };
   }
   function updateCamera(dt) {
@@ -354,7 +354,7 @@ export async function start(content, { nav = null } = {}) {
     look.pitch += (look.pitchT - look.pitch) * a;
     look.fov += (look.fovT - look.fov) * a;
     par.lerp(parT, 1 - Math.exp(-dt * 3));
-    if (shot) framePose(shot, goal); else if (view === 'home') homePose(goal); else focusPose(view, goal);
+    if (shot) framePose(shot, goal); else if (overview()) homePose(goal); else focusPose(view, goal);
     if (fly) {
       fly.t = Math.min(1, fly.t + dt / fly.dur);
       const e = ease(fly.t), f = fly.from;
@@ -368,7 +368,7 @@ export async function start(content, { nav = null } = {}) {
       Object.assign(cur, { yaw: goal.yaw, pitch: goal.pitch, fov: goal.fov });
     }
     basis(cur.yaw, cur.pitch);
-    const k = view === 'home' ? 0.05 : 0.008;
+    const k = overview() ? 0.05 : 0.008;
     camera.position.copy(cur.pos).addScaledVector(right, par.x * k).addScaledVector(up, -par.y * k * 0.5);
     camera.rotation.set(cur.pitch, cur.yaw, 0, 'YXZ');
     if (Math.abs(camera.fov - cur.fov) > 1e-3) { camera.fov = cur.fov; camera.updateProjectionMatrix(); }
@@ -380,8 +380,9 @@ export async function start(content, { nav = null } = {}) {
   }
 
   // ---------- 路由 ----------
-  let view = null, credits = null; // credits：致谢列表打开时的 HTML
-  const viewFromHash = () => { const h = location.hash.slice(1); return ROUTES.includes(h) && M.views?.[h] ? h : 'home'; };
+  let view = null, credits = null; // credits：致谢列表的 HTML（第一次打开时读 credits.json，之后复用）
+  const viewFromHash = () => { const h = location.hash.slice(1); return h === 'credits' || (ROUTES.includes(h) && M.views?.[h]) ? h : 'home'; };
+  function overview() { return view === 'home' || view === 'credits'; } // 致谢只是开个面板，镜头还是开场的样子
   function go(name) {
     const url = name === 'home' ? location.pathname + location.search : '#' + name;
     if ((location.hash.slice(1) || 'home') !== name) history.pushState(null, '', url);
@@ -392,7 +393,7 @@ export async function start(content, { nav = null } = {}) {
     if (paperFire?.busy) paperFire.cancel(); // 过场中途去了别的地方：纸回到桌上
     const first = view === null;
     view = name;
-    credits = null;
+    if (name === 'credits') loadCredits();
     orbText.setActive(name === 'about');
     if (name === 'work' && loaded == null) dropGem(0, { animate: !instant });
     setHover(null);
@@ -409,8 +410,8 @@ export async function start(content, { nav = null } = {}) {
   // ---------- HTML 面板 ----------
   function renderPanel() {
     let html = '';
-    if (view === 'home' && credits) {
-      html = credits;
+    if (view === 'credits') {
+      html = credits || '<div class="kicker">素材致谢</div><p>正在读取素材清单…</p>';
     } else if (view === 'work') {
       const t = loaded != null ? projects[loaded] : null;
       html = t
@@ -439,8 +440,8 @@ export async function start(content, { nav = null } = {}) {
     }
     panel.innerHTML = html;
     panel.hidden = !html;
-    panel.classList.toggle('credits', !!(view === 'home' && credits));
-    help.hidden = view !== 'home' || !!credits;
+    panel.classList.toggle('credits', view === 'credits');
+    help.hidden = view !== 'home';
   }
   // 点联系方式：先演揉纸投火，再在本页跳过去（等几秒再开新标签页会被浏览器当成弹窗拦掉）。
   // 按住 ⌘ / Ctrl / Shift、中键、或者系统设置了减少动态效果：照常在新标签页打开。
@@ -469,18 +470,19 @@ export async function start(content, { nav = null } = {}) {
       return;
     }
     const b = e.target.closest('button');
-    if (b?.dataset.cmd === 'close') { credits = null; renderPanel(); }
+    if (b?.dataset.cmd === 'close') go('home');
     else if (b?.dataset.cmd) cmd(b.dataset.cmd);
   });
   backBtn.addEventListener('click', () => go('home'));
 
   // ---------- 素材致谢：manifest.vendor 里用到的素材，信息来自 assets/vendor/credits.json ----------
   const creditLink = document.createElement('a');
-  creditLink.href = '#';
+  creditLink.href = '#credits';
   creditLink.textContent = '素材致谢';
   help.append(' · ', creditLink);
-  creditLink.addEventListener('click', async (e) => {
-    e.preventDefault();
+  creditLink.addEventListener('click', (e) => { e.preventDefault(); go('credits'); });
+  async function loadCredits() {
+    if (credits) return;
     let list = [];
     try { list = (await fetch(CREDITS).then((r) => r.json())).assets; } catch { /* 读不到就只显示说明 */ }
     const used = new Set(M.vendor || []);
@@ -490,8 +492,8 @@ export async function start(content, { nav = null } = {}) {
       <p>家具来自 Poly Haven。知知的三维网格、骨骼与动作以桌宠形象为参考重新制作；墙、地板、水盆、书桌和其余小物件也是原创的。</p>
       <ul class="list">${rows}</ul>
       <div class="ctl"><button type="button" data-cmd="close">关闭</button></div>`;
-    renderPanel();
-  });
+    if (view === 'credits') renderPanel();
+  }
 
   // ---------- 拾取 ----------
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
@@ -616,7 +618,6 @@ export async function start(content, { nav = null } = {}) {
     if (e.key === 'Escape') {
       if (paperFire?.busy) { paperFire.cancel(); return; } // 取消过场，纸回到桌上
       if (view !== 'home') go('home');
-      else if (credits) { credits = null; renderPanel(); }
       return;
     }
     if (e.target.closest?.('button,a,input,textarea') && !e.target.closest('#topbar')) return; // 点过导航栏以后方向键照常换项目
@@ -714,7 +715,7 @@ export async function start(content, { nav = null } = {}) {
     updateCamera(dt);
     camera.updateMatrixWorld();
     cat?.fire.color.copy(CAT_FIRE).lerp(CAT_GREEN, fx.green);
-    cat?.update(t, dt, { camera, view, fire: fireLv, candles: candleLv, basin: 0.5 + basinMagic.power });
+    cat?.update(t, dt, { camera, view: overview() ? 'home' : view, fire: fireLv, candles: candleLv, basin: 0.5 + basinMagic.power });
     if (render) composer.render(dt);
   }
 
