@@ -5,7 +5,7 @@
 //   - 壁炉上的水晶球 = 关于我：球里起雾，上方一个字一个字浮现介绍
 //   - 书桌上的羊皮纸 = 联系方式；左墙书架 = 书单
 //   - 点壁炉 / 蜡烛：熄火、生火（切的是光照层的系数）
-//   - 棋盘上两枚棋子自己来回走
+//   - 棋盘上两枚棋子自己来回走；窗边两面挂旗随风摆动（js/tower-banners.js）
 //   - #about #work #shelf #online 是真实 URL；页面底部的"素材致谢"是 #credits（和书桌房间同一个路由：镜头不动，只开面板）
 import * as THREE from 'three';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
@@ -17,6 +17,7 @@ import { paintParchment } from './paint.js';
 import { BakedRoom, loadBaked, tvLight } from './baked.js';
 import { waterMaterial, orbMaterial, flameMaterial, gemMaterial, OrbText, RIPPLES } from './magic.js';
 import { BasinMagic } from './basin.js';
+import { TowerBanners } from './tower-banners.js';
 import { TowerCat } from './tower-cat.js';
 import { PaperFire } from './paper-fire.js';
 
@@ -69,6 +70,7 @@ export async function start(content, { nav = null } = {}) {
   };
   const data = await loadBaked(BASE, { glb: 'tower.glb', onProgress: (k) => progress(k * 0.95) });
   const room = new BakedRoom(data, { renderer, scene });
+  const banners = new TowerBanners(room); // 窗边两面挂旗随风摆动（减少动态效果时静止）
   const M = data.manifest;
   const aniso = renderer.capabilities.getMaxAnisotropy();
 
@@ -662,6 +664,7 @@ export async function start(content, { nav = null } = {}) {
     tv.update(t, dt);
     orbText.update(t, dt);
     basinMagic.update(t, dt);
+    banners.update(t);
 
     // 提亮现有月光与分布在四周的灯；盆的底光始终存在，换片/黑画面时也不会熄灭。
     const fx = paperFire ? paperFire.update(dt, camera, renderer.domElement.height, light.fire) : { green: 0, boost: 0, flash: 0 };
@@ -736,7 +739,7 @@ export async function start(content, { nav = null } = {}) {
   renderer.setAnimationLoop(frame);
 
   window.__room = {
-    go, dropGem, cmd, tick, pick, look, light, camera, renderer, composer, room, tv, orbText, gems, chess, water, orb, basinMagic, cat, paperFire, burnLink,
+    go, dropGem, cmd, tick, pick, look, light, camera, renderer, composer, room, tv, orbText, gems, chess, water, orb, basinMagic, banners, cat, paperFire, burnLink,
     get view() { return view; }, get loaded() { return loaded; }, get hover() { return hover; },
     hoverAt: (x, y) => setHover(pick(x, y), x, y), clickAt: (x, y) => click(x, y, true),
   };
