@@ -53,7 +53,12 @@ export async function start(content, { nav = null } = {}) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color('#06070b');
   const camera = new THREE.PerspectiveCamera(55, 1, 0.02, 120);
-  const composer = new EffectComposer(renderer);
+  // 画布自带的抗锯齿管不到 EffectComposer 的离屏缓冲：场景先画进多重采样的 HDR 缓冲，再做辉光等后期
+  const sceneTarget = new THREE.WebGLRenderTarget(1, 1, {
+    type: THREE.HalfFloatType,
+    samples: Math.min(4, renderer.capabilities.maxSamples),
+  });
+  const composer = new EffectComposer(renderer, sceneTarget);
   composer.setPixelRatio(dpr);
   composer.addPass(new RenderPass(scene, camera));
   const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.45, 0.5, 0.9);
