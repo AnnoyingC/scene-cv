@@ -342,6 +342,32 @@
       ]
     },
     {
+      "id": "sketchfab/font-st-pauls-broadwell",
+      "source": "Sketchfab",
+      "title": "Font - St Pauls, Broadwell",
+      "zh": "布罗德韦尔圣保罗教堂的石头洗礼盆（15 世纪初，实拍扫描）",
+      "authors": [
+        "Laurence"
+      ],
+      "authorUrl": "https://sketchfab.com/laurencewilcox",
+      "url": "https://sketchfab.com/3d-models/font-st-pauls-broadwell-0e81a7d6607d4929bc559c28b221b2e8",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "0e81a7d6607d4929bc559c28b221b2e8",
+        "format": "glb",
+        "manual": true
+      },
+      "changes": [
+        "用于塔楼场景（?scene=tower），作为屋子正中的石盆（作品）",
+        "去掉扫描带着的一块教堂地面",
+        "水平方向放大到 1.2 倍，整体缩放到盆高 0.95 米，放在新加的两级八角石台上",
+        "原来是不受光的 unlit 材质：改成不反光的漫反射，只保留颜色贴图，从 8192×8192 缩小到 2048×2048",
+        "盆里加了浏览器绘制的水面，盆沿上加了四个放水晶的小托架",
+        "转成 Draco 压缩的 glTF，和塔楼合并成一个模型，光照烘焙进光照贴图"
+      ]
+    },
+    {
       "id": "sketchfab/mermaid-potion",
       "source": "Sketchfab",
       "title": "Mermaid Potion",

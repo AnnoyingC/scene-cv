@@ -7,7 +7,7 @@
 #
 #   /Applications/Blender.app/Contents/MacOS/Blender -b --factory-startup --python blender/bake_tower.py -- --preview home
 #
-# 场景：圆形塔楼（16 边形），正对镜头是一扇窄窄的尖拱窗。正中间是一座石头水盆（作品：水盆边上的水晶 = 项目，
+# 场景：圆形塔楼（16 边形），正对镜头是一扇窄窄的尖拱窗。正中间两级八角石台上立着一座八角石头洗礼盆（实拍扫描；作品：盆沿上的水晶 = 项目，
 # 点一颗就落进水里，水面浮现项目的画面）；左边是壁炉，壁炉台正中放着水晶球（关于我）；右边是书桌，桌上的羊皮纸
 # 写着联系方式。周围是扶手椅、书架、玻璃柜、棋桌、挂毯、吊灯这些陪衬，颜色压暗，不抢主角。
 #
@@ -19,7 +19,8 @@
 #   lm_basin.jpg     水盆发的光（按白光烘焙，浏览器里按项目画面的颜色染色）
 #   manifest.json    每层的亮度系数、镜头、窗户、水面、水晶球、水晶、会动的棋子、热点盒子、视角、用到的第三方素材
 #
-# 第三方模型来自 vendor-src/polyhaven/（node scripts/fetch_assets.mjs 下载）：导入 → 减面 → 只留颜色贴图（缩到 512）→ 摆放。
+# 第三方模型来自 vendor-src/polyhaven/（node scripts/fetch_assets.mjs 下载）和 vendor-src/sketchfab/<名字>/<名字>.glb（要登录，手动下载）：
+# 导入 → 减面 → 只留颜色贴图（一般缩到 512）→ 摆放。
 import json
 import math
 import os
@@ -270,9 +271,28 @@ def fix_material(mt, size, dim=None):
     """烘焙只需要颜色：保留颜色贴图（缩小），断开法线、金属度、粗糙度、透明这些贴图。"""
     nt = mt.node_tree
     b = principled(mt)
-    if b is None:
-        return
+    if b is None:  # glTF 的 unlit 材质（实拍扫描常见：贴图当自发光显示，不受光也不投影）：换成普通漫反射，贴图接到 Base Color
+        img = next((n for n in nt.nodes if n.type == 'TEX_IMAGE' and n.image), None)
+        if img is None:
+            return
+        keep = img.name  # bpy 的节点每次取出来都是新的 Python 对象，只能按名字比
+        for n in list(nt.nodes):
+            if n.name != keep:
+                nt.nodes.remove(n)
+        b = nt.nodes.new('ShaderNodeBsdfPrincipled')
+        nt.links.new(b.outputs[0], nt.nodes.new('ShaderNodeOutputMaterial').inputs['Surface'])
+        nt.links.new(nt.nodes[keep].outputs['Color'], b.inputs['Base Color'])
     diff = next((n for n in nt.nodes if n.type == 'TEX_IMAGE' and n.image and '_diff' in n.image.name), None)
+    if diff is None and b.inputs['Base Color'].links:  # Sketchfab 的贴图不叫 *_diff*：顺着 Base Color 往回找（中间可能隔一两个节点）
+        n = b.inputs['Base Color'].links[0].from_node
+        for _ in range(3):
+            if n.type == 'TEX_IMAGE' and n.image:
+                diff = n
+                break
+            ins = [lk.from_node for s_ in n.inputs for lk in s_.links]
+            if not ins:
+                break
+            n = ins[0]
     for s in b.inputs:
         if s.name != 'Base Color':
             for link in list(s.links):
@@ -330,7 +350,12 @@ def load_asset(asset, tris=None):
         return LIB[asset]
     before = set(bpy.data.objects)
     mats_before = set(bpy.data.materials)
-    bpy.ops.import_scene.gltf(filepath=os.path.join(VSRC, asset, f'{asset}_1k.gltf'))
+    if asset.startswith('sketchfab/'):  # 和 credits.json 的 id 一样：sketchfab/<slug> → vendor-src/sketchfab/<slug>/<slug>.glb
+        slug = asset.split('/', 1)[1]
+        path = os.path.join(ROOT, 'vendor-src', 'sketchfab', slug, f'{slug}.glb')
+    else:
+        path = os.path.join(VSRC, asset, f'{asset}_1k.gltf')
+    bpy.ops.import_scene.gltf(filepath=path)
     new = [o for o in bpy.data.objects if o not in before]
     pieces = {}
     for o in new:
@@ -539,38 +564,75 @@ for k in range(8):
 cyl(I, 0.32, 0.32, 0.24, 16, beam, (0, H - 0.14, 0))
 K = 10
 
-# ---------- 正中：石头水盆（作品）----------
-# 八角形底座 + 收腰的柱子 + 浅浅的圆盆。水面不进模型（浏览器里画）；盆沿上一圈发光的符文，前沿四个小托架放水晶
+# ---------- 正中：石台上的洗礼盆（作品）----------
+# 两级八角石台上立着一座 15 世纪初的八角石头洗礼盆：Sketchfab 上的实拍扫描（Laurence，St Pauls, Broadwell，CC BY 4.0）。
+# 扫描带着的一块教堂地面去掉；横向加宽 1.2 倍，盆口大一点（四叶饰看不出变形）。不加符文和底光，只留水面微弱的光。
+# 水面不进模型（浏览器里画）：盆沿高度、盆口大小、水位都从扫描网格里量；前沿四个小托架放水晶，按那一点的盆沿高度放
+FONT = 'sketchfab/font-st-pauls-broadwell'
+FONT_H, FONT_WIDE, DAIS = 0.95, 1.2, 0.2   # 盆本身高 0.95 米（不含石台）；石台两级共 0.2 米
+TEXSIZE[FONT] = 2048                      # 主角：贴图留大一点（原图 8K）
+
+
+def trim_floor(asset, below=0.075, ring=(0.14, 0.37)):
+    """去掉扫描带着的地面：高度在总高 below 以下的面全部去掉；ring[0] 以下、离中心超过 ring[1]（都按总高算）的也去掉。"""
+    for name, me in load_asset(asset).items():
+        if 'custom_normal' in me.attributes:  # bmesh 处理不了这种属性（INT16_2D），后面合并、展 UV 会出错；导出本来就不带法线
+            me.attributes.remove(me.attributes['custom_normal'])
+        bm = bmesh.new()
+        bm.from_mesh(me)
+        co = np.array([v.co[:] for v in bm.verts])  # Blender 坐标，z 向上
+        z0, hz = co[:, 2].min(), np.ptp(co[:, 2])
+        cx, cy = (co[:, 0].min() + co[:, 0].max()) / 2, (co[:, 1].min() + co[:, 1].max()) / 2
+        kill = []
+        for f in bm.faces:
+            c = f.calc_center_median()
+            h, r = (c.z - z0) / hz, math.hypot(c.x - cx, c.y - cy) / hz
+            if h < below or (h < ring[0] and r > ring[1]):
+                kill.append(f)
+        bmesh.ops.delete(bm, geom=kill, context='FACES')
+        bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context='VERTS')
+        bm.to_mesh(me)
+        bm.free()
+        print(f'[font] {name}: 去掉 {len(kill)} 个地面的面')
+
+
+trim_floor(FONT)
 K = 22
-bstone = tmat('basin_stone', STONE, 0.9, '#b3aca0')
-WATER_Y, WATER_R = 0.915, 0.375
+dais = tmat('dais_stone', STONE, 0.9, '#9d978c')  # 不叫 basin_stone：浏览器会给 basin_stone 加一层常亮的盆光，石台要保持暗
+O8 = (0, math.pi / 8, 0)                          # 八角形：一条边正对镜头
 with hot('work'):
-    cyl(gb, 0.30, 0.36, 0.06, 8, bstone, (0, 0.03, 0))
-    cyl(gb, 0.22, 0.27, 0.06, 8, bstone, (0, 0.09, 0))
-    cyl(gb, 0.15, 0.17, 0.04, 16, bstone, (0, 0.14, 0))
-    cyl(gb, 0.105, 0.125, 0.5, 16, bstone, (0, 0.41, 0))
-    cyl(gb, 0.14, 0.14, 0.035, 16, bstone, (0, 0.67, 0))
-    cyl(gb, 0.28, 0.12, 0.13, 16, bstone, (0, 0.755, 0))
-    cyl(gb, 0.47, 0.40, 0.14, 32, bstone, (0, 0.89, 0), caps=False)
-    disc(gb, 0.40, 32, bstone, (0, 0.82, 0), down=True)
-    ring(gb, WATER_R, 0.47, 0.96, 32, bstone)
-    cyl(gb, WATER_R, WATER_R, 0.96 - WATER_Y, 32, bstone, (0, (0.96 + WATER_Y) / 2, 0), caps=False, flip=True)
-    disc(gb, WATER_R, 32, mat('basin_water', '#0b1418'), (0, WATER_Y - 0.002, 0))
-    gem_ang = [math.atan2(math.cos(math.radians(-48 + i * 32)), math.sin(math.radians(-48 + i * 32))) for i in range(4)]
-    with glow():
-        for k in range(16):
-            a = k / 16 * math.tau + 0.1
-            if min(abs((a - g_ + math.pi) % math.tau - math.pi) for g_ in gem_ang) < 0.16:
-                continue
-            r0 = 0.425
-            box(gb, 0.018, 0.002, 0.03 if k % 2 else 0.018, emit('emit.basin.runes', 'basin', '#9fd4ff', 2.2),
-                math.cos(a) * r0, 0.961, math.sin(a) * r0, (0, -a, 0))
+    cyl(gb, 1.02, 1.06, 0.1, 8, dais, (0, 0.05, 0), O8)
+    cyl(gb, 0.8, 0.83, 0.1, 8, dais, (0, 0.15, 0), O8)
+    font_obs = vendor(FONT, gb @ M((0, DAIS - 0.005, 0), scale=(FONT_WIDE, 1, FONT_WIDE)), height=FONT_H, uvk=16)
+# 量盆沿：以盆中心为原点的 three 坐标
+FP = np.concatenate([_co(o.data) for o in font_obs])
+FP = np.stack([FP[:, 0], FP[:, 2], -FP[:, 1]], axis=1) - np.array([BASIN.x, 0.0, BASIN.z])
+FR = np.hypot(FP[:, 0], FP[:, 2])
+TOP_Y = float(FP[:, 1].max())
+band = FP[:, 1] > TOP_Y - 0.04
+RIM_IN, RIM_OUT = float(np.percentile(FR[band], 8)), float(np.percentile(FR[band], 92))
+WATER_Y = round(TOP_Y - 0.03, 3)                  # 盆里的内壁差不多是直的：水位放到盆沿下 3 厘米
+near = (np.abs(FP[:, 1] - WATER_Y) < 0.012) & (FR < RIM_IN * 1.15)
+WATER_R = round(float(FR[near].min()) * 0.97 if near.any() else RIM_IN * 0.92, 3)
+print(f'[font] 盆沿 {TOP_Y:.3f} 米，盆口 {RIM_IN:.3f}–{RIM_OUT:.3f}，水面半径 {WATER_R} @ {WATER_Y}')
+with hot('work'):
+    disc(gb, WATER_R, 48, mat('basin_water', '#0b1418'), (0, WATER_Y - 0.002, 0))
+
+
+def rim_y(x, z):
+    """盆沿（以盆中心为原点）x, z 那一点的高度：扫描的盆沿不平。"""
+    m = (np.hypot(FP[:, 0] - x, FP[:, 2] - z) < 0.05) & (FP[:, 1] > TOP_Y - 0.08)
+    return float(FP[m, 1].max()) if m.any() else TOP_Y
+
+
 GEM_COLORS = ['#e8b04a', '#e0577a', '#4fa3e0', '#59c27a']
 GEMS = []
 brass = mat('brass', '#a8823e')
+RG = (WATER_R + RIM_OUT) / 2 + 0.005
 for i in range(len(GEM_COLORS)):
     a = math.radians(-48 + i * 32)          # 盆沿前面（朝镜头的一侧）
-    p = BASIN + Vector((math.sin(a) * 0.43, 0.962, math.cos(a) * 0.43))
+    x, z = math.sin(a) * RG, math.cos(a) * RG
+    p = BASIN + Vector((x, rim_y(x, z) + 0.002, z))
     with hot('work'):
         for k in range(3):                  # 三根小爪
             b = k / 3 * math.tau
@@ -581,8 +643,9 @@ for i in range(len(GEM_COLORS)):
         cyl(I, 0.0, 0.022, 0.056, 6, gm, tuple(c + Vector((0, 0.028, 0))))
         cyl(I, 0.022, 0.0, 0.03, 6, gm, tuple(c - Vector((0, 0.015, 0))))
     GEMS.append(tuple(c))
-BASES.append(0.962)
-VIEWS['work'] = dict(target=tuple(BASIN + Vector((0, 0.93, 0.04))), size=(0.5, 0.42), dir=(0, 1.25, 1))
+    BASES.append(round(p.y, 4))
+# 镜头框住水面（size 是半宽、半高，跟着水面大小走）
+VIEWS['work'] = dict(target=tuple(BASIN + Vector((0, WATER_Y + 0.015, 0.04))), size=(WATER_R * 1.33, WATER_R * 1.12), dir=(0, 1.25, 1))
 K = 10
 
 # ---------- 左：壁炉（壁炉台正中放水晶球 = 关于我）----------
@@ -1386,7 +1449,7 @@ manifest.update({
     'chess': CHESS,
     'hotspots': HOT,
     'views': {k: {'target': r3(v['target']), 'size': list(v['size']), 'dir': r3(Vector(v['dir']).normalized())} for k, v in VIEWS.items()},
-    'vendor': [f'polyhaven/{a}' for a in USED] + ['polyhaven/stone_wall_04', 'polyhaven/medieval_red_brick'],
+    'vendor': [a if a.startswith('sketchfab/') else f'polyhaven/{a}' for a in USED] + ['polyhaven/stone_wall_04', 'polyhaven/medieval_red_brick'],
 })
 with open(os.path.join(OUTD, 'manifest.json'), 'w') as f:
     json.dump(manifest, f, indent=2, ensure_ascii=False)

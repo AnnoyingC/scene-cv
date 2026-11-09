@@ -1,7 +1,7 @@
 // 3D 塔楼书房（烘焙光照版）。几何和光照由 Blender 预先算好（blender/bake_tower.py → assets/tower/），这里负责交互：
-//   - 开场站在门口，正对一扇窄窄的尖拱窗，屋子中间是一只石头水盆。拖动转头，滚轮 / 双指缩放
-//   - 水盆 = 作品：盆体常亮。水晶入水后荡开亮纹、升起光柱，乱码逐渐浮现，水面映出项目画面；
-//     常亮蓝青色底光与项目色共同照亮屋子（复用烘焙好的"水盆"光照层）
+//   - 开场站在门口，正对一扇窄窄的尖拱窗，屋子中间两级石台上立着一座石头洗礼盆。拖动转头，滚轮 / 双指缩放
+//   - 水盆 = 作品：盆里是缓缓打旋的银灰色液体，只有一点微光。水晶入水后荡开波纹、升起一团打旋的银雾（js/basin.js），
+//     项目画面像倒影一样从液体里浮上来；盆里冷冷的银光和项目色一起照亮屋子（复用烘焙好的"水盆"光照层）
 //   - 壁炉上的水晶球 = 关于我：球里起雾，上方一个字一个字浮现介绍
 //   - 书桌上的羊皮纸 = 联系方式；左墙书架 = 书单
 //   - 点壁炉 / 蜡烛：熄火、生火（切的是光照层的系数）
@@ -90,7 +90,7 @@ export async function start(content, { nav = null } = {}) {
   const basinMagic = new BasinMagic(W);
   scene.add(basinMagic.group);
   function startRitual(i) { basinMagic.trigger(projects[i].color); }
-  const basinGlow = new THREE.Color('#83ddff');
+  const basinGlow = new THREE.Color('#a9c6d6'); // 盆里的光：偏银的冷光（原来是更饱和的青色）
   const basinStone = room.byMat.get('basin_stone') || [];
   let ripN = 0;
   function ripple(p, amp = 1) { // p：世界坐标
@@ -492,7 +492,7 @@ export async function start(content, { nav = null } = {}) {
     const rows = list.filter((a) => used.has(a.id)).map((a) => `<li><a href="${esc(a.url)}" target="_blank" rel="noopener">
       <b>${esc(a.zh || a.title)}</b><span>${esc(a.title)} · ${esc((a.authors || []).join('、'))} · ${esc(a.license)}</span></a></li>`).join('');
     credits = `<div class="kicker">素材致谢</div><h2>家具、灯和小物件</h2>
-      <p>家具来自 Poly Haven。墙、地板、水盆、书桌和其余小物件是原创的。</p>
+      <p>家具来自 Poly Haven（CC0）。正中的石头洗礼盆是 Sketchfab 上的实拍扫描（CC BY 4.0，作者见下）：去掉了扫描带着的地面，横向加宽到 1.2 倍，只留颜色贴图并缩小，和塔楼一起烘焙了光照。墙、地板、石台、书桌和其余小物件是原创的。</p>
       <ul class="list">${rows}</ul>
       <div class="ctl"><button type="button" data-cmd="close">关闭</button></div>`;
     if (view === 'credits') renderPanel();
@@ -671,7 +671,7 @@ export async function start(content, { nav = null } = {}) {
     const candleLv = light.candles * (0.94 + 0.06 * flick(t * 1.3, 2));
     tvLight(tv.color, basinColor).multiplyScalar(BASIN_GAIN * light.basin);
     const breath = 1 + 0.06 * Math.sin(t * 1.2);
-    runeColor.copy(basinGlow).multiplyScalar(2.6 * breath + basinMagic.power * 1.2 + basinMagic.flash * 1.8);
+    runeColor.copy(basinGlow).multiplyScalar(2.6 * breath + basinMagic.power * 0.5 + basinMagic.flash * 0.7); // 银雾不发光：入水那一下只让屋里微微亮一点
     basinColor.add(runeColor);
     fireK.setRGB(1, 1, 1).lerp(FIRE_GREEN, fx.green).multiplyScalar(fireLv * 1.2);
     room.setLevels({ ambient: 2.2, candles: candleLv * 1.6, fire: fireK, basin: basinColor });
@@ -685,7 +685,7 @@ export async function start(content, { nav = null } = {}) {
     WU.time.value = t;
     WU.level.value = 0.25 + 0.75 * light.basin;
     WU.tint.value.copy(projColor);
-    WU.glow.value = breath;
+    WU.glow.value = breath * (0.45 + 0.55 * light.basin); // 平时只留盆里一点微弱的荧光；水面放项目画面时再亮起来
     WU.pulse.value = basinMagic.flash;
     WU.hover.value += ((hover?.kind === 'work' ? 1 : 0) - WU.hover.value) * s;
     const ou = orb.material.uniforms;

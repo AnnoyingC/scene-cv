@@ -1,5 +1,5 @@
 // 塔楼里实时画的几样东西（都不参与烘焙）：
-//   - 水盆的水面：放项目画面（TV 的 canvas），水晶落进去时荡开波纹
+//   - 水盆的水面：缓缓打旋的银灰色液体，项目画面（TV 的 canvas）像倒影一样从液体里浮上来，水晶落进去时荡开波纹
 //   - 水晶球：玻璃球里流动的雾
 //   - 壁炉的火苗：几片交叉的面，着色器里用噪声画出跳动的火舌
 //   - 水晶：小六角双锥，按面算高光（模型导出时没带法线，用屏幕导数算面法线）
@@ -7,8 +7,8 @@
 import * as THREE from 'three';
 import { wrap, makeCanvas } from './tapes/util.js';
 
-// 三维值噪声 + 分形叠加，几个着色器共用
-const NOISE = /* glsl */`
+// 三维值噪声 + 分形叠加，几个着色器共用（js/basin.js 的雾也用）
+export const NOISE = /* glsl */`
   float hash(vec3 p) { p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
   float noise(vec3 x) {
     vec3 i = floor(x), f = fract(x);
@@ -51,6 +51,7 @@ export function waterMaterial(map) {
       uniform vec4 rip[${RIPPLES}];
       varying vec2 vP;
       varying vec3 vW;
+      ${NOISE}
       void main() {
         vec2 off = vec2(0.0);
         float crest = 0.0;
@@ -64,27 +65,33 @@ export function waterMaterial(map) {
           off += d / (dist + 1e-3) * w * 0.035;
           crest += w;
         }
-        // 平时也有一点细碎的水纹
-        off += 0.004 * vec2(sin(vP.y * 23.0 + time * 1.3) + sin(vP.x * 9.0 - time * 0.7), cos(vP.x * 19.0 - time * 1.1));
-        vec2 q = vP + off;
-        vec2 iuv = vec2(0.5 + q.x * 0.6, 0.5 + q.y * 0.8);
-        vec2 inRect = smoothstep(vec2(0.0), vec2(0.06), iuv) * smoothstep(vec2(0.0), vec2(0.06), 1.0 - iuv);
-        vec3 img = texture2D(map, iuv, 0.6).rgb * inRect.x * inRect.y; // 稍微糊一点（取低一级的 mipmap），像隔着水看
-        img = mix(img, vec3(dot(img, vec3(0.3, 0.55, 0.15))), 0.3) * mix(vec3(1.0), tint, 0.2); // 像水里的倒影：淡一点、染一点项目色
         float r = length(vP);
-        float edge = 1.0 - smoothstep(0.7, 1.02, r);
-        float facing = abs(normalize(cameraPosition - vW).y);  // 正上方看得清，斜着看主要是反光
-        float see = mix(0.45, 1.0, smoothstep(0.25, 0.75, facing));
-        vec3 aura = mix(vec3(0.18, 0.72, 1.0), tint, 0.12);
-        vec3 deep = vec3(0.006, 0.012, 0.02) + aura * 0.12 * glow;
-        vec3 col = deep + img * level * see * (0.2 + 0.9 * edge) * (1.0 + 0.25 * hover);
-        // 持续自发光的环流与内沿，和项目画面的明暗无关。
-        float flow = 0.5 + 0.5 * sin(r * 30.0 - time * 1.1 + sin(atan(vP.y, vP.x) * 5.0 + time * 0.4));
-        float rim = exp(-pow((r - 0.92) * 35.0, 2.0));
-        col += aura * (flow * 0.09 * edge + rim * 0.85) * glow;
-        col += aura * pulse * (0.4 + 0.8 * exp(-r * r * 6.0));
-        col += aura * max(crest, 0.0) * 0.35;
-        col += vec3(0.5, 0.42, 0.32) * pow(smoothstep(0.55, 1.0, r), 3.0) * 0.05; // 盆沿反射的烛光
+        // 银灰色的液体：绕着盆心慢慢打旋（越靠里转得越多），再被噪声拉成一缕一缕的银丝
+        float sw = atan(vP.y, vP.x) + time * 0.05 + (1.0 - r) * 2.4;
+        vec2 sp = vec2(cos(sw), sin(sw)) * r + off;
+        float body = fbm(vec3(sp * 2.6, time * 0.04));
+        float strands = smoothstep(0.52, 0.8, fbm(vec3(sp * 5.5 + body * 1.8, 7.0 + time * 0.05)));
+        vec3 silver = mix(vec3(0.6, 0.66, 0.7), tint, 0.08);
+        vec3 col = vec3(0.007, 0.009, 0.012);
+        col += silver * (0.035 + 0.07 * body + 0.16 * strands) * glow;
+        col += silver * exp(-r * r * 5.0) * 0.05 * glow;  // 中心透出一点微光
+        // 项目画面：像隔着银色液体看见的倒影，被液体带着扭曲、褪色；一片一片从液体里浮上来，边上化进银丝里。
+        // 平时（水面上没在放项目，level ≈ 0.25）看不到画面
+        vec2 q = vP + off + (vec2(body, strands) - 0.5) * 0.05;
+        vec2 iuv = vec2(0.5 + q.x * 0.6, 0.5 + q.y * 0.8);
+        vec2 inRect = smoothstep(vec2(0.0), vec2(0.08), iuv) * smoothstep(vec2(0.0), vec2(0.08), 1.0 - iuv);
+        vec3 img = texture2D(map, iuv, 0.8).rgb * inRect.x * inRect.y;
+        img = mix(img, vec3(dot(img, vec3(0.3, 0.55, 0.15))), 0.45) * mix(vec3(1.0), silver * 1.4, 0.35);
+        float facing = abs(normalize(cameraPosition - vW).y);  // 正上方看得清，斜着看主要是液面
+        float see = mix(0.4, 1.0, smoothstep(0.25, 0.75, facing));
+        float surface = smoothstep(0.3, 1.0, level);
+        float veil = smoothstep(0.3, 0.75, body + 0.38 - r * 0.5);
+        float fade = 1.0 - smoothstep(0.55, 0.95, r);
+        col = mix(col, col * 0.4 + img * 0.9 * (1.0 + 0.2 * hover), surface * veil * fade * see);
+        col += silver * pulse * 0.22 * exp(-r * r * 4.0);  // 水晶落水的一下
+        col += silver * max(crest, 0.0) * 0.16;
+        col *= 1.0 - 0.5 * smoothstep(0.86, 1.0, r);        // 贴着盆壁暗下去，没有亮边
+        col += vec3(0.5, 0.42, 0.32) * pow(smoothstep(0.55, 1.0, r), 3.0) * 0.03; // 盆沿反射的烛光
         gl_FragColor = vec4(col, 1.0);
         ${OUT}
       }`,
