@@ -513,25 +513,25 @@
       "changes": []
     },
     {
-      "id": "sketchfab/retro-computer",
+      "id": "sketchfab/old-pc",
       "source": "Sketchfab",
-      "title": "Retro computer",
-      "zh": "复古电脑",
+      "title": "Old PC",
+      "zh": "米色老式台式电脑",
       "authors": [
-        "Urpo"
+        "LiliumLetifer"
       ],
-      "authorUrl": "https://sketchfab.com/Urpo",
-      "url": "https://sketchfab.com/3d-models/retro-computer-f844c0357d284fd8baa1435e9ff31bb2",
+      "authorUrl": "https://sketchfab.com/LiliumLetifer",
+      "url": "https://sketchfab.com/3d-models/old-pc-5aa0b296714b4347ac796c0774653cf4",
       "license": "CC-BY-4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
       "fetch": {
-        "sketchfab": "f844c0357d284fd8baa1435e9ff31bb2",
+        "sketchfab": "5aa0b296714b4347ac796c0774653cf4",
         "format": "glb",
-        "textureMaxResolution": 2048,
+        "textureMaxResolution": 4096,
         "manual": true
       },
       "changes": [
-        "怀旧房间书桌上的电脑：缩放摆放；减面到约 38%；贴图缩到 1024 px、只保留底色贴图；屏幕玻璃改成深色，上面叠网页画的实时画面；烘焙进房间光照"
+        "怀旧房间书桌上的电脑：放大到 1.1 倍摆在书桌正中；去掉从机身里长出来的草叶；鼠标拆出来缩小、挪到键盘右边，原来的鼠标线删掉、重新拉了一根；贴图缩到 2048 px、只保留底色贴图，污渍减淡；屏幕玻璃改成深色，上面叠网页画的实时画面；前面加了自己搭的键盘和键盘线；烘焙进房间光照"
       ]
     },
     {
@@ -975,6 +975,15 @@
       "source": "Sketchfab",
       "url": "https://sketchfab.com/3d-models/old-map-3d-model-c8f056e093f74be99b2e83034099c40a",
       "reason": "模型标的是 CC BY 4.0，但作者说明里写了纸面贴图来自 photoshopsupply.com 和 textures4photoshop.com，这两张图不归作者所有，不能跟着模型一起再分发。"
+    },
+    {
+      "title": "Retro computer",
+      "authors": [
+        "Urpo"
+      ],
+      "source": "Sketchfab",
+      "url": "https://sketchfab.com/3d-models/retro-computer-f844c0357d284fd8baa1435e9ff31bb2",
+      "reason": "以前书桌上用的电脑（CC BY 4.0）。显像管四角圆、边框厚，屏幕上能放的字太少，换成了 Old PC。"
     }
   ]
 }

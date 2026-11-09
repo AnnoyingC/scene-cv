@@ -3,14 +3,16 @@ import * as THREE from 'three';
 import { wrap, makeCanvas, scanlines, MONO } from './tapes/util.js';
 
 export class PCScreen {
-  constructor({ name, tagline, about }, W = 512, H = 384) {
-    Object.assign(this, { W, H, pad: 20, lh: 22 });
+  // 排版按 512 × 384 定（16px 字、22px 行高、15 行）；canvas 按 k 倍画，屏幕大、镜头凑近时字也清楚
+  constructor({ name, tagline, about }, W = 1024, H = 768) {
+    const k = W / 512;
+    Object.assign(this, { W, H, k, pad: 20 * k, lh: 22 * k });
     this.canvas = makeCanvas(W, H);
     this.ctx = this.canvas.getContext('2d');
     this.texture = new THREE.CanvasTexture(this.canvas);
     this.texture.colorSpace = THREE.SRGBColorSpace;
-    this.scan = scanlines(W, H, 0.22);
-    this.font = `16px ${MONO}`;
+    this.scan = scanlines(512, 384, 0.22); // 扫描线按原来的疏密，画的时候放大
+    this.font = `${16 * k}px ${MONO}`;
     this.ctx.font = this.font;
     const maxW = W - this.pad * 2;
     const src = [
@@ -56,7 +58,7 @@ export class PCScreen {
     this.acc += dt;
     if (this.acc < 1 / 30) return; // 终端 30 帧够了
     this.acc = 0;
-    const { ctx, W, H, pad, lh } = this;
+    const { ctx, W, H, k, pad, lh } = this;
     const lines = this.shown();
     const max = Math.max(0, lines.length - this.rows);
     if (this.follow) this.scroll = max;
@@ -68,14 +70,14 @@ export class PCScreen {
     ctx.textBaseline = 'top';
     ctx.fillStyle = '#5dff93';
     ctx.shadowColor = 'rgba(60,255,130,0.7)';
-    ctx.shadowBlur = 6;
+    ctx.shadowBlur = 6 * k;
     const vis = lines.slice(this.scroll, this.scroll + this.rows);
     vis.forEach((l, i) => ctx.fillText(l, pad, pad + i * lh));
     if (Math.floor(t * 2.2) % 2 === 0) {
       const last = vis.length - 1;
       if (this.scroll + last === lines.length - 1) {
         const x = pad + ctx.measureText(vis[last] || '').width;
-        ctx.fillRect(x + 1, pad + last * lh + 2, 9, 16);
+        ctx.fillRect(x + k, pad + last * lh + 2 * k, 9 * k, 16 * k);
       }
     }
     ctx.shadowBlur = 0;
@@ -83,9 +85,9 @@ export class PCScreen {
       const h = (H - pad * 2) * (this.rows / lines.length);
       const y = pad + (H - pad * 2 - h) * (this.scroll / max);
       ctx.fillStyle = 'rgba(93,255,147,0.35)';
-      ctx.fillRect(W - 8, y, 3, h);
+      ctx.fillRect(W - 8 * k, y, 3 * k, h);
     }
-    ctx.drawImage(this.scan, 0, 0);
+    ctx.drawImage(this.scan, 0, 0, W, H);
     this.texture.needsUpdate = true;
   }
 }

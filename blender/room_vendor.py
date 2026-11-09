@@ -144,7 +144,8 @@ def _islands(bm):
 class Asset:
     """一个素材文件。pieces：子物件名 → 网格（Blender 坐标，素材自己的原点和单位）。"""
 
-    def __init__(self, source, prefix, texsize=512, drop=(), decimate=None, cutout=()):
+    def __init__(self, source, prefix, texsize=512, drop=(), decimate=None, cutout=(), by_parent=False):
+        """by_parent：子物件按上一层空物件的名字认（有的素材网格都叫 defaultMaterial，有意义的名字在父节点上）。"""
         self.source, self.prefix = source, prefix
         path = asset_path(source)
         before, mats_before = set(bpy.data.objects), set(bpy.data.materials)
@@ -154,9 +155,12 @@ class Asset:
         self.pieces, self.alias = {}, {}  # alias：子物件 → 原来的材质名（有的素材子物件名字没意义，按材质名认）
         for o in new:
             mname = o.data.materials[0].name if o.type == 'MESH' and o.data.materials and o.data.materials[0] else ''
-            if o.type != 'MESH' or any(fnmatch(o.name, p) or fnmatch(mname, p) for p in drop):
+            key = o.parent.name if by_parent and o.parent else o.name
+            if o.type != 'MESH' or any(fnmatch(key, p) or fnmatch(mname, p) for p in drop):
                 continue
-            self.alias[o.name] = mname
+            if key in self.pieces:
+                raise SystemExit(f'[vendor] {prefix}: 两个子物件都叫 {key}')
+            self.alias[key] = mname
             me = o.data.copy()
             me.transform(o.matrix_world)
             keep = uv_name_for(me.materials[0] if me.materials else None, me)
@@ -166,7 +170,7 @@ class Asset:
                 me.uv_layers[0].name = 'UVMap'
             for a in [a.name for a in me.color_attributes]:
                 me.color_attributes.remove(me.color_attributes[a])
-            self.pieces[o.name] = me
+            self.pieces[key] = me
         for o in new:
             bpy.data.objects.remove(o)
         self.tris0 = sum(tri_count(me) for me in self.pieces.values())
@@ -207,9 +211,11 @@ class Asset:
     def names(self, pieces=None):
         return [n for n in self.pieces if pieces is None or any(fnmatch(n, p) or fnmatch(self.alias[n], p) for p in pieces)]
 
-    def islands(self, piece, lo, hi, material=None, delete=False):
+    def islands(self, piece, lo, hi, material=None, delete=False, test=None, into=None):
         """子物件 piece 里，包围盒整个落在 [lo, hi]（素材自己的 three 坐标）里的"连在一起的面"：
-        delete=True 删掉；给了 material 就换成这个材质。返回这些面的顶点（素材坐标，three），拿来量屏幕弧度、灯泡位置。"""
+        delete=True 删掉；给了 material 就换成这个材质；into='名字' 把它们挪到一个新的子物件里（单独摆，比如鼠标）。
+        test(lo, hi)：岛自己的包围盒还要满足这个条件（只靠框分不开的时候用，比如玻璃和它旁边的窄边）。
+        返回这些面的顶点（素材坐标，three），拿来量屏幕弧度、灯泡位置。"""
         lo, hi = np.array(lo), np.array(hi)
         pts = []
         for name in self.names([piece]):
@@ -219,9 +225,21 @@ class Asset:
             hit = []
             for isl in _islands(bm):
                 co = np.array([(v.co.x, v.co.z, -v.co.y) for f in isl for v in f.verts])
-                if (co.min(0) >= lo).all() and (co.max(0) <= hi).all():
+                a, b = co.min(0), co.max(0)
+                if (a >= lo).all() and (b <= hi).all() and (test is None or test(a, b)):
                     hit.extend(isl)
                     pts.extend(map(tuple, co))
+            if into is not None and hit:
+                part = me.copy()  # 拷一份，删掉没选中的面；原来的删掉选中的面
+                pb = bmesh.new()
+                pb.from_mesh(part)
+                pb.faces.ensure_lookup_table()
+                keep = {f.index for f in hit}
+                bmesh.ops.delete(pb, geom=[f for f in pb.faces if f.index not in keep], context='FACES')
+                pb.to_mesh(part)
+                pb.free()
+                self.pieces[into], self.alias[into] = part, self.alias[name]
+                delete = True
             if delete:
                 bmesh.ops.delete(bm, geom=hit, context='FACES')
             elif material is not None:
@@ -235,6 +253,14 @@ class Asset:
         if not pts:
             raise SystemExit(f'[vendor] {self.prefix}/{piece}: 在 {lo}..{hi} 里没找到面')
         return np.unique(np.array(pts), axis=0)
+
+    def image(self, material):
+        """某个材质（原来的名字）的颜色贴图。"""
+        mt = bpy.data.materials.get(self.mat.get(material, ''))
+        tex = base_texture(mt) if mt else None
+        if tex is None:
+            raise SystemExit(f'[vendor] {self.prefix}: 材质 {material} 没有颜色贴图（有 {list(self.mat)}）')
+        return tex.image
 
     def drop_faces(self, material):
         """删掉用了某个材质（原来的名字）的面，比如画框的玻璃。"""
@@ -282,6 +308,37 @@ class Asset:
             bpy.context.scene.collection.objects.link(ob)
             obs.append(ob)
         return obs, T
+
+
+def _blur(x, r):
+    """盒式模糊（积分图，两个方向各一遍）。"""
+    for ax in (0, 1):
+        pad = [(r + 1, r) if k == ax else (0, 0) for k in range(x.ndim)]
+        c = np.cumsum(np.pad(x, pad, mode='edge'), axis=ax)
+        n = c.shape[ax]
+        x = (np.take(c, range(2 * r + 1, n), axis=ax) - np.take(c, range(0, n - 2 * r - 1), axis=ax)) / (2 * r + 1)
+    return x
+
+
+def soften_dirt(img, amount=0.8, radius=0.006):
+    """把颜色贴图上的污渍减淡：比周围（半径约 radius × 图宽 × 3）暗一点点的地方往回提亮，暗得多的地方（缝、黑线、本来就黑的面）不动。
+    amount = 0 原样，1 斑点几乎提平；radius 小 = 只管小斑点，大 = 连成片的脏印子。"""
+    w, h = img.size
+    a = np.empty(w * h * 4, dtype=np.float32)
+    img.pixels.foreach_get(a)
+    a = a.reshape(h, w, 4)
+    rgb = a[..., :3]
+    L = rgb @ np.array([0.2126, 0.7152, 0.0722], np.float32)
+    B, r = L, max(1, round(w * radius))
+    for _ in range(3):  # 三遍盒式 ≈ 高斯
+        B = _blur(B, r)
+    d = B - L  # 比周围暗多少（线性值）
+    k = np.clip(d / 0.06, 0, 1) * np.clip((0.22 - d) / 0.1, 0, 1) * np.clip((L - 0.12) / 0.15, 0, 1)
+    rgb *= (1 + amount * k * d / np.maximum(L, 1e-3))[..., None]
+    np.clip(rgb, 0, 1, out=rgb)
+    img.pixels.foreach_set(a.ravel())
+    img.update()
+    print(f'[vendor] {img.name}: 减淡污渍 {amount}（半径 {r} px），改动了 {(k > 0.05).mean() * 100:.0f}% 的像素')
 
 
 def world_points(obs):

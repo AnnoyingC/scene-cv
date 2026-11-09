@@ -231,6 +231,8 @@ state = { scene, route, weather: 'rain', rain: 0.8, window: 'closed', sound: tru
 
 **书桌房间已换上（2026-11-06）**：下表 22 项里用了 14 项（Sketchfab 12 项、Poly Haven 2 项），用了哪些、改了什么以 `assets/baked/manifest.json` 的 `vendor` 和网站上的 `#credits` 为准；其余 8 项这次没用上。
 
+**电脑换了（2026-11-07）**：下表第一项"复古电脑（Urpo）"的显像管四角是圆的、边框厚，屏幕上放不了多少字，换成了 Old PC（LiliumLetifer，Sketchfab CC BY，8.1k 面）：方屏、窄边框、显示器压在卧式主机上，按真实尺寸放大一成摆在书桌正中。素材没有键盘，键盘是自己搭的；鼠标从素材里拆出来挪到键盘右边。这个素材的 Sketchfab 页面带 NoAI 标签。
+
 **已选素材**（2026-11-05 选定，共 22 项）。面数是原始面数，处理方式按下面的预算：
 
 | 位置 | 素材 | 来源 | 原始面数 | 处理 |

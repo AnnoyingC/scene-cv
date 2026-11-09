@@ -34,7 +34,7 @@ from mathutils import Euler, Matrix, Vector
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import random  # noqa: E402
 from shared import BACK, MOON, OUT, ROOM, TOP, VIEW, WIN, get_args, srgb, tree, clear_scene, use_metal  # noqa: E402
-from room_vendor import Asset, plain_material, screen_grid, world_points  # noqa: E402
+from room_vendor import Asset, plain_material, screen_grid, soften_dirt, world_points  # noqa: E402
 
 # --skip-bake 1：几何没变、只改了热点 / 镜头时用，沿用现有的光照贴图
 # --preview 目录：只搭几何，用 Workbench 从开场镜头拍几张图（几秒钟），摆位置的时候用，不烘焙也不导出
@@ -328,44 +328,6 @@ def coil(path, R, r, pitch, mi):
     tube(dense, r, mi, 4)
 
 
-def surface(obs):
-    """第三方模型（摆好以后）的射线检测树，Blender 坐标。"""
-    from mathutils.bvhtree import BVHTree
-    bm = bmesh.new()
-    for ob in obs:
-        bm.from_mesh(ob.data)
-    bvh = BVHTree.FromBMesh(bm)
-    bm.free()
-    return bvh
-
-
-def stick(bvh, c, right, up, w, h, mi, lift=0.0015, nx=4, ny=4, marks=()):
-    """贴在曲面上的一张纸（便利贴）：中心 c、横 right、竖 up（three 世界坐标），每个网格点顺着 right × up 的反方向打到表面，再抬起 lift。
-    marks 同 sheet()：纸面上的字行（相对中心，米），和纸织在同一块网格里。"""
-    c, right, up = Vector(c), Vector(right), Vector(up)
-    n = right.cross(up).normalized()
-    xs, ys = _cuts(-w / 2, w / 2, marks, 0, 1, nx), _cuts(-h / 2, h / 2, marks, 2, 3, ny)
-    pts, depth = {}, {}
-    for j, y in enumerate(ys):
-        for i, x in enumerate(xs):
-            p = pts[i, j] = c + right * x + up * y
-            hit = bvh.ray_cast(tb(p + n * 0.15), tb(-n), 0.4)[0]
-            if hit is not None:
-                depth[i, j] = (Vector((hit.x, hit.z, -hit.y)) - p).dot(n)
-    if not depth:
-        raise SystemExit(f'[stick] {tuple(round(v, 3) for v in c)} 一个点都没打到表面')
-    grid = [[None] * len(xs) for _ in ys]
-    for (i, j), p in pts.items():  # 探出边沿的点（没打到）：用最近一个打到的点的深度，纸就平着伸出去
-        d = depth.get((i, j))
-        if d is None:
-            d = depth[min(depth, key=lambda k: (pts[k] - p).length)]
-        grid[j][i] = T.bm.verts.new(tb(p + n * (d + lift)))
-    for j in range(len(ys) - 1):
-        for i in range(len(xs) - 1):
-            m = _mark(marks, (xs[i] + xs[i + 1]) / 2, (ys[j] + ys[j + 1]) / 2, mi)
-            T.tag([T.bm.faces.new((grid[j][i], grid[j][i + 1], grid[j + 1][i + 1], grid[j + 1][i]))], m)
-
-
 mat = lambda name, color: T.mat(name, color)  # noqa: E731
 
 EMIT = {}  # Glow 网格的材质名 → 浏览器里的参数（属于哪层灯、颜色、亮度）
@@ -633,23 +595,111 @@ wbox(xr - xl, 0.075, 0.02, (xl + xr) / 2, yb - 0.0375, pf - 0.01)  # 前横档
 wbox(0.44, 0.052, 0.012, (xl + xr) / 2, yb - 0.0375, pf + 0.006)  # 扁抽屉
 pull((xl + xr) / 2, yb - 0.0375, pf + 0.012, half=0.03)
 
-# 电脑：黑色复古一体机（底座前面自带小键盘）。素材正面朝 +x，转 -90° 朝屋里。
-# 屏幕玻璃换成深色，浏览器在上面贴一块按玻璃弧度弯过的 canvas（弧度在这里量好写进 manifest）。
-PC = Asset('sketchfab/retro-computer', 'pc', texsize=1024, decimate={'Part2': 0.3, 'Part1': 0.6})
+# 电脑：米色的老式台式机，显示器压在卧式主机上，软驱里插着一张软盘，显示器侧面贴着便利贴（素材自带的）。
+# 素材是真实尺寸（米），正面朝 +x，转 -90° 朝屋里；子物件按父节点认：PC（机身 + 鼠标 + 鼠标线）、NOTAS（便利贴）、CD（软盘）、HOJAS（长出来的草叶，不要）。
+# 屏幕是方的、四角只有一点圆角，玻璃换成深色，浏览器在上面贴一块按玻璃弧度弯过的 canvas（弧度在这里量好写进 manifest）。
+# 鼠标原来在主机正前方（正好是键盘的位置），拆出来放到键盘右边；原来绕到机箱后面的鼠标线删掉，下面重新拉一根。
+# 素材的污渍画得很重（废土风），减淡一些；颜色贴图给 2048，点进"关于我"的时候边框就在眼前。
+PC_S = 1.1  # 素材本身是真实尺寸（显示器宽 43 厘米、连主机高 52 厘米）；电脑是书桌的主角，放大一成
+PC = Asset('sketchfab/old-pc', 'pc', texsize=2048, by_parent=True, drop=('HOJAS',))
+soften_dirt(PC.image('PRINCIPAL'), 0.8)                 # 小斑点
+soften_dirt(PC.image('PRINCIPAL'), 0.6, radius=0.02)    # 连成片的脏印子（缝里、边角的暗处还留着）
 pc_glass = plain_material('pc_glass', '#0c0f0e')
-PC.islands('Part1', (0.06, -0.21, -0.52), (0.215, 0.66, 0.52), material=pc_glass)
+PC.islands('PC', (0.17, 0.22, -0.18), (0.21, 0.5, 0.18), material=pc_glass, test=lambda a, b: (b - a)[1] > 0.2)  # 玻璃（框里还有两条窄边，按高度分开）
+PC.islands('PC', (-0.33, 0.005, -0.18), (0.3, 0.11, 0.31), delete=True, test=lambda a, b: a[0] < -0.3)  # 鼠标线：从机箱后面一直绕到鼠标
+PC.islands('PC', (0.245, 0.005, -0.03), (0.375, 0.065, 0.155), into='MOUSE')
+# 边框正面的两张便利贴（E=mc² 和笑脸）有一半盖在玻璃上，会挡住终端的第一行；上边框只有 4 厘米宽，挪上去会探出显示器顶上、一半陷进圆角里：删掉，
+# 只留显示器左侧面的两张（爱心、月亮）
+PC.islands('NOTAS', (0.19, 0.44, 0.0), (0.24, 0.52, 0.17), delete=True)
+lo, hi = PC.bounds(['PC', 'NOTAS', 'CD'])
+PC_BACK = BACK + 0.05  # 机箱后沿离墙 5 厘米（桌子后沿在墙前 3 厘米）
 with hot('about'):
-    pc_obs, _ = put(PC, G((DESK_X, TOP, -1.66), (0, -math.pi / 2, 0)), uvk=25, scale=0.31)
-PC_SCREEN = screen_grid(pc_obs, pc_glass, frac=0.82)  # 玻璃四角是圆的，边上往后卷：画面占玻璃宽度的 82%
+    pc_obs, T_pc = put(PC, G((DESK_X, TOP, PC_BACK + PC_S * (hi[0] - lo[0]) / 2), (0, -math.pi / 2, 0)),
+                       pieces=['PC', 'NOTAS', 'CD'], uvk=25, scale=PC_S)
+PC_SCREEN = screen_grid(pc_obs, pc_glass, frac=0.92)  # 玻璃是方的，只有四角一点圆角：画面占玻璃宽度的 92%
 screen_log('pc', PC_SCREEN)
-# 玻璃往后仰：镜头顺着玻璃的法线再稍微高一点看
-VIEWS['about'] = dict(target=PC_SCREEN['pos'], size=(0.175, 0.14), dir=tuple(Vector(PC_SCREEN['normal']) + Vector((0, 0.08, 0))))
-# 键盘、轨迹球是电脑素材自带的，原来的键盘、鼠标、鼠标垫和线都不要了
+# 玻璃往后仰：镜头顺着玻璃的法线再稍微高一点看；装进画面的范围跟着屏幕大小走：按字的区域凑近，边框只露出窄窄一圈
+VIEWS['about'] = dict(target=PC_SCREEN['pos'], size=(PC_SCREEN['size'][0] * 0.62, PC_SCREEN['size'][1] * 0.68),
+                      dir=tuple(Vector(PC_SCREEN['normal']) + Vector((0, 0.08, 0))))
+pc_pts = world_points(pc_obs)
+PC_L, PC_R = pc_pts[:, 0].min(), pc_pts[:, 0].max()                          # 电脑左右（含侧面的便利贴）
+PC_FRONT = at3(T_pc, (0.197, 0, 0)).z                                         # 机箱前面板
+PC_DEPTH = at3(T_pc, (0.197, 0, 0)).z - at3(T_pc, (lo[0], 0, 0)).z
 
-# 开场镜头：绕着电脑转（orbit）。目标点在屏幕中心偏右上一点，镜头站在左前方、略微俯视，右边的电视正好斜着朝向镜头；
+
+def keyboard(g, u=0.0185):
+    """米色的老式键盘：前低后高的底壳，上面六排键帽（功能键一排 + 主键区五排），右边方向键区和小键盘。
+    g 的原点 = 键盘底面中心，+z 朝前（朝人）。u = 一个键位的宽度。返回 (宽, 深)。"""
+    rows = [  # 主键区每排：(宽度, 'a' 字母键 / 'm' 功能键)，宽度为负 = 空位
+        [(1, 'm'), (-1, ''), *[(1, 'm')] * 4, (-0.5, ''), *[(1, 'm')] * 4, (-0.5, ''), *[(1, 'm')] * 4],
+        [*[(1, 'a')] * 13, (2, 'm')],
+        [(1.5, 'm'), *[(1, 'a')] * 12, (1.5, 'm')],
+        [(1.75, 'm'), *[(1, 'a')] * 11, (2.25, 'm')],
+        [(2.25, 'm'), *[(1, 'a')] * 10, (2.75, 'm')],
+        [(1.5, 'm'), (-1, ''), (1.5, 'm'), (7, 'a'), (1.5, 'm'), (-1, ''), (1.5, 'm')],
+    ]
+    nav = [[1, 1, 1], [1, 1, 1], [1, 1, 1], [], [-1, 1, -1], [1, 1, 1]]  # 方向键区（3 键宽）
+    # 小键盘（4 键宽）：(列, 排, 宽, 高, 类型)；第 0 排的位置是三个指示灯
+    pad = [(c, 1, 1, 1, 'm') for c in range(4)] + [(c, r, 1, 1, 'a') for r in (2, 3, 4) for c in range(3)]
+    pad += [(3, 2, 1, 2, 'm'), (3, 4, 1, 2, 'm'), (0, 5, 2, 1, 'a'), (2, 5, 1, 1, 'a')]
+    W, D = 23 * u + 0.024, 6.5 * u + 0.046
+    h0, h1 = 0.02, 0.036  # 前沿、后沿的高
+    sl = math.atan2(h1 - h0, D)
+    ytop = lambda z: h0 + (D / 2 - z) / D * (h1 - h0)  # noqa: E731
+    wedge(g, W, D, h0, h1, mat('kb_case', '#c7bd9e'))
+    mi = {'a': mat('kb_key', '#dad1b8'), 'm': mat('kb_mod', '#a49b85')}
+    x0, z0 = -W / 2 + 0.012, -D / 2 + 0.028  # 键区左上角（后沿留宽一点）
+    zr = lambda r, n=1: z0 + (r + (0.5 if r else 0) + n / 2) * u  # noqa: E731  第 r 排（往前）n 排高的键的中心
+
+    def key(x, r, w, n, kind):
+        z = zr(r, n)
+        box(g, w * u - 0.0035, 0.009, n * u - 0.0035, mi[kind], x0 + x * u + w * u / 2, ytop(z) + 0.0025, z, (sl, 0, 0))
+
+    for r, row in enumerate(rows):
+        x = 0
+        for w, kind in row:
+            if w > 0:
+                key(x, r, w, 1, kind)
+            x += abs(w)
+        x = 15.5
+        for w in nav[r]:
+            if w > 0:
+                key(x, r, w, 1, 'm')
+            x += abs(w)
+    for c, r, w, n, kind in pad:
+        key(19 + c, r, w, n, kind)
+    for i in range(3):  # 指示灯
+        z = zr(0)
+        box(g, 0.006, 0.002, 0.004, mat('kb_led', '#3c5a3a'), x0 + (19.6 + i * 1.2) * u, ytop(z) + 0.001, z, (sl, 0, 0))
+    return W, D
+
+
+# 键盘：在显示器正前方，稍微斜一点；鼠标在右边；两根线都从桌面上绕到主机后面
+KB_ROT = 0.035
+KB_Z = PC_FRONT + 0.135  # 键盘中心：离机箱前面 13.5 厘米（软盘探出来 9 厘米，键盘后沿还空着一点）
+g = G((DESK_X - 0.015, TOP, KB_Z), (0, KB_ROT, 0))
+with hot('about', KB_ROT):
+    KB_W, KB_D = keyboard(g)
+cable = mat('pc_cable', '#b9b2a2')
+lie = TOP + 0.004  # 线躺在桌面上时的中心高度（压在打印纸上面）
+tube(spline([world(g, (-0.13, 0.03, -KB_D / 2 + 0.004)), world(g, (-0.135, 0.006, -KB_D / 2 - 0.03)),
+             (PC_L - 0.015, lie, PC_FRONT + 0.02), (PC_L - 0.02, lie, PC_FRONT - 0.15), (PC_L - 0.012, lie, PC_BACK + 0.03),
+             (PC_L + 0.06, TOP + 0.03, PC_BACK + 0.02)], 5), 0.0028, cable)
+MOUSE_ROT = math.pi + 0.15  # 素材里鼠标线从 +z 那头（按键那头）出来：转 180° 让它朝屏幕，再往左斜一点（右手拿着的样子）
+with hot('about', MOUSE_ROT):
+    _, T_mouse = put(PC, G((DESK_X + KB_W / 2 + 0.06, TOP, KB_Z + 0.01), (0, MOUSE_ROT, 0)), pieces=['MOUSE'], uvk=25, scale=0.75)
+plug = at3(T_mouse, (0.29, 0.016, 0.152))
+back = (at3(T_mouse, (0.29, 0.016, 0.3)) - plug).normalized()
+tube(spline([tuple(plug), tuple(plug + back * 0.03 + Vector((0, lie - plug.y, 0))),
+             (PC_R + 0.02, lie, PC_FRONT + 0.04), (PC_R + 0.014, lie, PC_FRONT - 0.12), (PC_R + 0.01, lie, PC_BACK + 0.03),
+             (PC_R - 0.06, TOP + 0.03, PC_BACK + 0.02)], 5), 0.0024, cable)
+print(f'[pc] 电脑 x {PC_L:+.3f}..{PC_R:+.3f}，机箱前面 z {PC_FRONT:+.3f}，深 {PC_DEPTH:.3f}；键盘 {KB_W:.3f} × {KB_D:.3f}，中心 z {KB_Z:+.3f}')
+
+# 开场镜头：绕着电脑转（orbit）。镜头站在电脑正前方、略微俯视，目标点在屏幕中心正上方一点：电脑在画面正中，窗户框着它；
+# 右边的电视露出一半（斜着朝向镜头，看得到彩条），往右拖就整个出来；
 # 视角 34°，抬头最多到平视以上一点点（看不到天花板）；左右能转 50° 上下，转到头能看到侧墙靠里的一段（书架正面、唱机、软木板）。
 # box：镜头不能出这个范围（x 左右、z 最靠前、y 最低 / 最高），转到边上时自动拉近，免得钻进墙里
-CAM = dict(target=tuple(Vector(PC_SCREEN['pos']) + Vector((0.24, 0.08, -0.1))), dist=2.25, yaw=-0.2, pitch=-0.12, fov=34,
+CAM = dict(target=tuple(Vector(PC_SCREEN['pos']) + Vector((0, 0.08, -0.1))), dist=2.25, yaw=0.0, pitch=-0.12, fov=34,
            yawRange=(-1.0, 0.9), pitchRange=(-0.6, 0.06), distRange=(1.1, 2.4),
            box=dict(x=(x0 + 0.3, x1 - 0.25), z=z1 - 0.25, y=(0.45, RH - 0.3)))
 
@@ -692,7 +742,7 @@ with hot('online', NOTE_ROT):
     rod(world(g, (0.062, 0.017, 0.08)), world(g, (0.07, 0.017, -0.07)), 0.0045, mat('pen', '#1f3b6e'), 8)  # 笔压在右边沿，不挡纸上的字
 # 从正上方偏一点往下看，镜头转到和本子一样的角度，纸面在画面里是正的
 VIEWS['online'] = dict(target=world(g, (0, 0.012, 0.01)), size=(0.12, 0.14), dir=(math.sin(NOTE_ROT) * 0.45, 1.0, math.cos(NOTE_ROT) * 0.45))
-g = G((DESK_X + 0.27, TOP, -1.88))
+g = G((DESK_X + 0.29, TOP, -1.88))  # 笔筒：电脑右后方（鼠标线从它和电脑中间过去）
 cyl(g, 0.035, 0.035, 0.1, 16, mat('pencup', '#3d4a52'), (0, 0.05, 0))
 for i, c in enumerate(['#d8a53a', '#c94c3c', '#3a6db0']):
     a = i * 2.1
@@ -713,19 +763,19 @@ with hot('work'):
         box(g, 0.026, 0.103, 0.187, mat(f'tape{i}', '#141414'), x, 0.015 + 0.0515, 0)
         box(g, 0.02, 0.08, 0.002, mat(f'label{i}', c), x, 0.015 + 0.0515, 0.0945)
 
-# 咖啡杯、眼镜、遥控器（遥控器横放在键盘前面）
+# 咖啡杯（电脑右边）、眼镜（压在左边的打印纸上）、遥控器（记事本左边，竖着放）
 g = G((DESK_X + 0.31, TOP, -1.53))
 cup = mat('mug', '#e8e2d4')
 cyl(g, 0.042, 0.04, 0.095, 24, cup, (0, 0.0475, 0))
 cyl(g, 0.037, 0.037, 0.002, 24, mat('coffee', '#2a160c'), (0, 0.085, 0))
 box(g, 0.012, 0.055, 0.035, cup, 0.05, 0.05, 0)
-g = G((DESK_X + 0.24, TOP, -1.29), (0, 0.35, 0))
+g = G((DESK_X - 0.36, TOP + 0.0016, -1.58), (0, -0.4, 0))
 gm = mat('glasses', '#1a1a1a')
 for sx in (-1, 1):
     cyl(g, 0.026, 0.026, 0.004, 20, mat('lens', '#5d6d72'), (sx * 0.032, 0.026, 0), (math.pi / 2 - 0.25, 0, 0))
     box(g, 0.004, 0.004, 0.13, gm, sx * 0.058, 0.008, -0.06, (0, sx * 0.12, 0))
 box(g, 0.016, 0.004, 0.004, gm, 0, 0.034, 0.004)
-g = G((DESK_X + 0.07, TOP, -1.255), (0, -1.25, 0))
+g = G((DESK_X - 0.56, TOP, -1.32), (0, 0.15, 0))
 box(g, 0.05, 0.02, 0.17, mat('remote', '#2a2a2c'), 0, 0.01, 0)
 for i in range(6):
     box(g, 0.01, 0.004, 0.01, mat('rbtn', '#8a8580'), (i % 2 - 0.5) * 0.02, 0.021, -0.05 + (i // 2) * 0.03)
@@ -754,22 +804,6 @@ for k, (a, body) in enumerate(((0.25, mat('remote', '#2a2a2c')), (0.42, mat('boo
     box(g, 0.09, 0.0033, 0.094, body, 0, 0.00165, 0)
     quad(g, 0.05, 0.03, chrome, (0.006, 0.0034, -0.031), FLAT)   # 金属滑盖（插进去的那头）
     quad(g, 0.07, 0.042, paper, (0, 0.0034, 0.022), FLAT)       # 标签
-# 电脑屏幕边框上两张便利贴（顺着边框的弧度贴上去），上面几道蓝色圆珠笔字
-pc_bvh = surface(pc_obs)
-n_pc = Vector(PC_SCREEN['normal']).normalized()
-r_pc = (Vector((1, 0, 0)) - n_pc * n_pc.x).normalized()
-u_pc = n_pc.cross(r_pc)
-gw, gh = PC_SCREEN['glass']
-pen = mat('pen', '#1f3b6e')
-# 边框只有 4 厘米宽、外沿是圆的（右边框：离屏幕中心 0.155–0.195 米），便利贴一半贴在边框上、一半探出去
-for c, a, s, m in ((Vector(PC_SCREEN['pos']) + r_pc * 0.185 + u_pc * 0.075, 0.1, 0.05, mat('sticky', '#e9d66b')),
-                   (Vector(PC_SCREEN['pos']) - r_pc * 0.182 - u_pc * 0.055, -0.16, 0.045, mat('pencil1', '#c94c3c'))):
-    rr, uu = r_pc * math.cos(a) + u_pc * math.sin(a), u_pc * math.cos(a) - r_pc * math.sin(a)
-    scrib = []
-    for i in range(3):
-        x, y, hw = -0.004 * i, s * (0.22 - 0.16 * i), s * (0.7 - 0.15 * i) / 2
-        scrib.append((x - hw, x + hw, y - 0.0011, y + 0.0011, pen))
-    stick(pc_bvh, c, rr, uu, s, s, m, marks=scrib)
 # 一部米色的按键电话（右前方，原来遥控器的位置），也是"联系方式"热点的一部分
 PH_ROT = -0.35
 g = G((DESK_X + 0.5, TOP, -1.42), (0, PH_ROT, 0))
@@ -1234,7 +1268,8 @@ LAYERS = {
     'ambient': [
         light('moon', 'SUN', 1.4, '#a9b8ff', (0, 5, -6), tuple(-moon_dir), angle=math.radians(1.5)),
         city_plane(),
-        light('pc_screen', 'AREA', 1.2, (0.36, 1.0, 0.6), Vector(PC_SCREEN['pos']) + Vector(PC_SCREEN['normal']) * 0.01, PC_SCREEN['normal'],
+        # 电脑屏幕：比原来的大一半，再亮一点，绿光能照到键盘和桌面上
+        light('pc_screen', 'AREA', 2.4, (0.36, 1.0, 0.6), Vector(PC_SCREEN['pos']) + Vector(PC_SCREEN['normal']) * 0.01, PC_SCREEN['normal'],
               shape='RECTANGLE', size=PC_SCREEN['size'][0], size_y=PC_SCREEN['size'][1]),
     ],
     'room': [
