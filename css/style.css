@@ -78,6 +78,51 @@ h2 { font-size: 14px; letter-spacing: 0.12em; color: var(--muted); font-weight: 
 .is-room .topbar .tabs a[aria-current="page"] { background: var(--nav-on); color: var(--nav-on-fg); text-shadow: none; }
 .is-room .topbar a:focus-visible { outline-color: var(--nav-fg); }
 
+/* 两个场景共用的配乐试听；让开导航、返回按钮和底部内容面板。 */
+.music-player {
+  position: fixed; top: calc(max(14px, env(safe-area-inset-top)) + 48px); right: 20px; z-index: 4;
+  width: 248px; padding: 10px 12px; border: 1px solid rgba(239, 230, 214, 0.18); border-radius: 12px;
+  background: rgba(12, 12, 16, 0.78); backdrop-filter: blur(10px); color: var(--nav-fg);
+  font: 12px/1.5 var(--sans);
+}
+.music-track { display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 10px; margin-bottom: 8px; }
+.music-title { font-size: 14px; font-weight: 600; }
+.music-artist { color: var(--nav-dim); }
+.music-records { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-bottom: 10px; }
+.music-record {
+  display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; padding: 6px;
+  border: 1px solid rgba(239, 230, 214, 0.15); border-radius: 7px;
+  color: var(--nav-dim); background: transparent; font: inherit; font-size: 11px; text-align: left; cursor: pointer;
+}
+.music-record[aria-pressed="true"] { border-color: var(--nav-fg); color: var(--nav-fg); background: rgba(239, 230, 214, 0.09); }
+.music-record:hover { background: rgba(239, 230, 214, 0.13); }
+.music-record:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.music-record > span:last-child { min-width: 0; overflow-wrap: anywhere; }
+.music-record-disc {
+  flex: none; width: 24px; height: 24px; border-radius: 50%; border: 1px solid #5b5b5b;
+  background: radial-gradient(circle, #171719 0 5%, var(--record-label) 6% 31%, #131316 32% 55%, #343437 57% 60%, #131316 62%);
+}
+.music-controls { display: flex; align-items: center; gap: 8px; }
+.music-toggle {
+  flex: none; min-width: 68px; min-height: 32px; padding: 4px 8px; border-radius: 6px;
+  border: 1px solid rgba(239, 230, 214, 0.2); background: rgba(239, 230, 214, 0.08);
+  color: inherit; font: inherit; cursor: pointer;
+}
+.music-toggle:hover, .music-player.is-playing .music-toggle { background: rgba(239, 230, 214, 0.17); }
+.music-volume { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; white-space: nowrap; color: var(--nav-dim); }
+.music-volume input { width: 100%; min-width: 0; margin: 0; height: 32px; accent-color: var(--nav-on); cursor: pointer; }
+.music-level { min-width: 30px; text-align: right; font-variant-numeric: tabular-nums; color: var(--nav-dim); }
+.music-status { margin: 8px 0 0; color: var(--nav-dim); }
+.music-tone { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; color: var(--nav-dim); }
+.music-effect { border: 1px solid rgba(239, 230, 214, 0.2); border-radius: 6px; padding: 4px 8px; color: inherit; background: transparent; font: inherit; cursor: pointer; }
+.music-effect[aria-pressed="true"] { color: var(--nav-fg); background: rgba(239, 230, 214, 0.13); }
+.music-player :focus-visible { outline: 2px solid var(--nav-fg); outline-offset: 3px; }
+:root[data-scene="tower"] .music-player { background: rgba(28, 20, 10, 0.8); }
+@media (max-width: 600px) {
+  .music-player { top: calc(max(12px, env(safe-area-inset-top)) + 44px); right: 16px; width: min(248px, calc(100vw - 120px)); padding: 8px 10px; }
+  .music-volume { font-size: 0; gap: 0; }
+}
+
 /* JS 决定用哪个版本之前先藏起来，避免闪一下 */
 .js #content { visibility: hidden; }
 .is-plain #content { visibility: visible; }

@@ -3,6 +3,7 @@
 // ?room=1 强制 3D，?plain=1 强制静态版，?scene=tower 换成城堡塔楼书房（默认是窗前书桌的房间）。
 import { readContent } from './content.js';
 import { createNav } from './nav.js';
+import { createMusicPlayer } from './music.js';
 
 const params = new URLSearchParams(location.search);
 const forceRoom = params.has('room');
@@ -45,7 +46,8 @@ if (forcePlain || !env.ok) {
   plain('soft');
 } else {
   html.classList.add('is-room');
+  const music = createMusicPlayer({ vinyl: !tower });
   import(tower ? './tower.js' : './room.js')
-    .then((m) => m.start(readContent(), { nav }))
-    .catch((err) => { console.error('3D 房间加载失败，改用静态版', err); plain(); });
+    .then((m) => m.start(readContent(), { nav, music }))
+    .catch((err) => { music.destroy(); console.error('3D 房间加载失败，改用静态版', err); plain(); });
 }

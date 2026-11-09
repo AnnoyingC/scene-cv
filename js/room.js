@@ -18,6 +18,7 @@ import { paintNote } from './paint.js';
 import { paintCalendar } from './calendar.js';
 import { BakedRoom, loadBaked, tvLight } from './baked.js';
 import { GradePass, lookPicker } from './grade.js';
+import { createTurntable } from './turntable.js';
 
 const BASE = new URL('../assets/baked/', import.meta.url).href;
 const $ = (id) => document.getElementById(id);
@@ -30,7 +31,7 @@ const deg = THREE.MathUtils.degToRad;
 const ROUTES = ['about', 'work', 'shelf', 'online'];
 const HINTS = { about: '电脑 · 关于我', work: '电视 · 作品', shelf: '书架 · 书单', online: '记事本 · 联系方式' };
 
-export async function start(content, { nav = null } = {}) {
+export async function start(content, { nav = null, music = null } = {}) {
   const { tapes, books = [], links } = content;
   const N = tapes.length;
   $('room').hidden = false;
@@ -68,6 +69,7 @@ export async function start(content, { nav = null } = {}) {
   const data = await loadBaked(BASE, { onProgress: (k) => progress(k * 0.95) });
   const room = new BakedRoom(data, { renderer, scene });
   const M = data.manifest;
+  const turntable = createTurntable(room, music?.track);
 
   // ---------- 实时画的东西：电视、电脑屏幕、记事本纸面 ----------
   const tv = new TV();
@@ -382,6 +384,7 @@ export async function start(content, { nav = null } = {}) {
   // ---------- 拾取：射线打到的第一个面 → 是录像带，还是在哪个热点盒子里 ----------
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
   const pickables = [room.root, ...screens, ...phys.filter(Boolean).map((t) => t.group)];
+  if (turntable) pickables.push(turntable.group);
   const shown = (o) => { for (; o; o = o.parent) if (!o.visible) return false; return true; };
   function pick(x, y) {
     const r = canvas.getBoundingClientRect();
@@ -390,6 +393,7 @@ export async function start(content, { nav = null } = {}) {
     ray.setFromCamera(ndc, camera);
     for (const hit of ray.intersectObjects(pickables, true)) {
       if (!shown(hit.object)) continue;
+      if (music && hit.object.userData.recordPlayer) return { kind: 'music', key: 'music' };
       const ti = hit.object.userData.tape;
       if (ti != null) return { kind: 'tape', key: 'tape' + ti, i: ti };
       const name = room.hotspotAt(hit.point);
@@ -398,6 +402,7 @@ export async function start(content, { nav = null } = {}) {
     return null;
   }
   function hintText(h) {
+    if (h.kind === 'music') return music?.playing ? '唱片机 · 暂停配乐' : '唱片机 · 播放配乐';
     if (h.kind === 'tape') return `▶ ${tapes[h.i].title}`;
     if (h.kind === 'lamp') return light.lampT ? '台灯 · 关灯' : '台灯 · 开灯';
     if (h.kind === 'room') return light.roomT ? '屋里的灯 · 关灯' : '屋里的灯 · 开灯';
@@ -426,6 +431,7 @@ export async function start(content, { nav = null } = {}) {
     const h = pick(x, y);
     if (!h) { if (view !== 'home') go('home'); return; }
     if (h.kind === 'tape') { insertTape(h.i); go('work'); }
+    else if (h.kind === 'music') music?.toggle();
     else if (h.kind === 'lamp') light.lampT = light.lampT ? 0 : 1;
     else if (h.kind === 'room') light.roomT = light.roomT ? 0 : 1;
     else if (h.kind === 'about' && view === 'about') pc.finish();
@@ -534,6 +540,11 @@ export async function start(content, { nav = null } = {}) {
     light.room += (light.roomT - light.room) * s;
     tv.update(t, dt);
     pc.update(t, dt);
+    turntable?.update(dt, music?.playing, music?.track);
+    if (hover?.kind === 'music' && hintEl.classList.contains('show')) {
+      const text = hintText(hover);
+      if (hintEl.textContent !== text) hintEl.textContent = text;
+    }
     room.update({ room: light.room, lamp: light.lamp, tv: tvLight(tv.color, tvTint) });
     room.U.hiK.value += ((hover && hover.kind !== 'tape' ? 1 : 0) - room.U.hiK.value) * (1 - Math.exp(-dt * 14));
     for (const tp of phys) {
@@ -565,7 +576,7 @@ export async function start(content, { nav = null } = {}) {
 
   // 调试入口（控制台里用）：__room.tick(dt) 手动推进一帧（后台标签页里动画会被浏览器降速）
   window.__room = {
-    go, insertTape, cmd, tick, pick, look, light, camera, renderer, composer, room, tv, pc, grade: (k) => grade.set(k),
+    go, insertTape, cmd, tick, pick, look, light, camera, renderer, composer, room, tv, pc, turntable, grade: (k) => grade.set(k),
     get view() { return view; }, get loaded() { return loaded; }, get hover() { return hover; },
     hoverAt: (x, y) => setHover(pick(x, y), x, y), clickAt: (x, y) => click(x, y, true),
   };

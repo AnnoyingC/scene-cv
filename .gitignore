@@ -51,3 +51,8 @@ output/
 
 # 3D pets never go into the public repo (models, Blender files, reference images)
 assets/pets/
+
+# 两个场景本地试听的音频
+assets/audio/futatabi.mp3
+assets/audio/requiem-of-silence.mp3
+assets/audio/flower-dance.mp3
