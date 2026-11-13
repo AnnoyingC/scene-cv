@@ -114,7 +114,7 @@ export async function start(content, { nav = null, music = null } = {}) {
   const noteTex = new THREE.CanvasTexture(paintNote({ name: content.name, links }));
   noteTex.colorSpace = THREE.SRGBColorSpace;
   noteTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
-  room.decal('notepad', noteTex);
+  const contactNote = room.decal('notepad', noteTex);
   // 墙上的撕页日历：纸页换成今天的日期（页面一直开着的话，过了零点自己翻一页）
   if (M.calendar) {
     const calTex = new THREE.CanvasTexture(paintCalendar());
@@ -630,6 +630,7 @@ export async function start(content, { nav = null, music = null } = {}) {
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
   const pickables = [room.root, ...screens, ...phys.filter(Boolean).map((t) => t.group), ...(shelfBooks?.groups || [])];
   if (turntable) pickables.push(turntable.group);
+  if (contactNote) pickables.push(contactNote);
   const shown = (o) => { for (; o; o = o.parent) if (!o.visible) return false; return true; };
   function pick(x, y) {
     const r = canvas.getBoundingClientRect();
@@ -639,6 +640,12 @@ export async function start(content, { nav = null, music = null } = {}) {
     const extra = shelfBooks?.rig ? [shelfBooks.rig] : [];
     for (const hit of ray.intersectObjects([...extra, ...pickables], true)) {
       if (!shown(hit.object)) continue;
+      if (hit.object === contactNote) {
+        const f = contactNote.userData.frame, p = hit.point.clone().sub(f.center);
+        const link = view === 'online' ? noteTex.image.linkAt(p.dot(f.right) / (2 * f.hw) + 0.5, p.dot(f.long) / (2 * f.hh) + 0.5) : null;
+        return link?.url ? { kind: 'contact', key: 'contact:' + link.url, url: link.url, label: link.label, handle: link.handle }
+          : { kind: 'online', key: 'online' };
+      }
       if (music && hit.object.userData.recordPlayer) return { kind: 'music', key: 'music' };
       const ti = hit.object.userData.tape;
       if (ti != null) return { kind: 'tape', key: 'tape' + ti, i: ti };
@@ -661,6 +668,7 @@ export async function start(content, { nav = null, music = null } = {}) {
     return null;
   }
   function hintText(h) {
+    if (h.kind === 'contact') return `${h.label} · ${h.handle || h.url}`;
     if (h.kind === 'music') return music?.cardOpen === false ? 'Record player · Pick a record' : music?.cardOpen ? 'Record player · Close' : music?.playing ? 'Record player · Pause' : 'Record player · Play';
     if (h.kind === 'tape') return `▶ ${tapes[h.i].title}`;
     if (h.kind === 'book') { const e = shelfBooks.entry(h.i); return e.kind === 'secret' ? '一本没写书名的本子' : `《${e.b.title}》 · ${e.b.author}`; }
@@ -713,7 +721,16 @@ export async function start(content, { nav = null, music = null } = {}) {
     }
     if (view === 'shelf' && h?.kind !== 'book' && closeBook()) return; // 书翻开着：点别处先合上书
     if (!h) { if (view !== 'home') go('home'); return; }
-    if (h.kind === 'book') openBook(h.i);
+    if (h.kind === 'contact') {
+      const link = document.createElement('a');
+      link.href = h.url;
+      link.hidden = true;
+      if (/^https?:/i.test(h.url)) { link.target = '_blank'; link.rel = 'noopener'; }
+      document.body.append(link);
+      link.click();
+      link.remove();
+    }
+    else if (h.kind === 'book') openBook(h.i);
     else if (h.kind === 'tape') { insertTape(h.i); go('work'); }
     else if (h.kind === 'music') { if (music?.toggleCard) music.toggleCard(); else music?.toggle(); } // 点唱机：打开 / 收起唱片卡片
     else if (h.kind === 'lamp') light.lampT = light.lampT ? 0 : 1;

@@ -27,6 +27,7 @@ export function paintNote({ name, links }, W = 512, H = 717) {
 
   x.save();
   x.rotate(-0.012);
+  const toText = x.getTransform().inverse(), linkAreas = [];
   x.fillStyle = '#1f3b6e'; // 和桌上那支笔一个颜色
   x.textBaseline = 'alphabetic';
   x.font = `bold 44px ${HAND}`;
@@ -43,6 +44,7 @@ export function paintNote({ name, links }, W = 512, H = 717) {
     x.fillText(l.label, 80, y);
     fit(handle, right - 230, 30);
     x.fillText(handle, 230, y);
+    linkAreas.push({ left: 74, right, top: y - 36, bottom: y + 8, link: l });
   });
   if (name) {
     x.font = `30px ${HAND}`;
@@ -50,6 +52,13 @@ export function paintNote({ name, links }, W = 512, H = 717) {
     x.fillText(`— ${name}`, right, top + gap * (links.length + 3) - 12);
   }
   x.restore();
+  // 用画字时的坐标记录点击区域，纸面外观和排版不变。UV 的原点在左下，canvas 在左上。
+  c.linkAt = (u, v) => {
+    const px = u * W, py = (1 - v) * H;
+    const tx = toText.a * px + toText.c * py + toText.e;
+    const ty = toText.b * px + toText.d * py + toText.f;
+    return linkAreas.find((a) => tx >= a.left && tx <= a.right && ty >= a.top && ty <= a.bottom)?.link || null;
+  };
   return c;
 }
 
