@@ -1,0 +1,85 @@
+{
+ "photos": [
+  {
+   "src": "assets/photos/akihabara.webp",
+   "board": "assets/photos/akihabara.board.webp",
+   "alt": "akihabara",
+   "x": -0.303,
+   "y": -0.08,
+   "rot": -0.04,
+   "order": 4
+  },
+  {
+   "src": "assets/photos/bar.webp",
+   "board": "assets/photos/bar.board.webp",
+   "alt": "bar",
+   "x": -0.314,
+   "y": 0.123,
+   "rot": -0.05,
+   "order": 0
+  },
+  {
+   "src": "assets/photos/congress.webp",
+   "board": "assets/photos/congress.board.webp",
+   "alt": "congress",
+   "x": 0.338,
+   "y": -0.065,
+   "rot": -0.11,
+   "order": 8
+  },
+  {
+   "src": "assets/photos/fuji.webp",
+   "board": "assets/photos/fuji.board.webp",
+   "alt": "fuji",
+   "x": 0.104,
+   "y": 0.111,
+   "rot": 0.062,
+   "order": 2
+  },
+  {
+   "src": "assets/photos/lanyard.webp",
+   "board": "assets/photos/lanyard.board.webp",
+   "alt": "lanyard",
+   "x": 0.316,
+   "y": 0.106,
+   "rot": 0.083,
+   "order": 3
+  },
+  {
+   "src": "assets/photos/nobel-2036.webp",
+   "board": "assets/photos/nobel-2036.board.webp",
+   "alt": "nobel-2036",
+   "x": -0.108,
+   "y": -0.057,
+   "rot": 0.05,
+   "order": 5
+  },
+  {
+   "src": "assets/photos/podium.webp",
+   "board": "assets/photos/podium.board.webp",
+   "alt": "podium",
+   "x": 0.042,
+   "y": -0.096,
+   "rot": 0.02,
+   "order": 6
+  },
+  {
+   "src": "assets/photos/summer-practice.webp",
+   "board": "assets/photos/summer-practice.board.webp",
+   "alt": "summer-practice",
+   "x": -0.102,
+   "y": 0.131,
+   "rot": -0.085,
+   "order": 1
+  },
+  {
+   "src": "assets/photos/tower-night.webp",
+   "board": "assets/photos/tower-night.board.webp",
+   "alt": "tower-night",
+   "x": 0.196,
+   "y": -0.085,
+   "rot": -0.05,
+   "order": 7
+  }
+ ]
+}

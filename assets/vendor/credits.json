@@ -1,0 +1,1081 @@
+{
+  "_说明": "第三方 3D 素材清单。每一项的许可证以 license 字段为准，不受仓库代码许可证约束。changes 记录我们对原作做了哪些修改（CC BY 4.0 要求注明）。",
+  "assets": [
+    {
+      "id": "polyhaven/ArmChair_01",
+      "source": "Poly Haven",
+      "title": "Arm Chair 01",
+      "zh": "维多利亚雕花扶手椅",
+      "authors": [
+        "Kirill Sannikov"
+      ],
+      "url": "https://polyhaven.com/a/ArmChair_01",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "fetch": {
+        "polyhaven": "ArmChair_01",
+        "res": "1k",
+        "format": "gltf"
+      },
+      "changes": [
+        "用于塔楼场景（?scene=tower）",
+        "颜色贴图缩小到 1024×1024；去掉法线、粗糙度、金属度贴图（统一改成不反光的漫反射，光照烘焙进光照贴图）",
+        "颜色压暗、略降饱和度",
+        "转成 Draco 压缩的 glTF，和房间合并成一个模型"
+      ]
+    },
+    {
+      "id": "polyhaven/brass_candleholders",
+      "source": "Poly Haven",
+      "title": "Brass Candleholders",
+      "zh": "黄铜烛台",
+      "authors": [
+        "Tina"
+      ],
+      "url": "https://polyhaven.com/a/brass_candleholders",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "fetch": {
+        "polyhaven": "brass_candleholders",
+        "res": "1k",
+        "format": "gltf"
+      },
+      "changes": [
+        "用于塔楼场景（?scene=tower）",
+        "减面：41,936 → 13,997 个三角形",
+        "颜色贴图缩小到 512×512；去掉法线、粗糙度、金属度贴图（统一改成不反光的漫反射，光照烘焙进光照贴图）",
+        "去掉金属度后颜色压暗、提高饱和度",
+        "三个烛台分开摆放；烛焰改成网页里实时发光",
+        "转成 Draco 压缩的 glTF，和房间合并成一个模型"
+      ]
+    },
+    {
+      "id": "polyhaven/brass_goblets",
+      "source": "Poly Haven",
+      "title": "Brass Goblets",
+      "zh": "黄铜高脚杯",
+      "authors": [
+        "Tina"
+      ],
+      "url": "https://polyhaven.com/a/brass_goblets",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "fetch": {
+        "polyhaven": "brass_goblets",
+        "res": "1k",
+        "format": "gltf"
+      },
+      "changes": [
+        "用于塔楼场景（?scene=tower）",
+        "减面：9,600 → 4,997 个三角形",
+        "颜色贴图缩小到 512×512；去掉法线、粗糙度、金属度贴图（统一改成不反光的漫反射，光照烘焙进光照贴图）",
+        "去掉金属度后颜色压暗、提高饱和度",
+        "三只高脚杯分开摆放",
+        "转成 Draco 压缩的 glTF，和房间合并成一个模型"
+      ]
+    },
+    {
+      "id": "polyhaven/chess_set",
+      "source": "Poly Haven",
+      "title": "Chess Set",
+      "zh": "国际象棋",
+      "authors": [
+        "Riley Queen"
+      ],
+      "url": "https://polyhaven.com/a/chess_set",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "fetch": {
+        "polyhaven": "chess_set",
+        "res": "1k",
+        "format": "gltf"
+      },
+      "changes": [
+        "用于塔楼场景（?scene=tower）",
+        "减面：76,920 → 15,989 个三角形",
+        "颜色贴图缩小到 512×512；去掉法线、粗糙度、金属度贴图（统一改成不反光的漫反射，光照烘焙进光照贴图）",
+        "棋子摆成开局几步后的局面；两个棋子在网页里来回走",
+        "转成 Draco 压缩的 glTF，和房间合并成一个模型"
+      ]
+    },
+    {
+      "id": "polyhaven/fancy_picture_frame_02",
+      "source": "Poly Haven",
+      "title": "Fancy Picture Frame 02",
+      "zh": "雕花画框 2",
+      "authors": [
+        "Rob Tuytel",
+        "Rico Cilliers"
+      ],
+      "url": "https://polyhaven.com/a/fancy_picture_frame_02",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "fetch": {
+        "polyhaven": "fancy_picture_frame_02",
+        "res": "1k",
+        "format": "gltf"
+      },
+      "changes": [
+        "用于塔楼场景（?scene=tower）",
+        "减面：35,102 → 6,001 个三角形",
+        "颜色贴图缩小到 1024×1024；去掉法线、粗糙度、金属度贴图（统一改成不反光的漫反射，光照烘焙进光照贴图）",
+        "转成 Draco 压缩的 glTF，和房间合并成一个模型"
+      ]
+    },
+    {
+      "id": "polyhaven/gothic_statue",
+      "source": "Poly Haven",
+      "title": "Gothic Statue",
+      "zh": "哥特雕像",
+      "authors": [
+        "Benny Weimer"
+      ],
+      "url": "https://polyhaven.com/a/gothic_statue",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "fetch": {
+        "polyhaven": "gothic_statue",
+        "res": "1k",
+        "format": "gltf"
+      },
+      "changes": [
+        "用于塔楼场景（?scene=tower）",
+        "减面：27,739 → 5,500 个三角形",
+        "颜色贴图缩小到 512×512；去掉法线、粗糙度、金属度贴图（统一改成不反光的漫反射，光照烘焙进光照贴图）",
+        "转成 Draco 压缩的 glTF，和房间合并成一个模型"
+      ]
+    },
+    {
+      "id": "polyhaven/lantern_chandelier_01",
+      "source": "Poly Haven",
+      "title": "Lantern Chandelier 01",
+      "zh": "维多利亚吊灯式提灯",
+      "authors": [
+        "Kirill Sannikov"
+      ],
+      "url": "https://polyhaven.com/a/lantern_chandelier_01",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "fetch": {
+        "polyhaven": "lantern_chandelier_01",
+        "res": "1k",
+        "format": "gltf"
+      },
+      "changes": [
+        "用于塔楼场景（?scene=tower）",
+        "颜色贴图缩小到 512×512；去掉法线、粗糙度、金属度贴图（统一改成不反光的漫反射，光照烘焙进光照贴图）",
+        "去掉金属度后颜色压暗、提高饱和度",
+        "灯泡部分改成网页里实时发光，玻璃改成半透明",
+        "转成 Draco 压缩的 glTF，和房间合并成一个模型"
+      ]
+    },
+    {
+      "id": "polyhaven/potted_plant_02",
+      "source": "Poly Haven",
+      "title": "Potted Plant 02",
+      "zh": "大盆绿植",
+      "authors": [
+        "Rico Cilliers"
+      ],
+      "url": "https://polyhaven.com/a/potted_plant_02",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "fetch": {
+        "polyhaven": "potted_plant_02",
+        "res": "1k",
+        "format": "gltf"
+      },
+      "changes": [
+        "用于塔楼场景（?scene=tower）",
+        "减面：69,806 → 8,998 个三角形",
+        "颜色贴图缩小到 512×512；去掉法线、粗糙度、金属度贴图（统一改成不反光的漫反射，光照烘焙进光照贴图）",
+        "颜色压暗、降低饱和度",
+        "转成 Draco 压缩的 glTF，和房间合并成一个模型"
+      ]
+    },
+    {
+      "id": "polyhaven/tea_set_01",
+      "source": "Poly Haven",
+      "title": "Tea Set 01",
+      "zh": "维多利亚茶具",
+      "authors": [
+        "James Ray Cock",
+        "Rico Cilliers",
+        "Jurita Burger"
+      ],
+      "url": "https://polyhaven.com/a/tea_set_01",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "fetch": {
+        "polyhaven": "tea_set_01",
+        "res": "1k",
+        "format": "gltf"
+      },
+      "changes": [
+        "用于塔楼场景（?scene=tower）",
+        "减面：40,296 → 8,989 个三角形",
+        "颜色贴图缩小到 512×512；去掉法线、粗糙度、金属度贴图（统一改成不反光的漫反射，光照烘焙进光照贴图）",
+        "只用了茶壶（带盖）、小杯和杯碟",
+        "转成 Draco 压缩的 glTF，和房间合并成一个模型"
+      ]
+    },
+    {
+      "id": "polyhaven/throw_pillows_01",
+      "source": "Poly Haven",
+      "title": "Throw Pillows 01",
+      "zh": "靠垫",
+      "authors": [
+        "Serhii Khromov"
+      ],
+      "url": "https://polyhaven.com/a/throw_pillows_01",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "fetch": {
+        "polyhaven": "throw_pillows_01",
+        "res": "1k",
+        "format": "gltf"
+      },
+      "changes": [
+        "用于塔楼场景（?scene=tower）",
+        "颜色贴图缩小到 512×512；去掉法线、粗糙度、金属度贴图（统一改成不反光的漫反射，光照烘焙进光照贴图）",
+        "只用了一只靠垫，缩小到 80%",
+        "转成 Draco 压缩的 glTF，和房间合并成一个模型"
+      ]
+    },
+    {
+      "id": "polyhaven/vintage_cabinet_01",
+      "source": "Poly Haven",
+      "title": "Vintage Cabinet 01",
+      "zh": "复古玻璃柜",
+      "authors": [
+        "Rico Cilliers"
+      ],
+      "url": "https://polyhaven.com/a/vintage_cabinet_01",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "fetch": {
+        "polyhaven": "vintage_cabinet_01",
+        "res": "1k",
+        "format": "gltf"
+      },
+      "changes": [
+        "用于塔楼场景（?scene=tower）",
+        "减面：61,096 → 15,993 个三角形",
+        "颜色贴图缩小到 1024×1024；去掉法线、粗糙度、金属度贴图（统一改成不反光的漫反射，光照烘焙进光照贴图）",
+        "玻璃改成半透明",
+        "转成 Draco 压缩的 glTF，和房间合并成一个模型"
+      ]
+    },
+    {
+      "id": "polyhaven/wooden_candlestick",
+      "source": "Poly Haven",
+      "title": "Wooden Candlestick",
+      "zh": "木烛台",
+      "authors": [
+        "Josh Dean"
+      ],
+      "url": "https://polyhaven.com/a/wooden_candlestick",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "fetch": {
+        "polyhaven": "wooden_candlestick",
+        "res": "1k",
+        "format": "gltf"
+      },
+      "changes": [
+        "用于塔楼场景（?scene=tower）",
+        "减面：212,992 → 3,500 个三角形",
+        "颜色贴图缩小到 512×512；去掉法线、粗糙度、金属度贴图（统一改成不反光的漫反射，光照烘焙进光照贴图）",
+        "转成 Draco 压缩的 glTF，和房间合并成一个模型"
+      ]
+    },
+    {
+      "id": "polyhaven/medieval_red_brick",
+      "source": "Poly Haven",
+      "title": "Medieval Red Brick",
+      "zh": "中世纪红砖",
+      "authors": [
+        "Rob Tuytel"
+      ],
+      "url": "https://polyhaven.com/a/medieval_red_brick",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "fetch": {
+        "polyhaven": "medieval_red_brick",
+        "res": "1k",
+        "maps": [
+          "Diffuse",
+          "nor_gl"
+        ],
+        "format": "jpg"
+      },
+      "changes": [
+        "用于塔楼场景（?scene=tower）的壁炉",
+        "只用了颜色贴图，缩小到 512×512",
+        "转成 Draco 压缩的 glTF，和房间合并成一个模型"
+      ]
+    },
+    {
+      "id": "polyhaven/stone_wall_04",
+      "source": "Poly Haven",
+      "title": "Stone Wall 04",
+      "zh": "石墙",
+      "authors": [
+        "Amal Kumar"
+      ],
+      "url": "https://polyhaven.com/a/stone_wall_04",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "fetch": {
+        "polyhaven": "stone_wall_04",
+        "res": "1k",
+        "maps": [
+          "Diffuse",
+          "nor_gl"
+        ],
+        "format": "jpg"
+      },
+      "changes": [
+        "用于塔楼场景（?scene=tower）的墙面",
+        "只用了颜色贴图，缩小到 768×768",
+        "转成 Draco 压缩的 glTF，和房间合并成一个模型"
+      ]
+    },
+    {
+      "id": "sketchfab/font-st-pauls-broadwell",
+      "source": "Sketchfab",
+      "title": "Font - St Pauls, Broadwell",
+      "zh": "布罗德韦尔圣保罗教堂的石头洗礼盆（15 世纪初，实拍扫描）",
+      "authors": [
+        "Laurence"
+      ],
+      "authorUrl": "https://sketchfab.com/laurencewilcox",
+      "url": "https://sketchfab.com/3d-models/font-st-pauls-broadwell-0e81a7d6607d4929bc559c28b221b2e8",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "0e81a7d6607d4929bc559c28b221b2e8",
+        "format": "glb",
+        "manual": true
+      },
+      "changes": [
+        "用于塔楼场景（?scene=tower），作为屋子正中的石盆（作品）",
+        "去掉扫描带着的一块教堂地面",
+        "水平方向放大到 1.2 倍，整体缩放到盆高 0.95 米，放在新加的两级八角石台上",
+        "原来是不受光的 unlit 材质：改成不反光的漫反射，只保留颜色贴图，从 8192×8192 缩小到 2048×2048",
+        "盆里加了浏览器绘制的水面，盆沿上加了四个放水晶的小托架",
+        "转成 Draco 压缩的 glTF，和塔楼合并成一个模型，光照烘焙进光照贴图"
+      ]
+    },
+    {
+      "id": "sketchfab/mermaid-potion",
+      "source": "Sketchfab",
+      "title": "Mermaid Potion",
+      "zh": "药水瓶",
+      "authors": [
+        "Sharon Kunne"
+      ],
+      "authorUrl": "https://sketchfab.com/sharonkunne",
+      "url": "https://sketchfab.com/3d-models/mermaid-potion-2363db11631045dea8f84c8421578002",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "2363db11631045dea8f84c8421578002",
+        "format": "gltf",
+        "manual": true
+      },
+      "changes": []
+    },
+    {
+      "id": "sketchfab/basic-bottle",
+      "source": "Sketchfab",
+      "title": "Basic Bottle",
+      "zh": "圆药水瓶",
+      "authors": [
+        "Blender3D"
+      ],
+      "authorUrl": "https://sketchfab.com/Blender3D",
+      "url": "https://sketchfab.com/3d-models/basic-bottle-b2d9a692c15e4ad980c384fe2d6a8f8c",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "b2d9a692c15e4ad980c384fe2d6a8f8c",
+        "format": "gltf",
+        "manual": true
+      },
+      "changes": []
+    },
+    {
+      "id": "sketchfab/hourglass",
+      "source": "Sketchfab",
+      "title": "Hourglass",
+      "zh": "沙漏",
+      "authors": [
+        "• Less •"
+      ],
+      "authorUrl": "https://sketchfab.com/lessart",
+      "url": "https://sketchfab.com/3d-models/hourglass-a453e90d47b74260b5e5ccd5a965fe3e",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "a453e90d47b74260b5e5ccd5a965fe3e",
+        "format": "gltf",
+        "manual": true
+      },
+      "changes": []
+    },
+    {
+      "id": "sketchfab/6-medieval-fantasy-study-props",
+      "source": "Sketchfab",
+      "title": "6 Medieval Fantasy Study Props",
+      "zh": "书房道具包：烛架、地球仪、天平、烛台、带锁的书、沙漏",
+      "authors": [
+        "Alexander Patterson"
+      ],
+      "authorUrl": "https://sketchfab.com/adpatt",
+      "url": "https://sketchfab.com/3d-models/6-medieval-fantasy-study-props-3aaefdd3ea0f4b31954ce74a2142b92b",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "3aaefdd3ea0f4b31954ce74a2142b92b",
+        "format": "gltf",
+        "manual": true
+      },
+      "changes": []
+    },
+    {
+      "id": "sketchfab/skull-downloadable",
+      "source": "Sketchfab",
+      "title": "Skull downloadable",
+      "zh": "头骨",
+      "authors": [
+        "martinjario"
+      ],
+      "authorUrl": "https://sketchfab.com/martinjario",
+      "url": "https://sketchfab.com/3d-models/skull-downloadable-1a9db900738d44298b0bc59f68123393",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "1a9db900738d44298b0bc59f68123393",
+        "format": "gltf",
+        "manual": true
+      },
+      "changes": []
+    },
+    {
+      "id": "sketchfab/inkwell-glass-with-quill-pen-victorian-style",
+      "source": "Sketchfab",
+      "title": "Inkwell glass with quill pen Victorian style",
+      "zh": "羽毛笔和玻璃墨水瓶",
+      "authors": [
+        "Rylae Shylna"
+      ],
+      "authorUrl": "https://sketchfab.com/risteralline",
+      "url": "https://sketchfab.com/3d-models/inkwell-glass-with-quill-pen-victorian-style-64812fa9b17248e0aacb1800a278972b",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "64812fa9b17248e0aacb1800a278972b",
+        "format": "gltf",
+        "manual": true
+      },
+      "changes": []
+    },
+    {
+      "id": "sketchfab/quill-parchment-inkwell-objects",
+      "source": "Sketchfab",
+      "title": "Quill, Parchment & Inkwell Objects",
+      "zh": "羽毛笔、羊皮纸和墨水瓶",
+      "authors": [
+        "Kade.Wolfe"
+      ],
+      "authorUrl": "https://sketchfab.com/Kade.Wolfe",
+      "url": "https://sketchfab.com/3d-models/quill-parchment-inkwell-objects-8216aa35fc924b12babdd9195cacc354",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "8216aa35fc924b12babdd9195cacc354",
+        "format": "gltf",
+        "manual": true
+      },
+      "changes": []
+    },
+    {
+      "id": "sketchfab/scroll",
+      "source": "Sketchfab",
+      "title": "Scroll",
+      "zh": "带火漆印的卷轴",
+      "authors": [
+        "FlukierJupiter"
+      ],
+      "authorUrl": "https://sketchfab.com/FlukierJupiter",
+      "url": "https://sketchfab.com/3d-models/scroll-7450e494eb654e9b937bb52724220e77",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "7450e494eb654e9b937bb52724220e77",
+        "format": "gltf",
+        "manual": true
+      },
+      "changes": []
+    },
+    {
+      "id": "sketchfab/armillary-sphere",
+      "source": "Sketchfab",
+      "title": "Armillary sphere",
+      "zh": "浑天仪",
+      "authors": [
+        "KRei"
+      ],
+      "authorUrl": "https://sketchfab.com/krei1012",
+      "url": "https://sketchfab.com/3d-models/armillary-sphere-534e240ac6b0412cb526dd2b14bf8909",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "534e240ac6b0412cb526dd2b14bf8909",
+        "format": "gltf",
+        "manual": true
+      },
+      "changes": []
+    },
+    {
+      "id": "sketchfab/old-pc",
+      "source": "Sketchfab",
+      "title": "Old PC",
+      "zh": "米色老式台式电脑",
+      "authors": [
+        "LiliumLetifer"
+      ],
+      "authorUrl": "https://sketchfab.com/LiliumLetifer",
+      "url": "https://sketchfab.com/3d-models/old-pc-5aa0b296714b4347ac796c0774653cf4",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "5aa0b296714b4347ac796c0774653cf4",
+        "format": "glb",
+        "textureMaxResolution": 4096,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间书桌上的电脑：放大到 1.1 倍摆在书桌正中；去掉从机身里长出来的草叶；鼠标拆出来缩小、挪到键盘右边，原来的鼠标线删掉、重新拉了一根；贴图缩到 2048 px、只保留底色贴图，污渍减淡；屏幕玻璃改成深色，上面叠网页画的实时画面；前面加了自己搭的键盘和键盘线；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "sketchfab/retro-crt-tv",
+      "source": "Sketchfab",
+      "title": "Retro CRT TV",
+      "zh": "复古 CRT 电视",
+      "authors": [
+        "meipal"
+      ],
+      "authorUrl": "https://sketchfab.com/ashabbugaev12",
+      "url": "https://sketchfab.com/3d-models/retro-crt-tv-6bc462b233ce4c78904dfcadf5123e29",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "6bc462b233ce4c78904dfcadf5123e29",
+        "format": "glb",
+        "textureMaxResolution": 2048,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间录像机上的电视：缩放摆放；去掉一个部件；贴图缩到 1024 px、只保留底色贴图；屏幕玻璃改成深色，上面叠网页画的实时画面；加了两根天线；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "sketchfab/cassette-tapes",
+      "source": "Sketchfab",
+      "title": "Cassette tapes",
+      "zh": "一叠磁带",
+      "authors": [
+        "FEDDYFAZBARE"
+      ],
+      "authorUrl": "https://sketchfab.com/FEDDYFAZBARE",
+      "url": "https://sketchfab.com/3d-models/cassette-tapes-820777808625494581401700ccc3e7f7",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "820777808625494581401700ccc3e7f7",
+        "format": "glb",
+        "textureMaxResolution": 1024,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间书架上的三盘磁带：只用了外壳不透明的三盘（Object_8、Object_11、Object_14），拆开单独摆放；减面到约 30%；贴图缩到 512 px、只保留底色贴图；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "sketchfab/vhs",
+      "source": "Sketchfab",
+      "title": "VHS",
+      "zh": "录像带",
+      "authors": [
+        "Ilgis (Dolgov) Fatykhov"
+      ],
+      "authorUrl": "https://sketchfab.com/Dolgov12",
+      "url": "https://sketchfab.com/3d-models/vhs-15ff40eeb9a14a67abf76e2791527a19",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "15ff40eeb9a14a67abf76e2791527a19",
+        "format": "glb",
+        "textureMaxResolution": 1024,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间书桌上的录像带架：只用了单独放着的那一盘带子（转正、减面到约 50%，四盘共用同一份贴图）和尺寸正好的那个纸盒；纸盒重新排了 UV、原来的电影封面换成网页里画的作品包装；贴图只保留底色贴图；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "sketchfab/retro-camera",
+      "source": "Sketchfab",
+      "title": "Retro Camera",
+      "zh": "复古相机",
+      "authors": [
+        "Tom Seddon"
+      ],
+      "authorUrl": "https://sketchfab.com/bloodmeat08",
+      "url": "https://sketchfab.com/3d-models/retro-camera-ac8af9a9330346d2a1b1436476bd9010",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "ac8af9a9330346d2a1b1436476bd9010",
+        "format": "glb",
+        "textureMaxResolution": 1024,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间书架上的 8 毫米摄影机：缩放摆放；贴图缩到 512 px、只保留底色贴图（去掉透明通道）；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "sketchfab/coffee-mug-school-project",
+      "source": "Sketchfab",
+      "title": "Coffee Mug (School Project)",
+      "zh": "马克杯",
+      "authors": [
+        "Ole Gunnar Isager"
+      ],
+      "authorUrl": "https://sketchfab.com/FrenchBaguette",
+      "url": "https://sketchfab.com/3d-models/coffee-mug-school-project-5f5ccee1514c440887c072fae8e0d699",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "5f5ccee1514c440887c072fae8e0d699",
+        "format": "glb",
+        "textureMaxResolution": 512,
+        "manual": true
+      },
+      "changes": [
+        "用于怀旧房间（已下载，还没导入）"
+      ]
+    },
+    {
+      "id": "sketchfab/victorian-desk-lamp",
+      "source": "Sketchfab",
+      "title": "Victorian Desk Lamp",
+      "zh": "台灯",
+      "authors": [
+        "Faheem Yusuf"
+      ],
+      "authorUrl": "https://sketchfab.com/FameProductions",
+      "url": "https://sketchfab.com/3d-models/victorian-desk-lamp-11bcb1c2e9264457814bcfdca6860ad8",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "11bcb1c2e9264457814bcfdca6860ad8",
+        "format": "glb",
+        "textureMaxResolution": 1024,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间的书桌台灯：缩放摆放；删掉原来的灯泡，换成发光小球；贴图缩到 512 px、只保留底色贴图；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "sketchfab/yamaha-tt-300-record-player",
+      "source": "Sketchfab",
+      "title": "Yamaha TT-300 Record Player",
+      "zh": "唱机",
+      "authors": [
+        "AleixoAlonso"
+      ],
+      "authorUrl": "https://sketchfab.com/AleixoAlonso",
+      "url": "https://sketchfab.com/3d-models/yamaha-tt-300-record-player-3577a2a1a0c24218bd5d768beccf218e",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "3577a2a1a0c24218bd5d768beccf218e",
+        "format": "glb",
+        "textureMaxResolution": 1024,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间餐边柜上的唱机：缩放摆放；去掉防尘盖；唱臂和机身减面；贴图缩到 1024 px、只保留底色贴图；唱片换成单色几何体；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "sketchfab/antique-wooden-bookcase-game-model",
+      "source": "Sketchfab",
+      "title": "Antique wooden bookcase - Game model",
+      "zh": "老式木书柜",
+      "authors": [
+        "Lorenzo Drago"
+      ],
+      "authorUrl": "https://sketchfab.com/LorenzoDrago",
+      "url": "https://sketchfab.com/3d-models/antique-wooden-bookcase-game-model-75aa9519195647d99cf1e2d4863dbe87",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "75aa9519195647d99cf1e2d4863dbe87",
+        "format": "glb",
+        "textureMaxResolution": 2048,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间左墙的书柜：缩放摆放；贴图缩到 1024 px、只保留底色贴图；层板下加了灯带；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "sketchfab/monstera-deliciosa-potted-mid-century-plant",
+      "source": "Sketchfab",
+      "title": "Monstera Deliciosa Potted Mid-Century plant",
+      "zh": "龟背竹",
+      "authors": [
+        "Giora"
+      ],
+      "authorUrl": "https://sketchfab.com/ChubbyPanda",
+      "url": "https://sketchfab.com/3d-models/monstera-deliciosa-potted-mid-century-plant-1ab9bf841df04c07b1819be596327629",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "1ab9bf841df04c07b1819be596327629",
+        "format": "glb",
+        "textureMaxResolution": 1024,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间左后角的落地龟背竹：缩放摆放；气根减面到约 50%；贴图缩到 512 px、只保留底色贴图（叶片留着透明通道，网页里镂空）；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "sketchfab/free-pothos-potted-plant-money-plant",
+      "source": "Sketchfab",
+      "title": "[FREE] Pothos Potted Plant - Money Plant",
+      "zh": "绿萝",
+      "authors": [
+        "AllQuad"
+      ],
+      "authorUrl": "https://sketchfab.com/AllQuad",
+      "url": "https://sketchfab.com/3d-models/free-pothos-potted-plant-money-plant-e9832f38484f4f85b3f9081b51fa3799",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "e9832f38484f4f85b3f9081b51fa3799",
+        "format": "glb",
+        "textureMaxResolution": 1024,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间餐边柜上的绿萝：缩放摆放；花盆和木脚减面到约 40%；贴图缩到 512 px、只保留底色贴图（叶片留着透明通道，网页里镂空）；烘焙进房间光照。书架上另摆了一份，只用叶子（缩小到 80%），配一个自己搭的陶土盆"
+      ]
+    },
+    {
+      "id": "sketchfab/optimized-potted-plants",
+      "source": "Sketchfab",
+      "title": "Optimized Potted Plants",
+      "zh": "小盆栽一组",
+      "authors": [
+        "Nicholas-3D"
+      ],
+      "authorUrl": "https://sketchfab.com/Nicholas01",
+      "url": "https://sketchfab.com/3d-models/optimized-potted-plants-967b4bf23fac4098993776fcfc2d3318",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "967b4bf23fac4098993776fcfc2d3318",
+        "format": "glb",
+        "textureMaxResolution": 1024,
+        "manual": true
+      },
+      "changes": [
+        "为怀旧房间下载过，比较以后没有采用（场景里没有用到）"
+      ]
+    },
+    {
+      "id": "sketchfab/free-dyspis-lutescens-potted-palm",
+      "source": "Sketchfab",
+      "title": "[FREE] Dyspis Lutescens - Potted Palm",
+      "zh": "散尾葵",
+      "authors": [
+        "AllQuad"
+      ],
+      "authorUrl": "https://sketchfab.com/AllQuad",
+      "url": "https://sketchfab.com/3d-models/free-dyspis-lutescens-potted-palm-92f75abd656049608248cf76a8c88136",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "92f75abd656049608248cf76a8c88136",
+        "format": "glb",
+        "textureMaxResolution": 1024,
+        "manual": true
+      },
+      "changes": [
+        "为怀旧房间下载过，比较以后没有采用（场景里没有用到）"
+      ]
+    },
+    {
+      "id": "sketchfab/snake-plant-scan-lowpoly",
+      "source": "Sketchfab",
+      "title": "Snake plant scan LOWPOLY",
+      "zh": "虎尾兰",
+      "authors": [
+        "sixonetwo"
+      ],
+      "authorUrl": "https://sketchfab.com/evan4129",
+      "url": "https://sketchfab.com/3d-models/snake-plant-scan-lowpoly-6f136e24e4184f758aeb8ef376099e2a",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "6f136e24e4184f758aeb8ef376099e2a",
+        "format": "glb",
+        "textureMaxResolution": 1024,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间书桌右端的虎尾兰：缩放摆放；贴图缩到 512 px、只保留底色贴图；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "sketchfab/wall-calendar-tear-off-with-wind-blowing",
+      "source": "Sketchfab",
+      "title": "Wall Calendar / Tear off , with wind blowing",
+      "zh": "撕页日历",
+      "authors": [
+        "gokulsanjeevan"
+      ],
+      "authorUrl": "https://sketchfab.com/gokulsanjeevan",
+      "url": "https://sketchfab.com/3d-models/wall-calendar-tear-off-with-wind-blowing-1cfb64b810d14c089e6a0480a8bbb58a",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "1cfb64b810d14c089e6a0480a8bbb58a",
+        "format": "glb",
+        "textureMaxResolution": 512,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间窗边的撕页日历：缩放摆放；被风吹卷的纸页铺平（下角稍微翘起）；日历本改成深红色；纸页在网页里换成按当天日期画的画面；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "sketchfab/cork-board",
+      "source": "Sketchfab",
+      "title": "Cork Board",
+      "zh": "软木板",
+      "authors": [
+        "rickmaolly"
+      ],
+      "authorUrl": "https://sketchfab.com/rickmaolly",
+      "url": "https://sketchfab.com/3d-models/cork-board-9534ee2ad4344ea6b02b95b61bd4a913",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "9534ee2ad4344ea6b02b95b61bd4a913",
+        "format": "glb",
+        "textureMaxResolution": 1024,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间右墙的软木板：缩放摆放；减面到约 12%；贴图缩到 1024 px、只保留底色贴图；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "sketchfab/persian-rug",
+      "source": "Sketchfab",
+      "title": "Persian Rug",
+      "zh": "波斯地毯",
+      "authors": [
+        "Nicholas Record"
+      ],
+      "authorUrl": "https://sketchfab.com/nrecord",
+      "url": "https://sketchfab.com/3d-models/persian-rug-fe13eecfc9b8405dab1fe76c5dd28a4c",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "fe13eecfc9b8405dab1fe76c5dd28a4c",
+        "format": "glb",
+        "textureMaxResolution": 1024,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间的地毯：缩放摆放；贴图缩到 1024 px、只保留底色贴图；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "polyhaven/stationery_supplies",
+      "source": "Poly Haven",
+      "title": "Stationery Supplies",
+      "zh": "文具一组",
+      "authors": [
+        "Mateusz Sadek"
+      ],
+      "url": "https://polyhaven.com/a/stationery_supplies",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "fetch": {
+        "polyhaven": "stationery_supplies",
+        "res": "1k",
+        "format": "gltf"
+      },
+      "changes": [
+        "用于怀旧房间（已下载，还没导入）"
+      ]
+    },
+    {
+      "id": "polyhaven/potted_plant_04",
+      "source": "Poly Haven",
+      "title": "Potted Plant 04",
+      "zh": "小仙人掌",
+      "authors": [
+        "James Ray Cock"
+      ],
+      "url": "https://polyhaven.com/a/potted_plant_04",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "fetch": {
+        "polyhaven": "potted_plant_04",
+        "res": "1k",
+        "format": "gltf"
+      },
+      "changes": [
+        "怀旧房间窗台上的小盆多肉：缩放摆放；减面到约 30%；贴图缩到 512 px、只保留底色贴图；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "polyhaven/fern_02",
+      "source": "Poly Haven",
+      "title": "Fern 02",
+      "zh": "蕨",
+      "authors": [
+        "Rob Tuytel",
+        "Rico Cilliers"
+      ],
+      "url": "https://polyhaven.com/a/fern_02",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "fetch": {
+        "polyhaven": "fern_02",
+        "res": "1k",
+        "format": "gltf"
+      },
+      "changes": [
+        "为怀旧房间下载过，比较以后没有采用（场景里没有用到）"
+      ]
+    },
+    {
+      "id": "polyhaven/GreenChair_01",
+      "source": "Poly Haven",
+      "title": "Green Chair 01",
+      "zh": "绿色软包椅",
+      "authors": [
+        "Kirill Sannikov"
+      ],
+      "url": "https://polyhaven.com/a/GreenChair_01",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "fetch": {
+        "polyhaven": "GreenChair_01",
+        "res": "1k",
+        "format": "gltf"
+      },
+      "changes": [
+        "怀旧房间右前方的扶手椅：摆放；贴图缩到 512 px、只保留底色贴图；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "polyhaven/hanging_picture_frame_02",
+      "source": "Poly Haven",
+      "title": "Hanging Picture Frame 02",
+      "zh": "木画框",
+      "authors": [
+        "James Ray Cock"
+      ],
+      "url": "https://polyhaven.com/a/hanging_picture_frame_02",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "fetch": {
+        "polyhaven": "hanging_picture_frame_02",
+        "res": "1k",
+        "format": "gltf"
+      },
+      "changes": [
+        "怀旧房间右墙的挂画：缩放摆放；去掉玻璃；贴图缩到 1024 px、只保留底色贴图；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "sketchfab/wooden-bookcase",
+      "source": "Sketchfab",
+      "title": "Wooden bookcase",
+      "zh": "雕花木书柜",
+      "authors": [
+        "stanislau.see"
+      ],
+      "authorUrl": "https://sketchfab.com/stanislau.see",
+      "url": "https://sketchfab.com/3d-models/wooden-bookcase-e7ad8f190f1a4b15ad63572dd8dcf335",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "e7ad8f190f1a4b15ad63572dd8dcf335",
+        "format": "glb",
+        "textureMaxResolution": 4096,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间书桌左边的书柜：缩放到 0.85 倍（2.32 米高）靠后墙摆放；贴图缩到 2048 px、只保留底色贴图；格子里摆上旧书、自己搭的真书和摆件；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "sketchfab/elegan-old-book-pack",
+      "source": "Sketchfab",
+      "title": "Elegan old book pack",
+      "zh": "一套精装旧书",
+      "authors": [
+        "3D_for_everyone"
+      ],
+      "authorUrl": "https://sketchfab.com/boglarka4",
+      "url": "https://sketchfab.com/3d-models/elegan-old-book-pack-4cc9ecf0531b463dada8262851ca87f8",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "4cc9ecf0531b463dada8262851ca87f8",
+        "format": "glb",
+        "textureMaxResolution": 2048,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间书柜里的书：挑了其中几排和几本单本，缩到 0.82 倍，有的立着、有的横着摞；贴图缩到 512 px、只保留底色贴图；烘焙进房间光照"
+      ]
+    }
+  ],
+  "excluded": [
+    {
+      "title": "Old Map 3D Model",
+      "authors": [
+        "Johana-PS"
+      ],
+      "source": "Sketchfab",
+      "url": "https://sketchfab.com/3d-models/old-map-3d-model-c8f056e093f74be99b2e83034099c40a",
+      "reason": "模型标的是 CC BY 4.0，但作者说明里写了纸面贴图来自 photoshopsupply.com 和 textures4photoshop.com，这两张图不归作者所有，不能跟着模型一起再分发。"
+    },
+    {
+      "title": "Retro computer",
+      "authors": [
+        "Urpo"
+      ],
+      "source": "Sketchfab",
+      "url": "https://sketchfab.com/3d-models/retro-computer-f844c0357d284fd8baa1435e9ff31bb2",
+      "reason": "以前书桌上用的电脑（CC BY 4.0）。显像管四角圆、边框厚，屏幕上能放的字太少，换成了 Old PC。"
+    }
+  ]
+}

@@ -1,0 +1,209 @@
+<!--
+  真实简历（这个文件夹不进 Git：电话、邮箱、照片、PDF 都只在本地和自己的网站上用）。
+  网页启动时 js/main.js 读这个文件，把里面的 .cv-page 换进 index.html 的 #resume；没有这个文件就用 index.html 里的样例。
+  写法和 index.html #resume 里的样例一样：每个 article.cv-page 是一张 A4，lang 标语言，data-label 是切换按钮上的字，
+  data-pdf 是这种语言的 PDF（下载按钮）。内容来自 简历 1109 版（中文 1 页，英文 2 页）。
+-->
+<article class="cv-page" lang="zh-CN" data-label="中文" data-pdf="assets/resume/resume-zh.pdf">
+  <div class="cv-side">
+    <img class="cv-photo" src="assets/resume/photo.jpg" alt="徐一鸣的照片">
+    <h3 class="cv-name">徐一鸣</h3>
+    <dl class="cv-kv">
+      <dt>电话</dt><dd><a href="tel:+8613512926501">13512926501</a></dd>
+      <dt>邮箱</dt><dd><a href="mailto:1279911501@qq.com">1279911501@qq.com</a></dd>
+      <dt>英语</dt><dd>CET-4 / CET-6</dd>
+    </dl>
+    <h4>个人背景</h4>
+    <p>大连理工大学</p>
+    <p>2023.09 - 至今　软件工程本科在读</p>
+    <p>研究方向　<b>多模态、智能体系统</b>以及计算机视觉</p>
+    <p>GPA　<b>85.8</b>　　rank　<b>20/120</b></p>
+    <h4>获奖经历</h4>
+    <ul class="cv-awards">
+      <li><b>第十九届全国大学生软件创新大赛</b><span>东北赛区二等奖<time>2026</time></span></li>
+      <li><b>中国大学生计算机设计大赛（4C）辽宁省赛区</b><span>二等奖、三等奖若干<time>2026</time></span></li>
+      <li><b>中国大学生计算机设计大赛（4C）</b><span>校级二等奖<time>2026</time></span></li>
+      <li><b>美国大学生数学建模竞赛（MCM/ICM）</b><span>Meritorious Winner<time>2025</time></span></li>
+      <li><b>中国大学生数字媒体科技作品及创意竞赛</b><span>国家级三等奖<time>2025</time></span></li>
+      <li><b>亚太地区大学生数学建模竞赛</b><span>二等奖<time>2025</time></span></li>
+      <li><b>“CSEE 杯”全国大学生电工数学建模竞赛</b><span>二等奖<time>2024</time></span></li>
+      <li><b>亚太地区大学生数学建模竞赛</b><span>三等奖<time>2024</time></span></li>
+    </ul>
+    <h4>相关技能</h4>
+    <dl class="cv-skills">
+      <dt>编程</dt><dd>Python、C++、Pytorch</dd>
+      <dt>多模态</dt><dd>提示词微调、I2V、T2V</dd>
+      <dt>智能体</dt><dd>LangChain、RAG、向量检索、Tools calling、Skills</dd>
+      <dt>CV</dt><dd>3D 视觉、Gaussian Splatting、图像增强</dd>
+      <dt>语言</dt><dd>英语 CET-4 / CET-6</dd>
+    </dl>
+    <h4>校园经历</h4>
+    <ul class="cv-roles">
+      <li>软件学院学生会主席</li>
+      <li>校学生代表大会常任代表</li>
+      <li>阳光心理与健康协会会长</li>
+      <li>团员代表大会代表</li>
+    </ul>
+  </div>
+  <div class="cv-main">
+    <h4>实习经历</h4>
+    <div class="cv-item">
+      <div class="cv-head"><b>美团 · 财税技术研发实习生</b><time>2026.01 - 2026.03</time></div>
+      <ul>
+        <li>基于 LangChain、向量检索与文档分块构建税务领域 <b>RAG 智能体</b>，检索准确率达 <b>85%+</b>。</li>
+        <li>参与 MCP + Skills 的 SOP 自动化流程，实现登录、页面识别与表单填写等工具调用链。</li>
+        <li>处理并整理 <b>10,000+</b> 份税务及法规文档，迭代检索链路以提升知识覆盖与回答质量。</li>
+        <li>参与任务型智能体工作流设计与优化，聚焦任务拆解、工具编排和执行流程。</li>
+      </ul>
+    </div>
+    <div class="cv-item">
+      <div class="cv-head"><b>清闲智能 Libernovo · 大模型实习生</b><time>2026.10 - 2026.11</time></div>
+      <ul>
+        <li>面向<b>双机械臂、智能桌与智能椅</b>的多设备控制场景，在小模型能力与上下文受限的条件下，优化 <b>Embodied Agent</b> 的工具调用与任务执行能力。</li>
+        <li>设计 <b>Agent–Tools 执行流水线</b>，串联任务拆解、工具编排与真机执行，支撑模型调用多类设备，并基于执行反馈迭代优化实验流程。</li>
+        <li>基于流水线开展<b>真机数据采集与失败归因</b>，将执行轨迹及归因结论转化为训练样本，累计构建 <b>6,804 条数据</b>，形成采集、分析与数据构建闭环。</li>
+        <li>结合 <b>SFT、DPO 与 RL</b> 开展小模型微调与策略优化，打通数据采集到模型训练的迭代流程，将任务执行正确率从 <b>18.6% 提升至 78.4%</b>（<b>+59.8 个百分点</b>）。</li>
+      </ul>
+    </div>
+    <h4>科研经历</h4>
+    <div class="cv-item">
+      <div class="cv-head"><b>GS-UVCE: 水下视觉增强与三维重建</b><time>2026</time></div>
+      <p class="cv-sub">IEEE ICRA 2026 (CCF-B) Accepted</p>
+      <ul>
+        <li>面向水下散射、光衰减及非均匀光照造成的色偏、低照度和多视角不一致问题，基于 3D Gaussian Splatting 构建端到端框架，联合建模水介质、视角相关光照与场景深度，实现无监督视觉增强和高保真三维重建。</li>
+        <li>参与 <b>Light-MLP 与增强目标设计</b>，将视角相关光照建模为射线方向函数，并通过动态 Gamma 校正增强物体颜色表示，改善不同视角下的亮度、色彩一致性及弱光细节恢复。</li>
+        <li>参与曝光、后向散射及深度约束等损失函数的设计；<b>围绕 Light-MLP、Medium-MLP 和深度正则化设计并分析 9 组消融实验</b>，量化不同模块对视觉增强与三维重建质量的贡献。</li>
+        <li>在 SeaThru-NeRF 四个水下场景上，相较原始 3DGS 实现约 <b>9.6-12.9 dB PSNR 提升</b>，渲染速度达到 <b>190.3 FPS</b>。</li>
+      </ul>
+    </div>
+    <div class="cv-item">
+      <div class="cv-head"><b>AdapI2V：面向图生视频的自适应多智能体迭代优化</b><time>2026</time></div>
+      <p class="cv-sub">香港中文大学（深圳）卓越本科生夏令营｜目标投稿 <i>CVPR 2027</i></p>
+      <ul>
+        <li>针对图生视频在复杂指令下<b>动作遗漏、顺序错乱与跨段不连贯</b>的问题，在不训练底层模型、限制生成预算的条件下，提升多动作指令完成度与视频连贯性。</li>
+        <li>设计<b>规划、验证与修复 Agent 协同框架</b>，将指令解析为动作事件图，<b>自适应确定分段</b>数量与阶段目标，并以末帧状态传递衔接后续生成，保持动作顺序与跨段连续性。</li>
+        <li>构建<b>七维 28 项结构化评估与定向提示修复</b>，定位动作、状态及连续性失败；在单次有效执行最多 5 次生成调用内分配重试预算，并通过原始候选回退保障整段质量。</li>
+        <li>在改编评测集 TIP300 / WMB350 共 <b>650 例</b>上，Global28QA 评分较 VPO + BoN5 提升 <b>15.45 / 5.22 分</b>；较五候选采样，有效执行的生成帧数减少 <b>49.7% / 53.7%</b>。</li>
+      </ul>
+    </div>
+    <h4>项目经历</h4>
+    <div class="cv-item">
+      <div class="cv-head"><b>仿真驱动的多模态数据采集与处理平台</b><time>2025–2026</time></div>
+      <p class="cv-sub">国家级大学生创新创业训练计划项目｜软件著作权 <i>1</i> 项</p>
+      <ul>
+        <li>面向仿真环境中多传感器数据难以统一采集、管理与复用的问题，基于 <b>CARLA、Gazebo 与 ROS2</b> 搭建多模态数据采集平台，为下游感知模型训练提供可回放、可校验的数据支持。</li>
+        <li>开发 Python 数据处理工具，完成 <b>ROS2 Bag 解析、传感器数据组织、格式转换及基础质量检查</b>，形成从仿真采集到数据预处理的处理流程。</li>
+        <li>完成 <b>CARLA–ROS2 接口集成、数据录制与回放验证</b>，参与异常排查和流程规范化，推动相关工具形成软件著作权成果。</li>
+      </ul>
+    </div>
+    <h4>其他荣誉</h4>
+    <p>2024–2025 学年：<b>社会工作奖学金、科技创新奖学金、社会实践奖学金、精神文明奖学金</b></p>
+    <p>2023–2024 学年：<b>社会实践奖学金</b></p>
+  </div>
+</article>
+
+<article class="cv-page" lang="en" data-label="English" data-pdf="assets/resume/resume-en.pdf">
+  <div class="cv-side">
+    <img class="cv-photo" src="assets/resume/photo.jpg" alt="Photo of Yiming Xu">
+    <h3 class="cv-name">Yiming Xu</h3>
+    <dl class="cv-kv">
+      <dt>Phone</dt><dd><a href="tel:+8613512926501">13512926501</a></dd>
+      <dt>Email</dt><dd><a href="mailto:1279911501@qq.com">1279911501@qq.com</a></dd>
+      <dt>English</dt><dd>CET-4 / CET-6</dd>
+    </dl>
+    <h4>Profile</h4>
+    <p>Dalian University of Technology</p>
+    <p>B.Eng. in Software Engineering, 2023.09 – Present</p>
+    <p>Research interests: <b>multimodal learning, agent systems</b>, and computer vision</p>
+    <p>GPA: <b>85.8</b>　Rank: <b>20/120</b></p>
+    <h4>Awards</h4>
+    <ul class="cv-awards">
+      <li><b>19th National Undergraduate Software Innovation Competition</b><span>Second Prize, Northeast Region<time>2026</time></span></li>
+      <li><b>Chinese Collegiate Computing Competition (4C), Liaoning</b><span>Multiple Second / Third Prizes<time>2026</time></span></li>
+      <li><b>Chinese Collegiate Computing Competition (4C)</b><span>Campus Second Prize<time>2026</time></span></li>
+      <li><b>Mathematical Contest in Modeling (MCM/ICM)</b><span>Meritorious Winner<time>2025</time></span></li>
+      <li><b>China Collegiate Digital Media Technology Competition</b><span>National Third Prize<time>2025</time></span></li>
+      <li><b>Asia-Pacific Mathematical Contest in Modeling</b><span>Second Prize<time>2025</time></span></li>
+      <li><b>“CSEE Cup” National Electrical Engineering Math Modeling Competition</b><span>Second Prize<time>2024</time></span></li>
+      <li><b>Asia-Pacific Mathematical Contest in Modeling</b><span>Third Prize<time>2024</time></span></li>
+    </ul>
+  </div>
+  <div class="cv-main">
+    <h4>Internship Experience</h4>
+    <div class="cv-item">
+      <div class="cv-head"><b>Meituan - Tax and Finance R&amp;D Intern</b><time>2026.01 – 2026.03</time></div>
+      <ul>
+        <li>Built a tax-domain <b>RAG agent</b> with LangChain, vector retrieval, and document chunking, achieving <b>85%+</b> retrieval accuracy.</li>
+        <li>Contributed to MCP + Skills SOP automation, implementing tool-call workflows for login, page recognition, and form filling.</li>
+        <li>Processed and organized <b>10,000+</b> tax and regulatory documents, iterating retrieval pipelines to improve knowledge coverage and answer quality.</li>
+        <li>Contributed to task-oriented agent workflow design and optimization, focusing on task decomposition, tool orchestration, and execution.</li>
+      </ul>
+    </div>
+    <div class="cv-item">
+      <div class="cv-head"><b>Libernovo - Large Language Model Intern</b><time>2026.10 – 2026.11</time></div>
+      <ul>
+        <li>Improved <b>Embodied Agent</b> tool use and task execution for <b>dual robotic arms, smart desks, and smart chairs</b>, under constraints on small-model capabilities and context length.</li>
+        <li>Designed an <b>Agent–Tools execution pipeline</b> connecting task decomposition, tool orchestration, and real-device execution across multiple device types, and refined experiments using execution feedback.</li>
+        <li>Collected <b>real-device data and analyzed failure causes</b>, converting execution traces and findings into <b>6,804 training examples</b> through a collection, analysis, and dataset-building loop.</li>
+        <li>Used <b>SFT, DPO, and RL</b> for small-model fine-tuning and policy optimization, connecting data collection to iterative model training and improving task execution accuracy from <b>18.6% to 78.4%</b> (<b>+59.8 percentage points</b>).</li>
+      </ul>
+    </div>
+    <h4>Research Experience</h4>
+    <div class="cv-item">
+      <div class="cv-head"><b>GS-UVCE: Underwater Visual Enhancement and 3D Reconstruction</b><time>2026</time></div>
+      <p class="cv-sub">IEEE ICRA 2026 (CCF-B) Accepted</p>
+      <ul>
+        <li>Built an end-to-end <b>3D Gaussian Splatting</b> framework for color shifts, low-light degradation, and multi-view inconsistency caused by underwater scattering, light attenuation, and non-uniform illumination. Jointly modeled the water medium, view-dependent lighting, and scene depth for unsupervised visual enhancement and high-fidelity 3D reconstruction.</li>
+        <li>Contributed to <b>Light-MLP and enhancement objective design</b>, modeling view-dependent lighting as a ray-direction function and using dynamic Gamma correction to improve object colors, cross-view brightness and color consistency, and low-light detail recovery.</li>
+        <li>Contributed to exposure, backscatter, and depth loss design; <b>designed and analyzed 9 ablation experiments</b> on Light-MLP, Medium-MLP, and depth regularization to quantify their effects on enhancement and reconstruction quality.</li>
+        <li>Achieved approximately <b>9.6–12.9 dB PSNR gains</b> over vanilla 3DGS on four SeaThru-NeRF underwater scenes, with rendering speeds of <b>190.3 FPS</b>.</li>
+      </ul>
+    </div>
+  </div>
+</article>
+
+<article class="cv-page" lang="en" data-label="English" data-pdf="assets/resume/resume-en.pdf">
+  <div class="cv-side">
+    <h4>Skills</h4>
+    <dl class="cv-skills">
+      <dt>Programming</dt><dd>Python, C++, PyTorch</dd>
+      <dt>Multimodal</dt><dd>Prompt tuning, I2V, T2V</dd>
+      <dt>Agents</dt><dd>LangChain, RAG, vector retrieval, tool calling, Skills</dd>
+      <dt>Vision</dt><dd>3D vision, Gaussian Splatting, image enhancement</dd>
+      <dt>Languages</dt><dd>English: CET-4 / CET-6</dd>
+    </dl>
+    <h4>Campus Leadership</h4>
+    <ul class="cv-roles">
+      <li>President, Student Union of School of Software</li>
+      <li>Standing Representative, University Student Congress</li>
+      <li>President, Sunshine Mental Health Association</li>
+      <li>Representative, Youth League Congress</li>
+    </ul>
+  </div>
+  <div class="cv-main">
+    <h4>Research Experience (continued)</h4>
+    <div class="cv-item">
+      <div class="cv-head"><b>AdapI2V: Adaptive Multi-Agent Iterative Optimization for Image-to-Video Generation</b><time>2026</time></div>
+      <p class="cv-sub"><b>The Chinese University of Hong Kong, Shenzhen Excellent Undergraduate Summer Camp</b> | Target submission: CVPR 2027</p>
+      <ul>
+        <li>Addressed <b>missing actions, incorrect action order, and cross-segment discontinuities</b> in image-to-video generation under complex instructions, improving multi-action completion and video coherence <b>without training the underlying models and within a limited generation budget</b>.</li>
+        <li>Designed a collaborative framework of <b>planning, verification, and repair agents</b>. Parsed instructions into action-event graphs, <b>adaptively determined segment counts and stage goals</b>, and passed final-frame states to subsequent generations to preserve action order and continuity.</li>
+        <li>Built <b>structured evaluation with 28 criteria across seven dimensions and targeted prompt repair</b> to locate action, state, and continuity failures. Allocated retry budgets within <b>at most 5 generation calls per valid execution</b>, with fallback to original candidates to safeguard overall video quality.</li>
+        <li>On <b>650 cases</b> from the adapted TIP300 / WMB350 evaluation sets, improved Global28QA scores over VPO + BoN5 by <b>15.45 / 5.22 points</b>, respectively. Reduced generated frame counts for valid executions by <b>49.7% / 53.7%</b> relative to five-candidate sampling.</li>
+      </ul>
+    </div>
+    <h4>Project Experience</h4>
+    <div class="cv-item">
+      <div class="cv-head"><b>Simulation-Driven Multimodal Data Collection and Processing Platform</b><time>2025–2026</time></div>
+      <p class="cv-sub">National Undergraduate Innovation and Entrepreneurship Training Program | 1 Software Copyright</p>
+      <ul>
+        <li>Built a <b>CARLA, Gazebo, and ROS2</b> platform to unify multi-sensor data collection, management, and reuse in simulation, providing replayable and verifiable data for downstream perception model training.</li>
+        <li>Developed Python tools for <b>ROS2 Bag parsing, sensor data organization, format conversion, and basic quality checks</b>, creating a workflow from simulation data collection to preprocessing.</li>
+        <li>Completed <b>CARLA–ROS2 interface integration, recording, and replay validation</b>; contributed to troubleshooting and workflow standardization, supporting a software copyright registration for the tools.</li>
+      </ul>
+    </div>
+    <h4>Honors</h4>
+    <p>2024–2025: <b>Social Work Scholarship, Technological Innovation Scholarship, Social Practice Scholarship, Spiritual Civilization Scholarship</b></p>
+    <p>2023–2024: <b>Social Practice Scholarship</b></p>
+  </div>
+</article>

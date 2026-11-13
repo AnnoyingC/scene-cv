@@ -1,0 +1,894 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SceneCV · Step into my résumé</title>
+<meta name="description" content="SceneCV：可探索的 3D 场景化简历模板，在书桌房间或塔楼书房中呈现介绍、作品、书单与联系方式。">
+<script>document.documentElement.classList.add('js')</script>
+<link rel="stylesheet" href="css/style.css">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+
+<!--
+  内容层：网站的真实内容都写在这里（以后可以换成 CMS / Markdown 生成）。
+  3D 房间启动时从这里读数据；设备跑不动 3D 时，这一层本身就是静态版网站。
+  每个带 data-nav 的 section 会在顶部导航栏里出现一项（data-nav 是导航栏上显示的名字）。
+-->
+<main id="content">
+  <header class="hero">
+    <h1 data-name>你的名字</h1>
+    <p class="tagline">一句话介绍自己：做什么、在哪里、关心什么。</p>
+    <p class="notice" id="try-room" hidden>Your device may struggle with the 3D room, so this text version is shown first. <a href="?room=1">Try the 3D room anyway →</a></p>
+  </header>
+
+  <section id="about" data-nav="About">
+    <h2>About</h2>
+    <p>这里是一段自我介绍。可以写你现在在做什么，过去做过什么，以及你为什么对这些事情感兴趣。</p>
+    <p>第二段可以写写兴趣爱好、正在学习的东西，或者你希望别人因为什么事情来联系你。</p>
+    <p>这段文字在 3D 版里会一个字一个字地显现出来：书桌房间里打在旧电脑的屏幕上，塔楼里浮现在水晶球上方。</p>
+    <!--
+      书桌房间那台旧电脑上的菜单（js/pc.js）：放简历装不下的东西，和桌上的纸质简历、电视里的作品各管一摊。
+      上面三段 p 是塔楼水晶球上的字（也是没有菜单时电脑上的字），菜单不影响它们。
+        div.pc-menu        一种语言一份菜单：lang 是语言，data-label 是电脑上切换语言时显示的名字；电脑默认用和 <html lang> 一样的那份
+        article            菜单里的一项：data-cmd 是电脑上显示的命令名，h3 是这一项的中文 / 英文名字
+          只有 p           一页文字（打字机效果一个字一个字打出来）；data-updated 是"更新于"
+          ol > li          一个列表（时间线、笔记、问答）：b 是这一条的标题，p 是点开以后的内容；
+                           data-when 是时间；data-tape 写作品里某盘录像带标题里的一个词，点开后可以"在电视上播放"
+      【草稿】下面的文字是按 1109 版简历起草的，事实都来自简历；（待补充：……）是只有你知道的部分，发布前换成你自己的话。
+    -->
+    <div class="pc-menu" lang="zh-CN" data-label="中文">
+      <article data-cmd="WHOAMI">
+        <h3>自我介绍</h3>
+        <p>我在大连理工大学读软件工程（2023 级），研究方向是多模态、智能体系统和计算机视觉。</p>
+        <p>这几年的路线大致是：从三维视觉起步，做水下场景的视觉增强与三维重建（ICRA 2026）；然后做多智能体协作的图生视频；最近在让小模型驱动真实设备、调用工具把任务做完。</p>
+        <p>课外做过软件学院学生会主席，也做过阳光心理与健康协会会长。</p>
+        <p>这台电脑里放的是简历装不下的东西：现在在做什么、一路怎么走过来、怎么想问题。纸质简历在桌上，点一下就能拿起来；做过的东西在右边的电视里。</p>
+      </article>
+      <article data-cmd="NOW" data-updated="2026.11">
+        <h3>最近</h3>
+        <p>在清闲智能（Libernovo）做大模型实习（2026.10 – 2026.11）：在小模型、短上下文的限制下，让 Agent 驱动双机械臂、智能桌和智能椅，把真机执行的轨迹和失败归因变成训练数据。</p>
+        <p>AdapI2V（图生视频的自适应多智能体迭代优化）在准备投稿 CVPR 2027。</p>
+        <p>（待补充：你在找什么——比如哪一年的研究生项目、研究实习，想做的方向。）</p>
+      </article>
+      <article data-cmd="TIMELINE">
+        <h3>一路走来</h3>
+        <ol>
+          <li data-when="2023.09"><b>进入大连理工大学 · 软件工程</b>
+            <p>本科在读，GPA 85.8，专业排名 20/120。</p></li>
+          <li data-when="2024"><b>第一次打数学建模</b>
+            <p>亚太地区大学生数学建模竞赛三等奖，“CSEE 杯”全国大学生电工数学建模竞赛二等奖。</p></li>
+          <li data-when="2025"><b>美赛 Meritorious Winner</b>
+            <p>美国大学生数学建模竞赛（MCM/ICM）Meritorious Winner；同年拿到中国大学生数字媒体科技作品及创意竞赛国家级三等奖、亚太数模二等奖。</p></li>
+          <li data-when="2025–26"><b>仿真驱动的多模态数据采集平台</b>
+            <p>国家级大学生创新创业训练计划项目。用 CARLA、Gazebo 和 ROS2 搭多传感器采集平台，写了 ROS2 Bag 解析、格式转换和质量检查的工具，形成软件著作权 1 项。</p></li>
+          <li data-when="2026" data-tape="GS-UVCE"><b>GS-UVCE：水下视觉增强与三维重建</b>
+            <p>基于 3D Gaussian Splatting，联合建模水介质、视角相关光照和场景深度，无监督地增强水下画面并重建三维场景。被 IEEE ICRA 2026 录用。</p></li>
+          <li data-when="2026.01" data-tape="Meituan"><b>美团 · 财税技术研发实习</b>
+            <p>做税务领域的 RAG 智能体，检索准确率 85% 以上；整理了一万多份税务和法规文档，也参与了 MCP + Skills 的 SOP 自动化。</p></li>
+          <li data-when="2026 夏" data-tape="AdapI2V"><b>AdapI2V：图生视频的多智能体迭代优化</b>
+            <p>香港中文大学（深圳）卓越本科生夏令营。规划、验证、修复三个 Agent 协作，把复杂指令拆成动作事件图分段生成，目标投稿 CVPR 2027。</p></li>
+          <li data-when="2026.10" data-tape="Libernovo"><b>清闲智能 Libernovo · 大模型实习</b>
+            <p>具身智能体：让小模型调用工具控制双机械臂、智能桌和智能椅，任务执行正确率从 18.6% 提到 78.4%。</p></li>
+        </ol>
+      </article>
+      <article data-cmd="NOTES">
+        <h3>我怎么想问题</h3>
+        <ol>
+          <li><b>失败的轨迹比成功的更有用</b>
+            <p>在真机上跑智能体，成功的轨迹只说明"这样能行"，失败的轨迹才说明"哪里不行、为什么不行"。所以每次执行失败都做归因，把轨迹和归因结论一起变成训练样本，累计 6,804 条，再用 SFT、DPO 和 RL 去训小模型。</p>
+            <p>正确率从 18.6% 到 78.4%，靠的是"采集 → 归因 → 造数据 → 训练"这个闭环一圈圈转起来。</p></li>
+          <li><b>先拆开，再生成</b>
+            <p>一条指令里有好几个动作时，一次生成很难全做对，反复抽卡又很贵。AdapI2V 先把指令拆成动作事件图，按需要决定分几段，每段生成完就验证，只修出问题的那一段，用上一段的末帧接下一段。</p>
+            <p>在 650 个例子上，评分比 VPO + BoN5 高出 15.45 / 5.22 分，有效执行的生成帧数比五选一采样少了约一半。</p></li>
+        </ol>
+      </article>
+      <article data-cmd="ASK">
+        <h3>问我</h3>
+        <ol>
+          <li><b>你在 GS-UVCE 里具体负责什么？</b>
+            <p>参与了 Light-MLP 和增强目标的设计：把视角相关的光照建模成射线方向的函数，再用动态 Gamma 校正增强物体颜色。也参与了曝光、后向散射和深度约束这几项损失函数，并围绕 Light-MLP、Medium-MLP 和深度正则化设计、分析了 9 组消融实验。</p></li>
+          <li><b>小模型做具身智能体，难在哪？</b>
+            <p>能力和上下文都有限，任务一长、设备一多，就容易在工具调用上出错。我的做法是把任务拆解、工具编排和真机执行串成一条流水线，用真机执行的反馈去改实验和数据，再结合 SFT、DPO 和 RL 去训。</p></li>
+          <li><b>为什么从三维视觉转到智能体？</b>
+            <p>（待补充：这一题用你自己的话来答。）</p></li>
+          <li><b>怎么联系你？</b>
+            <p>联系方式在桌上的记事本里；纸质简历也在桌上，点一下就能拿起来看。</p></li>
+        </ol>
+      </article>
+    </div>
+    <div class="pc-menu" lang="en" data-label="EN">
+      <article data-cmd="WHOAMI">
+        <h3>Who I am</h3>
+        <p>I've been studying Software Engineering at Dalian University of Technology since 2023. I work on multimodal learning, agent systems and computer vision.</p>
+        <p>My path so far: I started in 3D vision, enhancing and reconstructing underwater scenes (ICRA 2026); moved to multi-agent image-to-video generation; and lately I've been getting small models to drive real devices and finish tasks with tools.</p>
+        <p>Outside research I was President of the Student Union of the School of Software and of the Sunshine Mental Health Association.</p>
+        <p>This computer holds what a résumé can't: what I'm doing now, how I got here, and how I think about problems. The paper résumé is on the desk — click it to pick it up. The work itself plays on the TV to the right.</p>
+      </article>
+      <article data-cmd="NOW" data-updated="2026.11">
+        <h3>What I'm up to</h3>
+        <p>Interning at Libernovo on large models (2026.10 – 2026.11): under tight limits on model size and context, getting an agent to drive dual robotic arms, a smart desk and a smart chair, and turning real-device traces and failure analysis into training data.</p>
+        <p>Preparing AdapI2V (adaptive multi-agent optimization for image-to-video) for CVPR 2027.</p>
+        <p>(To fill in: what you're looking for — e.g. which year's graduate programs or research internships, and in what area.)</p>
+      </article>
+      <article data-cmd="TIMELINE">
+        <h3>How I got here</h3>
+        <ol>
+          <li data-when="2023.09"><b>Dalian University of Technology · Software Engineering</b>
+            <p>Undergraduate, GPA 85.8, ranked 20/120.</p></li>
+          <li data-when="2024"><b>First math modeling contests</b>
+            <p>Third Prize, Asia-Pacific Mathematical Contest in Modeling; Second Prize, “CSEE Cup” National Electrical Engineering Math Modeling Competition.</p></li>
+          <li data-when="2025"><b>MCM/ICM Meritorious Winner</b>
+            <p>Meritorious Winner in the Mathematical Contest in Modeling; the same year, National Third Prize in the China Collegiate Digital Media Technology Competition and Second Prize in the Asia-Pacific contest.</p></li>
+          <li data-when="2025–26"><b>Simulation-driven multimodal data platform</b>
+            <p>National innovation training project. Built a multi-sensor collection platform on CARLA, Gazebo and ROS2, plus tools for ROS2 Bag parsing, format conversion and quality checks — registered as a software copyright.</p></li>
+          <li data-when="2026" data-tape="GS-UVCE"><b>GS-UVCE: underwater enhancement and 3D reconstruction</b>
+            <p>A 3D Gaussian Splatting framework that jointly models the water medium, view-dependent lighting and depth to enhance underwater images and reconstruct the scene without supervision. Accepted at IEEE ICRA 2026.</p></li>
+          <li data-when="2026.01" data-tape="Meituan"><b>Meituan · Tax and Finance R&amp;D intern</b>
+            <p>Built a tax-domain RAG agent with 85%+ retrieval accuracy, processed 10,000+ tax and regulatory documents, and worked on MCP + Skills SOP automation.</p></li>
+          <li data-when="2026 summer" data-tape="AdapI2V"><b>AdapI2V: multi-agent image-to-video</b>
+            <p>CUHK-Shenzhen Excellent Undergraduate Summer Camp. Planning, verification and repair agents split complex instructions into an action-event graph and generate it segment by segment. Targeting CVPR 2027.</p></li>
+          <li data-when="2026.10" data-tape="Libernovo"><b>Libernovo · Large Language Model intern</b>
+            <p>Embodied agents: small models calling tools to control dual robotic arms, a smart desk and a smart chair. Task accuracy went from 18.6% to 78.4%.</p></li>
+        </ol>
+      </article>
+      <article data-cmd="NOTES">
+        <h3>How I think</h3>
+        <ol>
+          <li><b>Failed runs teach more than successful ones</b>
+            <p>On real devices, a successful run only shows that something can work; a failed run shows where and why it breaks. So every failure got a cause analysis, and the trace plus the analysis became a training example — 6,804 of them — for SFT, DPO and RL on a small model.</p>
+            <p>Going from 18.6% to 78.4% came from keeping that loop turning: collect, attribute, build data, train.</p></li>
+          <li><b>Split first, then generate</b>
+            <p>When one instruction holds several actions, a single generation rarely gets them all right, and resampling is expensive. AdapI2V first turns the instruction into an action-event graph, decides how many segments it needs, checks each segment as it is generated, repairs only the broken one, and carries the last frame into the next.</p>
+            <p>On 650 cases it scored 15.45 / 5.22 points above VPO + BoN5, while generating about half as many frames as five-candidate sampling.</p></li>
+        </ol>
+      </article>
+      <article data-cmd="ASK">
+        <h3>Ask me</h3>
+        <ol>
+          <li><b>What exactly did you do on GS-UVCE?</b>
+            <p>I worked on the Light-MLP and the enhancement objective: modeling view-dependent lighting as a function of ray direction, and using dynamic Gamma correction to bring out object colors. I also worked on the exposure, backscatter and depth losses, and designed and analyzed 9 ablations on the Light-MLP, Medium-MLP and depth regularization.</p></li>
+          <li><b>What makes embodied agents hard for small models?</b>
+            <p>Limited capability and short context: with longer tasks and more devices, tool calls go wrong. I chained task decomposition, tool orchestration and real-device execution into one pipeline, used execution feedback to fix experiments and data, and trained with SFT, DPO and RL.</p></li>
+          <li><b>Why move from 3D vision to agents?</b>
+            <p>(To fill in: answer this one in your own words.)</p></li>
+          <li><b>How can I reach you?</b>
+            <p>Contact details are in the notepad on the desk. The paper résumé is on the desk too — click it to pick it up.</p></li>
+        </ol>
+      </article>
+    </div>
+  </section>
+
+  <section id="resume" data-nav="Résumé">
+    <h2>Résumé</h2>
+    <!--
+      每个 article.cv-page 是一张 A4 纸。3D 版里是书桌上那两张打印纸：点纸，纸从桌上浮起来，在眼前叠成一摞（js/resume.js），
+      左右翻着看；中英文放在同一摞里，上面的按钮直接翻到那种语言。纯文字版里就是一张张白纸卡片。
+        lang          这一页的语言（同一种语言连着写，比如中文 1 页、英文 2 页）
+        data-label    切换按钮上显示的名字
+        data-pdf      这种语言的 PDF（可选，有了就显示下载按钮）
+      纸上的结构：.cv-side 左栏（照片 img.cv-photo、名字 h3.cv-name、dl.cv-kv 联系方式、h4 小标题、ul.cv-awards 奖项、
+      dl.cv-skills 技能、ul.cv-roles 职务），.cv-main 右栏（h4 小标题、.cv-item 一段经历：.cv-head 标题 + 时间、p.cv-sub 副标题、ul 要点）。
+      3D 版的纸是固定的 A4 大小，字放不下会自动整体缩小一点。
+      下面是公开仓库里的样例。真实简历（电话、邮箱、照片）写在 assets/resume/resume.html，这个文件夹不进 Git，
+      有它的时候网页启动后换成它（写法一样，见那个文件开头的说明）。
+    -->
+    <div class="cv-deck">
+      <article class="cv-page" lang="zh-CN" data-label="中文">
+        <div class="cv-side">
+          <div class="cv-photo" role="img" aria-label="照片占位"></div>
+          <h3 class="cv-name">你的名字</h3>
+          <dl class="cv-kv">
+            <dt>电话</dt><dd>138 0000 0000</dd>
+            <dt>邮箱</dt><dd>you@example.com</dd>
+            <dt>城市</dt><dd>某某市</dd>
+          </dl>
+          <h4>教育背景</h4>
+          <p>某某大学</p>
+          <p>2023.09 - 至今　某某专业本科在读</p>
+          <p>研究方向　<b>写下你关心的方向</b></p>
+          <h4>获奖经历</h4>
+          <ul class="cv-awards">
+            <li><b>某某全国大学生竞赛</b><span>一等奖<time>2026</time></span></li>
+            <li><b>某某数学建模竞赛</b><span>二等奖<time>2025</time></span></li>
+            <li><b>某某创新创业大赛</b><span>省级三等奖<time>2024</time></span></li>
+          </ul>
+          <h4>相关技能</h4>
+          <dl class="cv-skills">
+            <dt>编程</dt><dd>Python、C++</dd>
+            <dt>方向</dt><dd>写下你熟悉的工具和框架</dd>
+            <dt>语言</dt><dd>英语 CET-6</dd>
+          </dl>
+          <h4>校园经历</h4>
+          <ul class="cv-roles">
+            <li>某某社团负责人</li>
+            <li>某某志愿活动组织者</li>
+          </ul>
+        </div>
+        <div class="cv-main">
+          <h4>实习经历</h4>
+          <div class="cv-item">
+            <div class="cv-head"><b>某某公司 · 某某岗位实习生</b><time>2026.01 - 2026.03</time></div>
+            <ul>
+              <li>一句话写清楚你做了什么、<b>用了什么方法</b>、带来了什么结果。</li>
+              <li>能量化就量化：比如把某个指标从 <b>A 提升到 B</b>。</li>
+              <li>每段经历写 2 到 4 条，重要的放前面。</li>
+            </ul>
+          </div>
+          <h4>科研经历</h4>
+          <div class="cv-item">
+            <div class="cv-head"><b>论文或课题的标题</b><time>2025</time></div>
+            <p class="cv-sub">会议或期刊名称 · 当前状态</p>
+            <ul>
+              <li>要解决的问题，以及为什么值得解决。</li>
+              <li>你负责的部分：<b>方法设计、实验、分析</b>。</li>
+              <li>最关键的一个结果。</li>
+            </ul>
+          </div>
+          <h4>项目经历</h4>
+          <div class="cv-item">
+            <div class="cv-head"><b>一个项目的名字</b><time>2024–2025</time></div>
+            <p class="cv-sub">项目的来源或性质</p>
+            <ul>
+              <li>项目是什么、给谁用。</li>
+              <li>你做的部分和用到的技术。</li>
+            </ul>
+          </div>
+          <h4>其他荣誉</h4>
+          <p>2024–2025 学年：<b>某某奖学金</b></p>
+        </div>
+      </article>
+      <article class="cv-page" lang="en" data-label="English">
+        <div class="cv-side">
+          <div class="cv-photo" role="img" aria-label="Photo placeholder"></div>
+          <h3 class="cv-name">Your Name</h3>
+          <dl class="cv-kv">
+            <dt>Phone</dt><dd>+86 138 0000 0000</dd>
+            <dt>Email</dt><dd>you@example.com</dd>
+            <dt>City</dt><dd>Your city</dd>
+          </dl>
+          <h4>Education</h4>
+          <p>Your University</p>
+          <p>B.Eng. in Your Major, 2023.09 – Present</p>
+          <p>Research interests: <b>what you care about</b></p>
+          <h4>Awards</h4>
+          <ul class="cv-awards">
+            <li><b>National Undergraduate Competition</b><span>First Prize<time>2026</time></span></li>
+            <li><b>Mathematical Contest in Modeling</b><span>Second Prize<time>2025</time></span></li>
+          </ul>
+          <h4>Skills</h4>
+          <dl class="cv-skills">
+            <dt>Programming</dt><dd>Python, C++</dd>
+            <dt>Tools</dt><dd>Frameworks you know well</dd>
+          </dl>
+        </div>
+        <div class="cv-main">
+          <h4>Experience</h4>
+          <div class="cv-item">
+            <div class="cv-head"><b>Company - Role Intern</b><time>2026.01 – 2026.03</time></div>
+            <ul>
+              <li>One line on what you did, <b>how you did it</b>, and what changed because of it.</li>
+              <li>Quantify when you can: moved a metric <b>from A to B</b>.</li>
+            </ul>
+          </div>
+          <h4>Research</h4>
+          <div class="cv-item">
+            <div class="cv-head"><b>Title of a Paper or Project</b><time>2025</time></div>
+            <p class="cv-sub">Venue · Status</p>
+            <ul>
+              <li>The problem, and why it matters.</li>
+              <li>Your part: <b>method, experiments, analysis</b>.</li>
+            </ul>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section id="work" data-nav="Work">
+    <h2>Work</h2>
+    <!--
+      每个 li 是一盘录像带：data-tape 选画面效果（bars / synth / bounce / rain），data-color 是纸盒书脊和电视灯的颜色。
+      a 的文字 = 带子的名字（印在纸盒的书脊和封面上；电脑屏幕菜单里的链接按这个名字找带子，名字里要保留
+      Meituan / Libernovo / GS-UVCE / AdapI2V 这几个词）。没有链接就不写 href。p 是一两句简介（第一句写身份或出处）。
+    -->
+    <ol class="tapes">
+      <li data-tape="bars" data-color="#f2c230">
+        <a>Meituan</a> <span class="years">2026.01–2026.03</span>
+        <p>Tax &amp; Finance R&amp;D Intern. Built a tax-domain RAG agent over 10,000+ regulatory documents and tool-calling SOP automation.</p>
+      </li>
+      <li data-tape="synth" data-color="#d9576b">
+        <a>Libernovo</a> <span class="years">2026.10–2026.11</span>
+        <p>LLM Intern. Embodied agents for robotic arms and smart furniture; task success from 18.6% to 78.4% with SFT, DPO and RL.</p>
+      </li>
+      <li data-tape="bounce" data-color="#3f8fd0">
+        <a>GS-UVCE</a> <span class="years">2026</span>
+        <p>IEEE ICRA 2026. Gaussian Splatting that models water, light and depth to restore underwater scenes: +9.6–12.9 dB PSNR at 190 FPS.</p>
+      </li>
+      <li data-tape="rain" data-color="#59b27a">
+        <a>AdapI2V</a> <span class="years">2026</span>
+        <p>CUHK-Shenzhen summer camp, targeting CVPR 2027. Planning, verification and repair agents keep multi-action image-to-video in order.</p>
+      </li>
+    </ol>
+  </section>
+
+  <section id="shelf" data-nav="Books" lang="zh-CN">
+    <h2 lang="en">Books</h2>
+    <!--
+      读过的书（按划线多少排）。3D 版里每个 li 是书架上的一本真书：点它会抽出来、翻开，左页是这本书的标志句，右页是划线。
+        data-size     书的宽 × 高 × 厚（毫米），烘焙脚本按这个尺寸建模（改了要重新烘焙房间）；套装按一本合订本的厚度算
+        data-kind     hard = 精装（封板比书芯大一圈），soft = 平装
+        data-color    书脊 / 封面的主色（有真实封面时网页会直接从封面取色）；data-ink 字的颜色
+        data-style    没有真实封面时自动画的封面样式：literary（素净文学）/ modern（粗体现代）/ sea（插画海岛）
+        data-cover    真实封面图片的文件名（可选），放在 assets/books/covers/：这个文件夹不进 Git，
+                      只在本地和你自己的网站上用；不写或者找不到图片，就用 data-style 自动画的封面
+        data-read     读完的时间；还没读完的写 data-progress（读到百分之几）
+        data-publisher / data-marks  出版社、划线一共多少条：划线少的书，翻开后右页下面印一张阅读卡（可以不写）
+      blockquote.key 是左页单独印的那一句（这本书最有名、最能代表它的话），其余的 blockquote 是划线：翻开后从右页往后排，一页放不下就翻页（每本最多放 24 条）。
+    -->
+    <ul class="books">
+      <li data-size="150x220x55" data-kind="soft" data-color="#b09b5d" data-style="modern" data-publisher="云南人民出版社" data-marks="194" data-cover="wr35458107.jpg" data-progress="24">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=12e32aa0721d0c3b12e4e6d">罗翔说刑法</a> <span class="by">罗翔</span>
+        <blockquote class="key">刑事法律要遏制的不是犯罪人，而是国家。</blockquote>
+        <blockquote>任何知识都需要接受必要的怀疑，以摆脱知识的独断与傲慢。</blockquote>
+        <blockquote>道德本来就不教导我们如何使自己幸福，而是教导我们如何使自己无愧于幸福。</blockquote>
+        <blockquote>刑杀之权是一种由国家垄断的暴力。</blockquote>
+        <blockquote>自愿转让本属于个人的一些自然权利而缔结的社会契约。</blockquote>
+        <blockquote>刑法是补充法，不可能出现不是违法行为，却是犯罪行为的现象。</blockquote>
+        <blockquote>一种认为刑法的目的主要是为了维护一定的伦理秩序，叫做规范违反说，犯罪违反了伦理规范，行为本身就是错误的，所以要对它进行惩罚。与之争锋相对的观点，认为犯罪是对法律要保护的利益的侵犯，惩罚犯罪只是为了保护结果意义上的一种法律利益，这叫做法益侵犯说。</blockquote>
+        <blockquote>伪造货币罪所侵犯的法益是货币的公共信用，即货币作为一般等价物给人们提供的交易信心。如果市面上假币很多，民众就不敢使用货币，会动摇民众对货币的信心。但如果伪造的货币无法动摇货币的公共信用，那就不能理解为刑法意义上的假币。</blockquote>
+        <blockquote>其次，在出罪层面上必须考虑伦理道德的需要。一种侵犯法益的行为也不一定是犯罪，除非它是伦理道德所谴责的，对于伦理所容忍所鼓励的行为，没有必要发动刑罚权，这是对刑罚权的第二层限制。</blockquote>
+        <blockquote>伦理道德当然不能作为入罪的直接依据，刑法只是对人最低的道德要求，不能通过刑法来推崇道德完美主义，否则看似善良的愿望往往会把人类带向人间地狱，用道德取代法律的积极道德主义是刑法要拒绝的。但是刑法也不能和道德相抵触，对于伦理道德所容忍和鼓励的行为，自然没有必要处罚，伦理道德可以作为出罪的依据，用道德来减缓法律的刚性的消极道德主义是合理的。</blockquote>
+        <blockquote>我国刑法其实就是一种折中说，同时用法益侵犯说和规范违法说两种理论来支撑刑法的正当性，法益作为入罪的基础，而伦理作为出罪的依据</blockquote>
+        <blockquote>行为正义和结果正义在人类历史上已经争论了数千年，古希腊哲学家柏拉图就试图调和这两种矛盾。柏拉图认为正义就是行为本身是正当的，而且通常能带来好的结果。比如，人为什么要诚信，因为诚信本身是对的，而且都能带来好的结果。当然，柏拉图把好的结果拉到了永恒的维度。也就是说即便你现在看不到这个好的结果，但是在永恒中必将看到好的结果。但是现代人很多不再相信永恒，以致行为正义和结果正义始终处于冲突之中。</blockquote>
+        <blockquote>刑法规定了犯罪和刑罚，刑罚是对犯罪的惩罚，而刑法则是对刑罚的约束。</blockquote>
+        <blockquote>因为现行刑法规定追诉时效最长是20年，只有可能判死刑和无期徒刑的犯罪才可以报最高人民检察院核准追诉。</blockquote>
+        <blockquote>一次犯罪不过是污染了水流，而一次不公正的司法却是污染的水源。在法治社会，刑法不再是刀把子，而是双刃剑，一刃针对犯罪，一刃针对国家权力。</blockquote>
+        <blockquote>它不只是可罚性的缘由，也是它的界限，因此表现出悖论性：刑法不仅要面对犯罪人保护国家，也要面对国家保护犯罪人，不单面对犯罪人，也要面对检察官保护市民，成为公民反对司法专横和错误的大宪章。</blockquote>
+        <blockquote>法无明文规定不为罪，法无明文规定不处罚，这是法治国家最重要的刑法原则。</blockquote>
+        <blockquote>罪刑法定原则的本质是限制国家的刑罚权，重要的理论来源是权力分立学说。</blockquote>
+        <blockquote>刑罚的轻重，应当与犯罪分子所犯罪行和承担的刑事责任相适应。这就是罪刑相当原则，也即重罪重刑，轻罪轻刑，无罪不刑。</blockquote>
+        <blockquote>在传统的古典学派看来，人之所以犯罪是由人的自由意志决定的，每个人都有同样的自由意志，因此刑罚无须考虑个性，只需要考虑共性的外在行为。但社会学派却反其道而行之，认为人之所以犯罪根本不是自由意志的决定，很多时候是外在环境、成长背景甚至基因决定的。</blockquote>
+        <blockquote>罪刑相当原则有两点考量，一个是客观相当，二个是主观相当。</blockquote>
+        <blockquote>客观相当，即在客观方面，刑罚与犯罪行为的社会危害性相适应，社会危害性越大，刑罚也应越重，因此犯罪结果越重，犯罪数额越大，其刑罚也应越重。</blockquote>
+        <blockquote>主观相当，即在主观方面，刑罚与犯罪人的人身危险性相适应，人身危险性越大的罪犯，其刑罚也应越重</blockquote>
+        <blockquote>平等可以分为分配正义和矫正正义。前者是指根据每个人的功绩、价值来分配财富、官职、荣誉等，相同之人给予相同东西，不同的人给予不同东西。后者是指当分配正义遭到破坏时，按照均等的原则予以重建或恢复。比如某人侵害了他人的利益或财产，矫正正义就要求侵害者偿还属于受害者的财产、权利。</blockquote>
+        <blockquote>“投鼠忌器”的例子，“鼠近于器，尚惮不投，恐伤其器，况于贵臣之近主乎”</blockquote></li>
+      <li data-size="148x210x24" data-kind="hard" data-color="#f4f4f3" data-style="modern" data-publisher="中国法制出版社" data-marks="74" data-cover="wr40457732.jpg" data-read="2024 年 11 月">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=739322a07269560473951d3">圆圈正义</a> <span class="by">罗翔</span>
+        <blockquote class="key">往往是那些善良的愿望，把人类带入了人间地狱。</blockquote>
+        <blockquote>法治的基本要义在于用公开的规则去约束权力，让民众能够有合理的预期，免于惶惶未知的恐惧。</blockquote>
+        <blockquote>当生命中缺乏一个终极的敬仰对象，人就不可避免地会把自己置于生命中最重要的地位，形成无法抑制的自恋。</blockquote>
+        <blockquote>客观归罪是法治不发达的产物。</blockquote>
+        <blockquote>万事互为效力，任何人都可以既是他人的手段，又是自身的目的。如果人只是手段，这会走向毫不掩饰的极权主义。如果人只是目的，那也会走向过于放纵的个人主义。</blockquote>
+        <blockquote>因此，不能因为存在对他人的利用就认为这是不道德的，而要看这种利用是否已经变成剥削。</blockquote>
+        <blockquote>从后果的角度，如果一种对他人不幸处境或人性弱点的利用，没有传递任何积极正面的道德价值，那它就属于不道德的剥削</blockquote>
+        <blockquote>这就是为什么学术界把功利主义区分为现世功利主义和永恒功利主义，两者的区别在于是根据现世的经验还是根据“超经验的永恒福祉”来计算利害得失。因此帕斯卡尔说：“我们全部的行为和思想都要随究竟有没有永恒的福祉可希望这件事为转移而采取如此之不同的途径，以至于除非是根据应该成为我们的最终目标的那种观点来调节我们的步伐，否则我们就不可能具有意义和判断而迈出任何一步。”</blockquote>
+        <blockquote>看来，只有着眼于永恒的功利主义才能让我们不再根据眼前的利害得失作出选择，道德主义与功利主义会走向融合。越追求德行，越能体现人的尊严，获得更大的快乐。唯此，勇气也才可能有坚实的基础。</blockquote>
+        <blockquote>只要将刑法作为工具，权力的滥用也就不可避免，人治可以打着法治的名义大行其道。任何事物一旦成为工具，就必须为使用者服务，当工具可以满足使用者的目的时，工具可以获得各种美赞，而当工具妨碍了使用者实现目的，自然也就会弃之如敝屣。无论将法律定义为何种工具，它都无法避免为人任意裁剪取舍的命运。法律工具主义是权力至善的必然体现。深信权力毋庸置疑的正确性导致掌权者很难有一颗谦卑的心去接受束缚，法律自然只能成为掌权者推行政策的工具。</blockquote>
+        <blockquote>传统刑法理论推崇意志自由论，认为人们实施犯罪是基于意志自由，是自我选择的结果，犯罪人必须承担道义上的责任，刑罚并不仅仅是为了惩罚犯罪，还要发挥积极的威慑作用，防止他人走上犯罪道路。</blockquote>
+        <blockquote>对中国的司法制度有了解的人都知道，法院一旦作出无罪判决，将会直接导致公安机关、检察机关承担一定的国家赔偿责任，甚至就连具体办案的警察、检察官也会受到“错案责任追究”。甚至，在司法机关内部还存在着一些成文或不成文的绩效考核规定，对刑事破案率、批捕率、无罪判决率、撤诉率等进行考核。检察机关往往把无罪判决率作为案件质量考核的硬指标，出现无罪判决，责任人要承担不利后果。一些时候，当事人权利与司法机关绩效考核发生了本不该有的联系。</blockquote>
+        <blockquote>但是，你唯一不能感谢的就是你自己。如果你认为是你自己的才干、智慧让你获得了成功，那你注定不会幸福。因为这样的你在成功时，你会目空一切、狂妄自大，在得意中自我毁灭；在失败时，你会自怨自艾、愤怒嫉妒，甚至自寻短见。</blockquote>
+        <blockquote>但他爱人类，不爱具体的人。因为抽象的人类只是一种完美的概念，它总是可爱的，对概念的爱只需投入脑力，但对具体的人的爱则需投入真实的感情。每一个具体的人都不完美，都有可鄙之处。一个人越是陷入对抽象人类的爱，就越是厌恶真正具体的人。</blockquote>
+        <blockquote>每个人的心中都有一个“理想人”的范例，用柏拉图的术语来说这叫作人的“共相”。这种“理想人”有着高尚、勇敢、知恩图报等诸多美德。</blockquote>
+        <blockquote>“妾父为吏，齐中称其廉平，今坐法当刑，妾切痛死者不可复生，而刑者不可复续，虽欲改过自新，其路莫由。妾愿入身为官婢，以赎父刑罪，使得改行自新也。”</blockquote>
+        <blockquote>《创世记》中的上帝让亚伯拉罕知道，世俗社会的公平正义就是寻找合适的平衡点，辩护制度也不例外。</blockquote>
+        <blockquote>智者派代表人物普罗泰戈拉甚至提出“人是万物的尺度”这个命题。</blockquote>
+        <blockquote>人本主义传统将导致辩护制度过分张扬人之权利，而忽视人权应该有一定的限度。</blockquote>
+        <blockquote>与古希腊的人本主义传统不同，西方文化的另一源头“希伯来—基督教”信仰强调神本主义，一神论的信仰确认了绝对真理的客观存在，上帝之道即为真理，所谓“太初有道，道与上帝同在，道就是上帝”。因此，辩护制度应当接受绝对真理的约束，辩护必须在规则范围内行使。按照这种信仰观，辩护人在辩护时要受到限制，十诫中第九诫“不可作假见证陷害人”当为辩护人之铁律；同时人权也须受到限制，正如亚伯拉罕在为罪城辩护的案例中所学习到的，保障人权不能以完全牺牲惩罚犯罪为代价。</blockquote>
+        <blockquote>哈佛大学教授德肖维茨说：“一个国家是否有真正的自由，试金石之一是它对那些为有罪之人、为世人不耻之徒辩护的人的态度。在大部分专制国家里，独立自主的辩护律师队伍是不存在的。诚然，专制压迫肆虐无忌的明显标志之一就是政府开始迫害辩护律师。”</blockquote>
+        <blockquote>在条件关系的基础上，只有对结果的发生具有重要促进作用的条件才能认为与结果具有刑法上的因果关系。</blockquote>
+        <blockquote>只有那些严重伤害人们正义情感的行为，才可认为它与危害结果存在刑法上的因果关系，绝对不能因为预防的需要来设定因果关系。比如，劫匪劫持人质，警察出于恶意故意将人质击毙，虽然劫匪的劫持行为与人质之死有一定关系，但人质之死主要与警察有关。如果为了警告将来的劫犯，防止绑架案件的出现，而让劫匪对人质死亡结果承担责任，这明显是不公平的。</blockquote>
+        <blockquote>如果在我们的经验情感中，是一个行为独立地导致结果发生，就应当将结果归责于该行为，而不能追溯至先前条件，这就是所谓的禁止溯及理论。</blockquote>
+        <blockquote>如果前行为会高概率导致介入因素，而介入因素又引起了最后的结果，那么前行为就与结果有刑法上的因果关系。</blockquote></li>
+      <li data-size="165x235x34" data-kind="soft" data-color="#302a23" data-style="literary" data-publisher="民主与建设出版社" data-marks="32" data-cover="wr23774475.jpg" data-read="2026 年 7 月">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=66032040716ac50b660b6c7">曾国藩传</a> <span class="by">张宏杰</span>
+        <blockquote class="key">赴势甚钝，取道甚迂，德不苟成，业不苟名，艰难错迕，迟久而后进。铢而积，寸而累，既其纯熟，则圣人之徒。</blockquote>
+        <blockquote>在修身起始阶段，重要的是猛，而在进行阶段，更重要的是韧。</blockquote>
+        <blockquote>木秀于林，风必摧之，锋芒毕露，人必非之。</blockquote>
+        <blockquote>其实很多时候做事不需要你有什么超天才的想法，你只要好好总结一下别人都犯了哪些错误，然后你反着来，你可能就成功了。</blockquote>
+        <blockquote>看曾国藩的一生，与上级交往，是很注重分寸的，从不失态。他和穆彰阿交往，完全保持在正常范围内，走动并不是特别勤，所以后来穆彰阿倒台，曾国藩也没有受到牵连。这是曾国藩一生的一个重要原则</blockquote>
+        <blockquote>我虽置身霄汉上，器小仅济瓶与罍。…………似驴非驴马非马，自憎形影良可咍。</blockquote>
+        <blockquote>“致君尧舜上，再使风俗淳”。</blockquote>
+        <blockquote>公尝以蚊虻负山、商距驰河自况</blockquote>
+        <blockquote>臣处客寄虚悬之位，又无圆通济变之才，恐终不免于贻误大局</blockquote>
+        <blockquote>在具体作战原则上，曾国藩的战略思想是“以静制动、反客为主”</blockquote>
+        <blockquote>大臣以心迹定罪状，不必以公禀之有无为权衡。</blockquote>
+        <blockquote>听其拂逆而动心忍性，委曲求全，且以无敌国外患而无为虑者，圣贤之用心也。</blockquote>
+        <blockquote>古今亿万年无有穷期，人生其间数十寒暑，仅须臾耳。……事变万端，美名百途，人生才力之所能办者，不过太仓之一粒耳。</blockquote>
+        <blockquote>众口悠悠，初不知其所自起，亦不知其所由止。</blockquote>
+        <blockquote>女富则肥及外家，叶盛则粪及本根</blockquote>
+        <blockquote>程门今已矣，立雪再生来。</blockquote>
+        <blockquote>学于古，则多看书籍；学于今，则多觅榜样。</blockquote>
+        <blockquote>勤俭自持，习劳习苦，可以处乐，可以处约。此君子也。</blockquote></li>
+      <li data-size="145x210x32" data-kind="hard" data-color="#5f656d" data-style="literary" data-publisher="江苏凤凰文艺出版社" data-marks="31" data-cover="wr926179.jpg" data-read="2025 年 8 月">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=c0432af05e21e3c0472496c">巴黎圣母院</a> <span class="by">[法]雨果</span>
+        <blockquote class="key">透过烟霭薄雾的轻纱，只见巴黎一片寂静的屋顶，尖峭细小，难以计数，好似夏夜风平浪静的粼粼海波。</blockquote>
+        <blockquote>月色凄迷，给天地蒙上一层青灰的色调。</blockquote>
+        <blockquote>姑娘扑倒在地上。地牢里再也听不见别的声响，黑暗中唯有让水洼悸动的滴水的叹息。</blockquote>
+        <blockquote>怎能不怕那形骸重新化作幻影，那实体重又遁入虚无！</blockquote>
+        <blockquote>通向司法宫广场的五六条街道犹如河口，不断拥出一股股人流，从住户的窗口望过去，只见广场上人山人海，万头攒动。人流的汹涌波涛越来越大，冲击着楼房的墙角，而那些墙角又像岬角，突进围成如不规则状大水池的广场。</blockquote>
+        <blockquote>随着歌声的千回百转，她那张俏脸的神态，也奇异般变幻莫测，从极度狂放到极度庄严，忽而显出一副浪相，忽而俨若一位女王。</blockquote>
+        <blockquote>格兰古瓦在惶恐中，借着微弱而闪动的亮光，依稀辨出巨大的广场上围着一圈破烂不堪的房子，门脸儿都虫蛀斑斑，变得干瘪而萎缩了，每座都开了一两个有亮光的天窗，在黑暗中看去，像围坐一圈的老太婆的巨大脑袋，样子既怪诞又乖戾，正眨着眼睛观赏着群魔乱舞的场面。</blockquote>
+        <blockquote>他当真开始认为自己是童话中的人物了，还不时左顾右盼，看看由两只生翅膀的神兽驾驶的火焰车是否还在，因为只有这种火焰车，才能如此飞速地把他从塔耳塔洛斯狱送上天堂。有时，他死盯住自己上衣的破洞，好紧紧抓住现实，免得完全失去依托。他的理智在想象的空间飘荡，也只靠这一根细线维系了。</blockquote>
+        <blockquote>那姑娘又望望他，脸刷地红了，面颊好像燃起一团火，她把手鼓往腋下一夹，穿过惊愕的观众，走向弗比斯叫她的那幢楼房的正门，只见她眼神恍惚，脚步缓慢而又踉踉跄跄，活像被一条蛇迷住的一只小鸟。</blockquote>
+        <blockquote>她的确美得出奇，人世罕见，在客厅门口刚一出现，就满室生辉。在这间壅塞的客厅里，在这由帷幔和细木镶壁的幽暗场所，她显得更加美丽，更加光彩照人，远非她在广场上时所能比拟。这就好比一枝火炬，从阳光下猛然移到黑暗之处。几位贵族小姐都情不自禁地目眩神摇，每人都感到自己的美貌多少有些相形见绌。</blockquote>
+        <blockquote>她们既残忍无情，又温文尔雅，施展吹毛求疵的本领，从她这身缀满金属饰片的、寒碜而又轻佻的服装上找话茬儿，狡黠地大做文章，又是嘲笑，又是讥讽，没完没了地羞辱人。冷嘲热讽的话语、居高临下的慈悲、恶毒凶狠的目光，一齐朝吉卜赛姑娘袭来。这个场面，真像古罗马的贵族小姐少妇拿美丽的女奴取乐，用金针深深刺进那女奴的胸脯。又好似一群鼻孔张开、眼睛冒火的雄健的猎犬，围着主人用目光禁止它们撕咬吃掉的一只牝鹿。</blockquote>
+        <blockquote>他伫立在那里，一动不动，神态严峻，眼睛只盯住一个目标，心里只有一个念头。整个巴黎在他的脚下，只见建筑物的尖塔林立，天边丘峦环抱，桥下的河流斗折蛇行，街道上人流滚滚，半空中烟云雾霭，而屋顶则鳞次栉比，连环波动，从四面八方进逼圣母院。</blockquote>
+        <blockquote>以前，动辄钟声齐鸣，有从初课延至终课的长鸣钟，有大弥撒的大鸣钟，还有婚礼或洗礼的小鸣钟，各种音丝声线在空中交织而成色彩斑斓的绣锦。这座古老的教堂，整个儿颤动，整个儿鸣响，始终洋溢着钟乐，令人时时感到，这里有个喧闹而任性的精灵，通过这一张张大铜口歌唱。然而现在，这个精灵仿佛消逝了，大教堂显得死气沉沉，甘愿保持缄默了。</blockquote>
+        <blockquote>床铺旁边有一扇窗户，玻璃早已破得像被暴雨打烂的蜘蛛网。透过破损的铅丝窗网，能望见一角天空，以及卧在薄云鸭绒褥上的月亮。</blockquote>
+        <blockquote>二人都受到了激情的重压，沉默了好几分钟，他是丧失理智，而她则陷于呆痴。</blockquote>
+        <blockquote>不过，这个形象变换了颜色，显得晦暗、惨淡而黝黑，犹如冒失鬼注视太阳之后久久留在视觉上的黑斑。</blockquote>
+        <blockquote>现在正是薄暮时分，太阳西沉，落到奈斯勒高塔后面。天空白茫茫，河水白茫茫。他所凝望的塞纳河左岸，巨大的阴影投进这两片白之间，越往远延伸越细薄，最后像一枝黑箭射入天边的雾霭中。岸上房舍相连，只见朦胧一片，又有天光水色的衬托，越发显得黝黑了。有的人家已经上了灯，闪亮的窗户好似一个个炉口。</blockquote>
+        <blockquote>我的不幸，还是在于太像人了。我真希望完全成为一头牲畜，就像这只小山羊。</blockquote>
+        <blockquote>卡西莫多忧心忡忡，不时望望天空，就像心烦意乱的人那样。大块大块的乌云垂悬，残破龟裂而又滞重，仿佛星空天幕下垂挂的一张张罗纱吊床，又如苍穹上编织下来的一面面蜘蛛网。</blockquote>
+        <blockquote>人心能够承受的悲痛是有限度的。海绵吸饱水之后，任凭大海从上面流过去，也不能再吸收一滴泪了。</blockquote></li>
+      <li data-size="150x220x22" data-kind="hard" data-color="#656060" data-style="modern" data-publisher="文汇出版社" data-marks="27" data-cover="wr30966548.jpg" data-read="2026 年 8 月">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=f12326b071d88314f12ac8e">一生的旅程</a> <span class="by">罗伯特·艾格</span>
+        <blockquote class="key">拼死创新，这一点放在今天更加适用。如果将对新事物的恐惧作为行动的出发点，那么创新就无从谈起。</blockquote>
+        <blockquote>管理自己的时间，尊重别人的时间，这是作为一名管理者应具备的最重要的特质。</blockquote>
+        <blockquote>不要让抱负脱离摆在眼前的机会。如果一心执着于未来的工作或项目，你就会对现在的环境失去耐心。</blockquote>
+        <blockquote>在谈判中，尊敬待人是一笔财富，而且其价值往往被人低估。</blockquote>
+        <blockquote>我从他俩身上学到，发自内心的真诚友善与职业上的争强好胜并不是相互排斥的。更进一步地说，真正的诚信——对自己有自知之明，对正误有明确分辨，并将此作为行为的准则——本身就是一件秘密武器。</blockquote>
+        <blockquote>他们不但把重视能力多过经验挂在嘴上，也相信应该把人员安排在能够激发当事人尚不自知的潜能的职位上。这并不意味着经验不重要，按照两人的话说，他们这是在“为脑力押注”​，他们相信，如果把人才安排在能够成长的职位上，即便这是当事人并不熟悉的领域，局面也终究会打开。</blockquote>
+        <blockquote>面对这样的情况，你会怎样做呢？第一条原则，就是不要营造任何假象。你必须保持谦虚，不能把自己佯装成另一个人，也不能不懂装懂。虽说如此，你仍然处在一个领导者的位置上，因此不能让谦虚成了领导他人的绊脚石。这是我在今时今日所宣扬的一个理念，其中的分界线很微妙。你需要提出你必须提出的问题，不要有任何歉意地承认自己不懂的东西，并做好功课，以尽快学到必须学到的东西。没有什么比不懂装懂更能摧毁一个人的自信心了。拥有自知之明，不要假扮别人，这才是真正的权威和领导力的源泉。</blockquote>
+        <blockquote>我倾向于留在公司，也就是说，我要让乔与迪士尼的法律总顾问桑迪·利特瓦克(Sandy Litvack)唇枪舌剑一番，协商出一份我能够接受的合约。</blockquote>
+        <blockquote>两人都本应明白这样的组合是不会成功的，但是由于两人都在某种程度上被各自的需求障了眼，因此都自欺欺人地避免了提出这些难以回答的问题。直面问题并不简单，置身于问题之中时尤为如此。但当你发现自己只是在希望问题能最终得到解决，却没法说服自己到底该如何解决时，头脑中的小警报就应拉响，而你也应该向自己提出几个有助于厘清疑虑的问题来。我应该解决的问题是什么？这个解决方案合理吗？如果我心存疑虑，原因是什么？我这样做是出于正当的理由，还是受了什么个人利益的驱使呢？</blockquote>
+        <blockquote>然而，首席执行官与其接班人之间的关系则充满了矛盾。我们都愿意相信自己是不可取代的，诀窍就在于拥有足够的自知之明，不要沉溺于你是唯一一个能做这份工作的人选的执念之中。从本质上来说，杰出的领导力的重点并不在于你的不可取代，而是要帮助他人做好有一天继任你的职位的准备——也就是给予他人与你一起制定决策的机会；辨识出他们需要开发的能力并帮助他们实现进步。另外，就像我之前不得不做的一样，有的时候，如果对方还没有做好迎接下一步的准备，你也要开诚布公地指出来。</blockquote>
+        <blockquote>但是，我毕竟需要他去执行我交付给他的项目。把人员收拢到你的一边，争取他们的热情加入，这件事并不好拿捏。有的时候，将他们的疑惑拿出来进行探讨，对其顾虑进行耐心回应，是值得去做的。但有的时候，你不得不直截了当地让对方知道，你才是上司，需要对方把任务完成。这并非是说第一种方法“友善”​，而第二种不然，只是说第二种方法要更加直接且没有商量的余地。重点在于你觉得哪种方法适用于当下——有的时候，更加民主的方法不仅能帮助你得到最好的收效，也有利于提高士气；而有的时候，你或许有足够的把握，即便面对争议，你也愿意坚持做一名独裁者。</blockquote>
+        <blockquote>一般来说，迈克尔天生而来的悲观主义的确能取得效果，但这也是在一定程度上而言。他的一部分驱动力来自对灾难的恐惧，这也往往推动了他的完美主义和成功，但在鼓励人心上，悲观主义并不是一个非常有力的工具。有的时候，他的担心事出有因，也应当予以处理，但是很多时候，裹挟着他的却是一种杞人忧天般的担心。担心并非迈克尔唯一的状态，除此之外，他与生俱来的充沛精力也往往有着很大的感染力。但在他的晚年，随着肩上的压力逐渐增加，悲观主义从例外变成了常态，也使得他开始拉帮结派、离群索居。</blockquote>
+        <blockquote>乐观主义则会带来全然不同的连锁效应。你所领导的员工需要相信你有能力着眼重点，而不是以戒备心和自保心为出发点来做事，在困难时期尤为如此。这也并不意味着要向大家传递“船到桥头自然直”的盲目信心。你要相信自己和身边的人有能力朝着最好的结果前进，如果不是真的遇到重大的挫折，那就不要传达满盘皆输的信息。作为领导，你所设下的基调对于身边的人而言有着巨大的影响，没有人想要成为悲观者的信众。</blockquote>
+        <blockquote>我推测，各业务的负责人如果感觉自己更多地参与了决策制定，便会给公司的士气带来积极的涓滴效应。但这种影响之巨大和突然，却是当时的我始料未及的。</blockquote>
+        <blockquote>现在回溯这段岁月，我觉得这些得之不易的教训，不仅关乎韧性和坚忍的重要，也关乎不为你无法控制的事情感到愤怒和焦虑的必要。对于自尊心的打击虽然往往是真枪实弹，但也不要让这些打击过多地占据你大脑的空间或是耗损你太多的精力，此中的重要性，我如何强调也不为过。当每个人都在夸赞你时，想要保持乐观是很容易的。但当你的自我认知如此公然地受到挑战的时候，保持乐观就困难了很多，也必要了很多。</blockquote>
+        <blockquote>“几个实打实的优点要比一堆缺点更有力，​”史蒂夫说道，​“所以说，我们接下来该怎么办？​”这又是宝贵的一课：史蒂夫很擅长衡量一件事情的方方面面，不允许优点被缺点掩盖住，在他想要争取的事情上更是如此。这是他的一个很突出的特质。</blockquote>
+        <blockquote>没有什么规章手册能告诉你该如何应对这样的挑战，但你通常需要试着认识到，面对一个牵涉重大利益的项目，往项目工作人员的身上施压是收效甚微的。将你的焦虑投射到团队的身上，往往适得其反。表达你与团队分担压力，和大家共同奋战，以及表达你需要大家拿出好的结果以减轻你的压力，这二者之间的区别虽然很小，但却能造成完全不同的效果。</blockquote>
+        <blockquote>不要在耗损公司和我的资源但回报甚微的项目上投资。</blockquote>
+        <blockquote>作为管理者，如果不尽自己的职责，那么周围的人很快就会察觉到这一点，而他们对你的尊敬也便化为乌有了。你必须做到专心致志。即便遇到想要中途离场的会议，也必须坚持开完。你要倾听别人的困难，并帮助他们寻找解决方法。这些，都是一名杰出管理者的必备特质。</blockquote>
+        <blockquote>你需要清楚表达并反复强调你的优先事项。如果你无法清晰传达你的优先事项，那么身边的人们也就不清楚自己的优先事项是什么。这会造成时间、精力以及资本的浪费。</blockquote></li>
+      <li data-size="130x184x12" data-kind="soft" data-color="#d2cdcc" data-style="literary" data-publisher="中国友谊出版公司" data-marks="23" data-cover="wr3300053214.jpg" data-progress="46">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=679325a0813ab7b49g014cc2">雪国</a> <span class="by">川端康成</span>
+        <blockquote class="key">穿过县界长长的隧道，便是雪国。</blockquote>
+        <blockquote>她的声音，美得几近悲凉。那么激扬清越，仿佛雪夜里会传来回声似的。</blockquote>
+        <blockquote>啊，银河！岛村举目望去，猛然间仿佛自己飘然飞入银河中去。</blockquote>
+        <blockquote>惨淡的夕阳已经西沉，寒气渐渐袭人，仿佛连星光也冷得格外璀璨。</blockquote>
+        <blockquote>只见疏疏落落的几间木板房，像是铁路员工的宿舍，瑟缩在山脚下。不等火车开到那里，雪色就给黑暗吞没了。</blockquote>
+        <blockquote>单单映出星眸一点，反而显得格外迷人。岛村把脸靠近车窗，赶紧摆出一副旅愁模样，装作要看薄暮景色，用手掌抹着玻璃。</blockquote>
+        <blockquote>镜子的衬底，是流动着的黄昏景色，就是说，镜面的映像同镜底的景物，恰似电影上的叠印一般，不断地变换。出场人物与背景之间毫无关联。人物是透明的幻影，背景则是朦胧逝去的日暮野景，两者融合在一起，构成一幅不似人间的象征世界。尤其是姑娘的脸庞上，叠现出寒山灯火的一刹那间，真是美得无可形容，岛村的心灵都为之震颤。</blockquote>
+        <blockquote>一个女人长身玉立，和服的下摆拖在冰冷黑亮的地板上。</blockquote>
+        <blockquote>也许是旭日将升的缘故，镜中的白雪寒光激射，渐渐染上绯红。姑娘映在雪色上的头发，也随之黑中带紫，鲜明透亮。</blockquote>
+        <blockquote>右面是白雪覆盖的菜地，左面在邻家的墙下，栽了一排柿子树。房前好像是花圃，中间有个小小的荷花池。里面的冰块已经捞到池边，池中游着红鲤。如同柿子树的枝干一样，房屋也有些年头了。积雪斑驳的房顶上，木板已经朽烂，檐头也倾斜不平。</blockquote>
+        <blockquote>叶子朝岛村尖利地睃了一眼，一声不响地走过一进门的泥地。</blockquote>
+        <blockquote>山谷里天暗得早，日暮生寒。薄明幽暗之中，夕阳的余晖映照着山头的积雪，远山的距离仿佛也忽地近多了。不久，随着山的远近高低不同，一道道皱襞的阴影也愈加浓黑。等到只有峰峦上留下一抹淡淡的残照时，峰巅的积雪之上，已是漫天的晚霞了。村里的河岸上，滑雪场上，神社里，到处是杉树，憧憧黑影越发分明。</blockquote>
+        <blockquote>天上云起，层峦叠嶂中，有的遮着云影，有的浴着阳光。光与影，时刻变幻不定，景物凄清。不大会儿，滑雪场上也一片凝阴。俯视窗下，篱笆上像胶冻似的结着一条条霜柱，上面的菊花已经枯萎。檐头落水管里，化雪的滴沥声响个不停。</blockquote>
+        <blockquote>就像穷乡僻壤的水果店里，一枚珍果给遗忘在熏黑的玻璃箱里似的。</blockquote>
+        <blockquote>货车过后，如同揭下了遮眼布，铁路那一边的荞麦花，灿然入目。红红的荞麦秆，花开得崭齐，显得十分幽丽。</blockquote>
+        <blockquote>驹子闯入自己的心灵，岛村觉得很不可思议。她的一切，岛村都能理解，而岛村的一切，驹子似乎毫无所知。驹子撞上一堵虚无的墙壁，那回声，岛村听来，如同雪花纷纷落在自己的心坎上。岛村毕竟不可能由着自己的性儿，永远这样下去。</blockquote>
+        <blockquote>虽然同是雪国，但驹子所在的温泉村，屋檐并不相连，所以岛村到了这个镇上，才头一次见到“雁木”。他稀奇得不得了，在那下面走了一遭。古老的屋檐，遮得下面很暗。倾圮的柱脚，已快朽烂。他觉得好像在窥探这世世代代埋在雪中阴森忧郁的人家似的。</blockquote>
+        <blockquote>火势越来越猛，但从高处望去，辽阔的星空下，一片寂静，火灾如同儿戏一般。然而，又好似听到烈焰熊熊的声音，有些凄厉可怖。岛村搂着驹子。</blockquote>
+        <blockquote>驹子向银河低垂处，暗黑的山那边跑去。好像提着下摆，随着手臂来回摆动，红衬衣的底襟便忽长忽短地时时露出来。从那星光辉映的雪地上，可以知道是红色的。</blockquote>
+        <blockquote>岛村蓦地想起几年前，到这个温泉村与驹子来相会的途中，在火车上看到叶子的脸在窗上映着寒山灯火的情景，心头不禁又震颤起来。一刹那间，仿佛照彻了他与驹子共同度过的岁月。那令人难耐的惨痛和悲哀，也正存乎其间。</blockquote></li>
+      <li data-size="170x240x42" data-kind="hard" data-color="#aeaeb0" data-style="modern" data-publisher="中信出版集团" data-marks="18" data-cover="wr3300054143.jpg" data-read="2026 年 4 月">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=df332000813ab7ba6g013fc6">史蒂夫·乔布斯传</a> <span class="by">[美]沃尔特·艾萨克森</span>
+        <blockquote class="key">能站在人文与科技的交会处，取两者之长的人，才是社会的中流砥柱。</blockquote>
+        <blockquote>决定‘不做什么’跟决定‘做什么’同样重要。对公司来说是这样，对产品来说亦是如此。</blockquote>
+        <blockquote>时刻铭记人终有一死，是我知道的避免患得患失陷阱的最佳方式。</blockquote>
+        <blockquote>伟大的公司必须能够通过第一印象向用户灌输自己的价值观。</blockquote>
+        <blockquote>第一点是“共鸣”，就是要设身处地为用户着想。“我们会比其他任何企业都更加充分地了解用户需求。”第二点是“专注”，“为了出色完成既定目标，我们必须心无旁骛，放弃所有无关紧要的心思和追求。”第三点同样重要，叫作“灌输”，其中心思想是人们对一个公司或产品的印象基于其对外传递的信号。</blockquote>
+        <blockquote>“乔布斯的现实扭曲力场构成非常复杂，融合了魅力超凡的言辞，不屈不挠的意志力量，还有为达成一己之目标而让任何现实屈从的强烈渴望。”</blockquote>
+        <blockquote>乔布斯觉得自己从Mac项目的管理中总结了一条重要的经验：如果想建立一个由A级选手组成的团队，就必须拥有铁石心肠。他回忆说：“在团队发展壮大的过程中，难免会出现几个B级选手，而B级选手会吸引更多的B级选手，甚至还会带来C级选手。我在管理Mac团队的过程中学会的是，A级选手只喜欢跟A级选手共事，这就意味着你不能纵容B级选手的出现。</blockquote>
+        <blockquote>他坚持要谈论在政治斗争中落败后被斯大林下令暗杀的革命家托洛茨基。负责监视乔布斯的克格勃特工不得不提醒他不要大谈特谈自己对托洛茨基的喜爱之情</blockquote>
+        <blockquote>乔布斯喜欢通过树敌来转移内部矛盾、增强内部凝聚力，过去他把IBM和微软当靶子，现在又与戴尔为敌</blockquote>
+        <blockquote>一个好的公司必须懂得如何“灌输”——公司所做的一切，从包装到营销，必须能够传达自己的价值观和重要性。</blockquote>
+        <blockquote>如果不是忙着生活，那就是在为死亡忙活。</blockquote>
+        <blockquote>他们讨厌条条框框。他们不屑安于现状。你可以把他们的话语引作经典，也可以反对他们的观点，你可以颂扬他们，也可以贬损他们，但唯独不能忽视他们。</blockquote>
+        <blockquote>只有疯狂到认为自己可以改变世界的人，才能真正改变世界。</blockquote></li>
+      <li data-size="155x230x50" data-kind="soft" data-color="#5a1f1b" data-ink="#e8d9b0" data-style="literary" data-marks="18" data-progress="20">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=cf1323c0811e1a41cg01706b">先知三部曲</a> <span class="by">伊萨克·多伊彻</span>
+        <blockquote class="key">难道期票等于纯金？许诺自由就等于自由？</blockquote>
+        <blockquote>自然，马后炮总是对预测中的局部错误猛攻，致使那个错误蒙蔽整个预测的光彩。</blockquote>
+        <blockquote>斯大林说，当革命冲力增长因而前进时，托洛茨基的力量就显示出来；而当革命失败并必须退却时，他的弱点就变得突出了。</blockquote>
+        <blockquote>当他们看到欧洲社会主义领袖们完全不顾他们所有庄严的反军国主义决议和国际主义的誓言，反而号召工人阶级为他们的皇帝作战、仇恨“敌人”、杀死“敌人”时，他们简直不能相信自己的眼睛。</blockquote>
+        <blockquote>他们得出结论，如果文明政府认为为追求本国强权政治就可以屠杀几百万人和使几千万人伤残，那么，在为建立能使人类摆脱这种愚蠢行径的新社会制度的斗争中不惜牺牲，无疑是社会民主党人的职责。旧制度正在给他们一个残酷无情的教训。欧洲文明的“哥特式花边”已被扯成碎片，而且正被踏入战壕里的泥浆和血污中。</blockquote>
+        <blockquote>他对其持否定态度的正是他预见的那种“民族革命救世主的情绪”，它把“自己的民族国家”看做是“注定要把人类引导到社会主义的回家”。斯大林在后来的岁月中就成为这种“情绪”的代表。</blockquote>
+        <blockquote>1917年的俄国工人阶级是历史的奇迹之一。他们虽然人数少、年轻幼稚、没有经验、未受教育，但富有政治热情、慷慨大方，具有理想主义以及罕见的英雄品质。这个工人阶级具有对未来伟大美景抱有幻想的天赋，对死亡则抱有如同斯多葛派甘愿战死疆场那样的视死如归的思想。他们的思想尽管是半文盲的思想，却信奉哲学家们的共和国理想，这种共和国理想不是博学者对老百姓进行寡头统治的柏拉图式共和国的翻版，而是财富和智慧都足以使每个公民成为哲学家而又是工人的共和国的理想。俄国工人阶级在他们悲惨的深渊里着手建立这样的共和国。</blockquote>
+        <blockquote>他们单独一个党全心全意信奉苏维埃宪政，这只能使他们把自己党的政策和宪政视为一体，然后以党的意志取代宪政的原则，最后将彻底抛弃那些原则。说得更明白些，布尔什维克是革命党这一情况促使他们首先把革命跟他们自己等同起来，尔后使革命成为他们党独占的事。</blockquote>
+        <blockquote>但是一个国家在世界上的地位不仅由目前技术设备的条件制约，而且还由这个国家内在的潜力决定。”他并不打算根据德国目前的粮食储备情况，即它的人民正在挨饿来衡量德国的经济实力。他指出同盟国各国企图以所谓军事地图作为媾和基础而不是以“各国人民之间的协议作为基础。这种倾向对德国人民和俄国人民同样都是有害的，因为军事地图不断变化，而人民是恒久的</blockquote></li>
+      <li data-size="150x220x18" data-kind="soft" data-color="#d1c4b9" data-style="literary" data-publisher="北京大学出版社" data-marks="18" data-cover="wr26833146.jpg" data-progress="18">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=f0232960719970faf0202e2">曾国藩领导力十二讲</a> <span class="by">宫玉振</span>
+        <blockquote class="key">好人半自苦中来，莫图便益；世事多因忙里错，且更从容。</blockquote>
+        <blockquote>天道三忌：“忌巧、忌盈、忌贰”。</blockquote>
+        <blockquote>以贤临人，未有得人者也；以贤下人，未有不得人者也。</blockquote>
+        <blockquote>天下断无易处之境遇，人间哪有空闲的光阴。</blockquote>
+        <blockquote>昏惰任下者败，傲狠妄为者败，贪鄙无忌者败，反复多诈者败</blockquote>
+        <blockquote>所谓的“拙诚”，就是做事做人不存投机取巧之心，一步一步地做，实实在在地做。他认为“天道忌巧”，他相信“惟天下之至诚，能胜天下之至伪；惟天下之至拙，能胜天下之至巧”。梁启超认为曾国藩的成功，恰恰就是这个“困勉”“拙诚”的功夫，“而困而知，而勉而行，历百千艰阻而不挫屈，不求近效，铢积寸累。受之以虚，将之以勤，植之以刚，贞之以恒，帅之以诚，勇猛精进，坚苦卓绝。如斯而已，如斯而已”。民国学者萧一山也说曾国藩“不尚机权，惟务质实”，这是曾国藩人生哲学的核心，是他一生得力之处。</blockquote>
+        <blockquote>此一二人者之心向义，则众人与之赴义；一二人者之心向利，则众人与之赴利</blockquote>
+        <blockquote>舆人成舆，则欲人之富贵；匠人成棺，则欲人之夭死也。非舆人仁而匠人贼也。人不贵，则舆不售；人不死，则棺不卖，情非憎人也，利在人之死也。</blockquote>
+        <blockquote>重为轻根，静为躁君。轻则失根，躁则失君。</blockquote>
+        <blockquote>持之以敬，临之以庄，无形无声之际，常有凛然难犯之象</blockquote>
+        <blockquote>苟轻于颦笑周旋，则物得而狎之</blockquote>
+        <blockquote>君子宽而不僈，廉而不刿，辨而不争，察而不激，直立而不胜，坚强而不暴。柔从而不流，恭敬谨慎而容，夫是谓至文。</blockquote>
+        <blockquote>好谈兵事者，其阅历必浅；好攻人短者，其自修必疏。</blockquote>
+        <blockquote>不轻进人，即异日不轻退人之本；不妄亲人，即异日不妄疏人之本。</blockquote>
+        <blockquote>大抵能下人，斯能上人；能忍人，斯能胜人。</blockquote></li>
+      <li data-size="130x190x16" data-kind="soft" data-color="#8d2521" data-style="literary" data-publisher="天津人民出版社" data-marks="16" data-cover="wr35458105.jpg" data-progress="58">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=1f132ba0721d0c391f151ce">金阁寺</a> <span class="by">三岛由纪夫</span>
+        <blockquote class="key">美完全有要求我死心的权利，不可能让我左手触着永远，右手拉着人生。</blockquote>
+        <blockquote>明明没有风，却感觉池中月碎成了几千片。</blockquote>
+        <blockquote>我完全没必要通过清晰流畅的长篇大论来解释我的残暴。沉默是对残暴最正当的解答。</blockquote>
+        <blockquote>地狱的特点估计就是可以清楚地看见每个细微的角落。还是在一片漆黑中！</blockquote>
+        <blockquote>直到现在，我都没有见过像她那样写满抵触的脸。我的脸是被世界抵触的脸，有为子的脸却拒绝了整个世界。月光毫不客气地洒向她的额头、眼睛、鼻翼、脸颊，她却一动不动任由月光清洗，仿佛只要稍微转转眼睛、动动嘴巴，被她拒绝的世界就会瞬间如雪崩般涌来。</blockquote>
+        <blockquote>这样不可思议的面庞，我只在刚被砍掉树干的树墩上见过。虽然颜色尚且新鲜，还带着湿润，却不能继续生长、暴露在本不应该接触到的风和阳光里，猝不及防直面本来不属于自己的世界。</blockquote>
+        <blockquote>在我看来，一切都非常遥远。钝感的人只要不流血就不会惊慌。事实上，血流下来的那一刻，悲剧已经结束</blockquote>
+        <blockquote>相比于其他鸟在空间里穿梭，这只金凤凰张着辉煌的双翼，永远在时间里翱翔。时间拍打着双翼，拍打，随后流逝。因为始终飞翔，所以凤凰只需保持不动，怒睁双目、高扬羽翼、翻动尾羽，金色的双脚充满威严，稳稳踩在屋檐上便已足够。</blockquote>
+        <blockquote>山边耸立着冷峻的云朵，一如父亲下葬前读枕经时我眼角感知到的那样凝重。云朵忍受着积郁的阳光，俯视这纤细的建筑。金阁在这炽烈阳光下丧失了细节的趣味，内部裹着冰冷阴暗的影子，用神秘的外部轮廓抵触着外部闪闪发光的世界。只有顶部的凤凰不惧太阳，用尖锐的爪子挺立，稳稳地抓着底座。</blockquote>
+        <blockquote>柏木在后院长着三叶草的荒地打开了便当。荒地正对着空手道部、乒乓球部等活动室，很多窗玻璃已经残破。五六棵干瘪的松树杵在地上，还有一座空空的小花房。架子上涂着蓝色油漆，斑驳粗糙，像是干枯的假花一样卷曲着。旁边是两三阶盆栽架、瓦砾堆，以及种着风信子和报春花的花圃。</blockquote>
+        <blockquote>正确判断现实的勇气，和与判断结果战斗的勇气，很容易同流合污。我已经习惯了边生活边战斗。</blockquote>
+        <blockquote>对我来说，问题不是如何与人拉近距离，而是如何保持距离以使得情人更像情人。</blockquote>
+        <blockquote>金阁也深知，人生总用幻化为永远的瞬间来恍惚我们的心智，跟幻化为瞬间的金阁永恒的身姿根本无法相提并论。美这永恒的存在，也是在这一瞬间，阻碍着、荼毒着我们的人生。人生让我们窥见的瞬间的美，完全不能对抗这样的荼毒。它倏然崩塌、灭亡，甚至连自身也在灭亡的暗淡光线中被迫现身。</blockquote>
+        <blockquote>平缓的深深的屋檐，由八根典雅的天竺式样插肘木支撑，伸向月光栖息的池水表面。</blockquote>
+        <blockquote>她的语气很坚决，随后，她的举动充满了狂喜，同时也充满了绝望。可能她的意识里是狂喜，促使她做出过激行为的真正力量，是柏木给她的绝望，或许这就是绝望带来的不屈不挠的后劲。</blockquote></li>
+      <li data-size="170x230x16" data-kind="soft" data-color="#e8eaf1" data-style="sea" data-publisher="中信出版集团" data-marks="15" data-cover="wr912417.jpg" data-progress="69">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=a38326805dec21a389a21c8">小岛经济学</a> <span class="by">彼得·希夫 / 安德鲁·希夫</span>
+        <blockquote class="key">技术创新是个单向的过程。除非人们失去记忆，否则生产效率必然会越来越高。</blockquote>
+        <blockquote>一旦利己主义得到发展机会，生产能力就会迅速提高。</blockquote>
+        <blockquote>消费贷款如果不能提高产能的话，这笔贷款无论是对贷款人还是借款人来说都是一种负担。</blockquote>
+        <blockquote>员工只要工作就有报酬，而企业主想得到回报则只能等到企业赢利，他们的收益是对承担风险的回报，也是对成功整合稀有资源的回报。</blockquote>
+        <blockquote>大多数经济学家认为，给老百姓更多的钱花就可以增加需求，但是这种做法并不能改变真正的需求，只会使人们花更多的钱购买已经生产出来的商品。只有增加供给才能切实满足人们更多的需求。</blockquote>
+        <blockquote>假设贝克和查理不是向艾伯借鱼、省出时间来织网，而是利用这些时间研发对鱼群实施催眠术的技术，情况可能会大不相同。 如果他们研发的技术无效，这项贷款就无法使“借款人”查理和贝克受益，而贷款人艾伯也得不到任何好处。 ￼ 最糟糕的情况是，贷给不赢利企业的那些款项浪费了社会储蓄，降低了生产力。结果，贷款人连本金都很难收回，更不要说利息了。</blockquote>
+        <blockquote>持续下降的价格还会鼓励岛民储蓄，因为他们知道现在的鱼将来会更有价值。尽管听起来可能有些疯狂，不过省一条确实等于赚一条。这样一来，人们就愿意储蓄，也就有更多资本可用于贷款、资本投资、生产，最终带来更多消费。</blockquote>
+        <blockquote>劳动的价值通常取决于劳动者所使用的资本。资本越优化，劳动的价值就越大。例如，付出同样的劳动，你驾驶一辆推土机挖的坑要比你用铁锹挖的坑大得多。所以，最好利用可用的最优资本工作。</blockquote>
+        <blockquote>法律不需要对薪资负责，需要对此负责的是员工本人</blockquote>
+        <blockquote>但是在最低薪资制度下，使这些权益得以实现的是员工的生产力，而非那些法规。然而，这些要求却剥夺了员工的选择权</blockquote>
+        <blockquote>将来某一天，芬尼根可能储蓄足够多的鱼，制造自己的运鱼车，进而和他的老东家竞争。为了防止此类事情发生，莫里不得不支付给芬尼根合适的报酬，比他自己干赚得多，但不会多到让他产生自立门户的想法。</blockquote>
+        <blockquote>另外，较低的存款率表明人们更愿意将储蓄用于近期消费，因而抑制了为满足未来消费需求而进行的投资。</blockquote>
+        <blockquote>政 府不但制定法律，向某些贷款类型和人群倾斜，扰乱了信贷市场，还通过另一种更加根本的方式影响信贷流动：操控利率。</blockquote>
+        <blockquote>美联储调高或调低联邦基金利率并不会直接决定某家银行每种贷款的利率，但会影响整个市场走高或走低。通常，银行向大众收取的利率要高于它们支付给美联储的贷款利率。因此，当美联储调高或调低其基准利率时，企业和个人在借贷时就要多付或者少付一些钱。</blockquote>
+        <blockquote>第一，该机制的前提是：美联储的一小撮人要比数百万独立决断的民众（或者叫“市场”）更清楚什么是恰当的利率水平。但是，美联储跟利率没有任何关系。它既不产生储蓄，也不会因为贷款变成坏账而蒙受损失。积累储蓄的是民众，而且银行能否获利取决于自身的管理水平。如果没有这种关联，借贷必然是低效的。</blockquote>
+        <blockquote>其实我们更能确定的是，政府对于公共设施和服务的垄断几乎必然会造成效率低下和贪污腐败。</blockquote></li>
+      <li data-size="130x190x18" data-kind="soft" data-color="#9c5869" data-style="literary" data-publisher="人民文学出版社" data-marks="15" data-cover="wr23303606.jpg" data-read="2025 年 7 月">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=06332f20716395b6063fa3e">茶花女</a> <span class="by">[法]小仲马</span>
+        <blockquote class="key">她是我偏爱的死人。先生，我们这些人没有办法，只能爱死人，因为我们忙得不可开交，几乎没有时间去爱别的东西了。</blockquote>
+        <blockquote>太阳在闪耀着蔚蓝和金黄两色的薄暮中入睡了。</blockquote>
+        <blockquote>我一句话也没有讲，我的灵魂似乎钻进到了我的心坎里，而我的心灵又仿佛钻进到了我的眼睛里。</blockquote>
+        <blockquote>最纯洁的决心都会有一些庸俗可笑的牵连。</blockquote>
+        <blockquote>在巴黎这个谣诼纷纭的罪恶渊薮里，这些事情到处有人在议论，随着岁月的消逝，也就慢慢地被人遗忘了</blockquote>
+        <blockquote>本来我很想为这个女人受苦，我担心她过快地接受我，怕她过于匆忙地爱上我；我宁愿经过长期等待，历尽艰辛以后才得到这种爱情。我们这些男人就是这种脾气；如果能使我们头脑里的想象赋有一点诗意，灵魂里的幻想高于肉欲，那就会感到无比的幸福。</blockquote>
+        <blockquote>怎么也容纳不下我的幸福，我需要向整个大自然倾诉衷肠。</blockquote>
+        <blockquote>为他们争面子的时候，我们排在第一位，要得到他们尊重的时候，我们排在最后面</blockquote>
+        <blockquote>你也许知道这个饭店，它一个星期有六天是旅馆，星期天是咖啡馆。它有一个花园，有一般二层楼那么高，在那里远眺，风景非常优美。左边是一望无际的马尔利引水渠，右边是连绵不断的小山岗；在加皮荣平原和克罗瓦西岛之间，有一条银白色的小河，它在这一带几乎是停滞的，像一条宽大的白色波纹缎带似的向两面伸展开去。两岸高大的杨树在随风摇曳，柳树在喃喃细语，不停地哄着小河入睡。</blockquote>
+        <blockquote>这就是那天灼热的阳光穿过树叶的空隙给我带来的梦境。</blockquote>
+        <blockquote>时间慢慢在流逝，天空布满了乌云，一阵秋雨抽打着玻璃窗，有时空荡荡的床铺看上去犹如一座坟墓，我害怕起来了。我打开门，侧耳静听，除了树林里簌簌的风声以外什么也听不见。路上车辆绝迹，教堂的钟凄凉地在敲半点钟。我倒反而怕有人来了，我觉得在这种时刻，在这种阴沉的天气，要有什么事情来找我的话，也决不会是好事。</blockquote>
+        <blockquote>两点钟敲过了，我稍等了一会儿，惟有那墙上时钟的单调的滴答声打破寂静的气氛。</blockquote>
+        <blockquote>最后我离开了这个房间，由于内心的孤独和不安，在我看来这个房间里连最小的物件也都蒙上了一层愁云。</blockquote></li>
+      <li data-size="148x210x18" data-kind="hard" data-color="#f6f4f0" data-style="modern" data-publisher="中信出版集团" data-marks="15" data-cover="wr44026191.jpg" data-read="2026 年 5 月">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=e1e32b00729fc94fe1e824d">纳瓦尔宝典</a> <span class="by">埃里克·乔根森</span>
+        <blockquote class="key">我对财富的定义是在睡觉时也能带来收入的企业和资产。</blockquote>
+        <blockquote>如果在一个艰难的决定上意见不统一，你就应该选择短期内更痛苦的道路。</blockquote>
+        <blockquote>工作时，和比自己更成功的人在一起。玩耍时，和比自己更快乐的人在一起。</blockquote>
+        <blockquote>如果不想跟一个人共事一生，那就一天都不要和他共事。</blockquote>
+        <blockquote>明确的责任分配非常重要。没有责任，就没有动力。没有责任，就无法建立可信度。但责任也意味着风险：失败的风险，被羞辱的风险，以个人名誉承担失败的风险。</blockquote>
+        <blockquote>同时，你更有可能获得这个社会还不能通过培训提供的技能。如果社会可以培训他人，这些人就可以取代你。如果你可以被轻易取代，社会就不需要为你支付重酬。要时刻牢记，掌握社会所需的独门绝技才是占据职业制高点的不二法门。</blockquote>
+        <blockquote>如果你所有的信念都能被整整齐齐地打包成某个“主义”，或某个思想流派，你就要对自己的信念保持高度怀疑。</blockquote>
+        <blockquote>做人除了要极度诚实，还可以参照巴菲特很久之前说过的一个建议：具体地表扬，泛泛地批评。</blockquote>
+        <blockquote>恺撒大帝有句名言：“如果你想完成一件事，那就亲自去做。如果不想完成，那就派人去做。”他的意思是，如果想把事情做好，你就必须自己去做。如果你是委托人，你就会有主人翁的责任感，因为在意结果，所以你会做得很好。而如果你是代理人，你就是在为别人做事，你可能会做得很糟糕，因为你不在乎。你追求的是自身利益最大化，而不是委托人资产最优化。</blockquote>
+        <blockquote>这就是为什么生命的伟大在很大程度上源于苦难。人必须先看到消极的一面，才能去憧憬和欣赏积极的一面。</blockquote>
+        <blockquote>幸福指数的个人衡量标准是，一天中你有多少时间用于履行职责，而不是追随兴趣。</blockquote>
+        <blockquote>一个方法是退后一步，回顾经历过的痛苦。我还会把这些痛苦写下来：上次分手，上次生意失败，上次健康出问题，后来都发生了什么？这样我就可以看到在随后的几年里我的成长和进步。另一个应对小挫折的方法就是换个角度看问题。当我遭遇挫折时，部分自我会立即做出消极反应。但现在我已经学会自问：“这种情况有什么积极的意义吗？”比如，开会要迟到了，这件事对我有什么好处吗？好处就是我可以放松一下，看鸟观云。而且，我也可以少花一些时间在那个无聊的会议上。任何事情都有积极的一面。</blockquote>
+        <blockquote>高度集中注意力是一种能力，这种能力与放松自我、活在当下、保持快乐的能力有关，当然，也与提高效能的能力有关。</blockquote>
+        <blockquote>社会认可是在群体内部进行的。如果想得到社会认可，就需要去阅读整个社会群体都在阅读的东西。而要想在群体中脱颖而出，就需要有一定的逆向思维和反叛精神，能够说出：“不，我就是要做自己选择的事情。不管社会结果如何，我就是要学自己觉得有意思的东西。”</blockquote>
+        <blockquote>拥有说服技能很重要，因为如果能影响自己的同胞，你就可以做成很多事情。我认为，说服力是一项实实在在的技能，而且是可以学会的，并没有那么难。数学有助于解决生活中所有复杂的难题。如果想赚钱，如果想研究科学，如果想了解博弈论、政治、经济、投资或计算机，你就需要学好数学，因为所有这些都以数学为核心。数学是自然界最基本的语言。</blockquote></li>
+      <li data-size="130x184x8" data-kind="soft" data-color="#e23a32" data-style="modern" data-publisher="中国民主法制出版社" data-marks="10" data-cover="wr3300057016.jpg" data-progress="19">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=c02321e0813ab7cc5g0165d2">共产党宣言</a> <span class="by">马克思 / 恩格斯</span>
+        <blockquote class="key">一个幽灵，共产主义的幽灵，在欧洲游荡。</blockquote>
+        <blockquote>至今一切社会的历史都是阶级斗争的历史。</blockquote>
+        <blockquote>它的商品的低廉价格，是它用来摧毁一切万里长城、征服野蛮人最顽强的仇外心理的重炮。</blockquote>
+        <blockquote>一句话，它按照自己的面貌为自己创造出一个世界。</blockquote>
+        <blockquote>从封建社会的灭亡中产生出来的现代资产阶级社会并没有消灭阶级对立。它只是用新的阶级、新的压迫条件、新的斗争形式代替了旧的。</blockquote>
+        <blockquote>各种行业组织之间的分工随着各个作坊内部的分工的出现而消失了。</blockquote>
+        <blockquote>资产阶级的这种发展的每一个阶段，都伴随着相应的政治上的进展。它在封建主统治下是被压迫的等级，在公社里是武装的和自治的团体，在一些地方组成独立的城市共和国，在另一些地方组成君主国中的纳税的第三等级；后来，在工场手工业时期，它是等级君主国或专制君主国中同贵族抗衡的势力，而且是大君主国的主要基础；最后，从大工业和世界市场建立的时候起，它在现代的代议制国家里夺得了独占的政治统治。现代的国家政权不过是管理整个资产阶级的共同事务的委员会罢了。</blockquote>
+        <blockquote>它无情地斩断了把人们束缚于天然尊长的形形色色的封建羁绊，它使人和人之间除了赤裸裸的利害关系，除了冷酷无情的“现金交易”，就再也没有任何别的联系了。</blockquote>
+        <blockquote>总而言之，它用公开的、无耻的、直接的、露骨的剥削代替了由宗教幻想和政治幻想掩盖着的剥削。</blockquote>
+        <blockquote>资产阶级日甚一日地消灭生产资料、财产和人口的分散状态。它使人口密集起来，使生产资料集中起来，使财产聚集在少数人的手里。由此必然产生的结果就是政治的集中。各自独立的、几乎只有同盟关系的、各有不同利益、不同法律、不同政府、不同关税的各个地区，现在已经结合为一个拥有统一的政府、统一的法律、统一的民族阶级利益和统一的关税的统一的民族。</blockquote></li>
+      <li data-size="145x210x18" data-kind="soft" data-color="#6a7174" data-style="literary" data-publisher="中央编译出版社" data-marks="9" data-cover="wr26130880.jpg" data-progress="11">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=3f2328b0718eb9c03f24832">君主论</a> <span class="by">马基雅维利</span>
+        <blockquote class="key">伤害要一次做完，恩惠要慢慢给。</blockquote>
+        <blockquote>名声只是对成功的人类力量的外在遵从，而与可能捆住政府手脚的道德准则不相干。</blockquote>
+        <blockquote>合宪的政府只有在一个不合宪的开端之后才有可能。</blockquote>
+        <blockquote>除非你的慷慨(或者大方)被注意到并“被认为慷慨”或者赢得一个慷慨的名声，否则便是没有用的。但是，一位君主是不能靠真的慷慨而被视为慷慨的，因为他只能对少数人慷慨而对多数人课以重税，这就触犯了多数人，君主将不得不节衣缩食，如此他很快便会得到吝啬的名声。因此，获得慷慨名声的正确方式是在一开始并不在意吝啬的名声。一旦人民发现君主成就事业却不给他们增加负担，他们立刻便会认为君主对他们是慷慨的，而只对那些他从未赏赐过什么的人才吝啬。最终，“慷慨”的意思变成了少获取而非多给予。</blockquote>
+        <blockquote>不过，在寻求帮助的过程中，他必须考虑在每座城市中都会发现的“两种对立的脾性”：渴望不受大人物支配和压迫的人民、渴望支配和压迫人民的大人物(第9章)。</blockquote>
+        <blockquote>这里的经验是，合宪的政府(constitutional government)只有在一个不合宪的开端之后才有可能。</blockquote>
+        <blockquote>他最典型的操作发生在罗马涅。当地原来由一些弱小领主统治，治安混乱、盗匪横行、派系纷争严重。切萨雷占领后，先派一个非常残酷但有效的官员雷米罗·德·奥尔科去整肃地方。这个人短时间内恢复了秩序，但也积累了民怨。随后切萨雷设立较正规的司法机构，又把雷米罗处死，并把尸体和血刀摆在切塞纳广场上。马基雅维利说，这一幕让人民“既满意又震惊”。</blockquote>
+        <blockquote>《君主论》第 8 章里，马基雅维利讲得更狠：阿伽托克勒斯假装召集人民和元老院讨论共和国事务，结果在约定信号下，让士兵杀死所有元老和最富有的人民；这些人死后，他就夺取了叙拉古的统治权。</blockquote>
+        <blockquote>马基雅维利对他的评价很微妙：他承认阿伽托克勒斯有军事能力和胆量，但说“杀害同胞、欺骗朋友、无信义、无怜悯、无宗教”不能称为真正的德性；这种方式可以获得统治权，但不能获得荣耀。</blockquote>
+        <blockquote>阿伽托克勒斯对应的政治逻辑是：</blockquote>
+        <blockquote>一次性清洗最危险的精英集团，然后迅速稳定局面。</blockquote></li>
+      <li data-size="150x210x13" data-kind="soft" data-color="#d8cac3" data-style="modern" data-publisher="四川少年儿童出版社" data-marks="9" data-cover="wr798755.jpg" data-read="2025 年 6 月">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=ea232e205c3023ea2c96525">小狗钱钱</a> <span class="by">[德]博多·舍费尔</span>
+        <blockquote class="key">运气其实永远只是充分准备加上努力工作的结果。</blockquote>
+        <blockquote>笨人只有一次好运，聪明人永远都有好运。</blockquote>
+        <blockquote>最珍贵的礼物是我们自己争取来的。克服了丢面子的恐惧，世界就会向你敞开大门。</blockquote>
+        <blockquote>你要每天不间断地去做对你的未来意义重大的事情。</blockquote>
+        <blockquote>如果你只是带着试试看的心态，那么你最后只会以失败而告终，你会一事无成。尝试纯粹是一种借口，你还没有做，就已经给自己想好退路了。不能试验。你只有两个选择：做，或者不做。</blockquote>
+        <blockquote>尝试为别人解决一个难题，那么你就能赚到许多钱；第二个建议就是，把精力集中在你知道的、你会的和你拥有的东西上。</blockquote>
+        <blockquote>你是否能挣到钱，最关键的因素并不在于你是不是有一个好点子。你有多聪明也不是主要原因，决定因素是你的自信程度。　　一个人把精力集中在自己所能做的，知道的和拥有的东西上的那一天起，他的成功就已经拉开了序幕。这也使得一个孩子完全有能力比成人挣到更多的钱。</blockquote>
+        <blockquote>一个人挣钱多少是和他的自信心联系在一起的。还有就是取决于他的精力是集中在自己的能力范围之内，还是放到了他力所不能及的事情上。没有我的成功日记本，我就不会去思考自己适合在哪些地方赚钱。</blockquote>
+        <blockquote>从分析企业家的传记中还可以明显看出，在童年时期和学生时代，他们当中有许多人不得不努力地压制自己的意志，使自己适应外界对思维发展的束缚。是什么阻碍了企业家素质的萌芽呢？如果这种阻力能够有所降低的话，那已然是一件幸事。</blockquote></li>
+      <li data-size="155x230x32" data-kind="soft" data-color="#85afca" data-style="literary" data-publisher="新星出版社" data-marks="8" data-cover="wr23783430.jpg" data-progress="7">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=e5832af0716ae806e581eab">哲学的故事</a> <span class="by">威尔·杜兰特</span>
+        <blockquote class="key">对过程的观察、对方法的构建是科学，对目的的批判和协调则是哲学。</blockquote>
+        <blockquote>不指向欲求的事实毫无意义，不联系目的和整体的事实不可能完备。</blockquote>
+        <blockquote>每每聆听圣人之声便经历一次一种奇异的似曾相识感，仿佛在遥远的青年时代，我们年轻的头脑中也曾出现过这些声音，只不过当时我们既无能力也无勇气将它们表达出来罢了</blockquote>
+        <blockquote>在政治方面，他们分为两派：其一就像后来的卢梭，坚持性本善，文明本恶，同时，这一派坚持人生而平等，后天的不平等则完全由按阶级划分的社会制度导致，法律则是强者用以压制和统治弱者的发明；其二就像后来的尼采，认为人的本性无所谓善恶，人一出生即不平等，道德是弱者拿来牵制强者的工具，这一派还认为，权力是最高的德行，是人类至高的追求，贵族制才是最有效、最自然的政府组织形式。</blockquote></li>
+      <li data-size="130x190x14" data-kind="hard" data-color="#b08545" data-style="literary" data-marks="7" data-cover="wr3300148779.jpg" data-progress="38">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=2eb32580813aba09dg01940c">克林索尔的最后夏天</a> <span class="by">[德]赫尔曼·黑塞</span>
+        <blockquote class="key">忧郁像一个巨人踞坐在他颤抖的心上。</blockquote>
+        <blockquote>笑容好似月光铺开在他扭歪的脸上。</blockquote>
+        <blockquote>这一片片枯叶和木片就像是一叶叶小舟，一会儿向前急驶，一会儿被堵住搁了浅，它们经历着喜悦、痛苦和种种变幻莫测的命运，而我的经历正是和它们一样。</blockquote>
+        <blockquote>几天以来，远处棕色的树林就已经闪烁着一种明朗的翠绿光彩；今天我在莱顿斯推格的小路上发现了第一批微绽的樱草花花蕾；湿润晴朗的天空中梦幻似的飘浮着轻柔的四月云；那片广阔的、尚未播种的棕色田地晶莹闪烁，在温煦的空气中有所期待地向远处伸展，好似在渴求创造，让它那沉默的力量在成千上万个绿色的萌芽中、在繁茂的禾秆中得到检验、有所感受并得到繁衍。在这温柔和煦、刚刚开始变暖的气候里，万物都在期待、萌芽、充满了梦幻和希望——幼芽向着太阳，云彩向着田野，嫩草向着和风。</blockquote>
+        <blockquote>然而他胸膛里的感觉又是多么美、多么痛苦和多么难解，这些对于某种彩色缤纷生活碎块的热爱与闪烁不定的渴望，这些对于观察与创造的狂热而甜蜜的冲动。然而，虽然还蒙着一层轻纱，他还是立即感到自己所作所为既孩子气又徒劳无益！</blockquote>
+        <blockquote>这时正是傍晚的黄金时刻，到处还都闪耀着白天的光辉，而月亮却也已夺得发光的地盘，第一批蝙蝠也已在微微颤动的澄青夜色中飞舞了。一片森林的边缘还温暖地沐浴着落日余晖，亮晶晶的栗树树干突现在黑色阴影之前，一座黄色农舍好似一块黄玉正柔柔地散放出自己白天吸入的光亮，小路穿越着草地、葡萄园和树林，时而呈玫瑰色，时而呈蓝紫色，这里那里随处可见变黄的槐树枝条，在西边，蓝色的群山还笼罩着金绿色光辉。</blockquote></li>
+      <li data-size="150x220x26" data-kind="soft" data-color="#b11924" data-style="modern" data-publisher="天地出版社" data-marks="6" data-cover="wr3300049248.jpg" data-read="2025 年 9 月">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=fc832b90813ab79bcg018479">红色的起点</a> <span class="by">叶永烈</span>
+        <blockquote class="key">作始也简，将毕也巨。</blockquote>
+        <blockquote>上海社会主义青年团成立之初，没有年龄限制，连41岁的陈独秀也是团员。</blockquote>
+        <blockquote>列宁建立远东共和国，为的是在远东建立一个缓冲国，便于同协约国打交道。1922年冬，当红军把日军全部赶出远东之后，远东共和国并入了苏俄。</blockquote>
+        <blockquote>1922年5月正式成立时，称“中国社会主义青年团”。1925年，改称“中国共产主义青年团”。1935年11月，为了适应抗战形势，便于动员广大青年参加抗战，共青团改组，成立了“中华民族解放先锋队”“青年救国会”“青年抗日先锋队”等。1946年，试建“中国新民主主义青年团”。1949年4月，正式成立“中国新民主主义青年团”。1957年5月，改名为“中国共产主义青年团”。</blockquote>
+        <blockquote>这样，俞秀松成为中国社会主义青年团的第一任书记。</blockquote></li>
+      <li data-size="165x235x26" data-kind="soft" data-color="#9dc4c9" data-style="modern" data-publisher="机械工业出版社" data-marks="6" data-cover="wr3300087415.jpg" data-progress="22">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=91a32240813ab88a5g015c11">妙趣横生博弈论</a> <span class="by">迪克西特 / 奈尔伯夫</span>
+        <blockquote class="key">向前展望，倒后推理。</blockquote>
+        <blockquote>你可能以为自己是在参与一个博弈，但这只不过是更大的博弈中的一部分。总是存在更大的博弈。</blockquote>
+        <blockquote>在单人决策中，更大的行动自由可能永远没有坏处。但是在博弈中，它却可能对参与者不利。</blockquote>
+        <blockquote>早在2000多年前，亚里士多德就论述过知识与成功的关系：人类的知识可分为经验、技术和智慧，但个人的成功必须依赖经验；有经验的人可以比有技术而无经验的人更成功；不过，有经验之人只知事物之然而不知其所以然，而有技术之人则兼知其所以然，所以有技术的人更聪明。</blockquote>
+        <blockquote>科学与艺术的主要区别在于科学的内容可以通过系统而富有逻辑的方式来学习，而策略艺术的练习则只有依靠例子、经验和实践来进行</blockquote>
+        <blockquote>我们并非生活于一个真空世界，也并非在一个真空世界中行事。因此，我们不能认为，当我们改变了自己的行为时，其他事情还会保持原样。</blockquote></li>
+      <li data-size="128x182x16" data-kind="soft" data-color="#8bc2e1" data-style="literary" data-publisher="百花洲文艺出版社" data-marks="5" data-cover="wr26620075.jpg" data-read="2026 年 1 月">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=fff32b30719630abfff37cf">天气之子</a> <span class="by">新海诚</span>
+        <blockquote class="key">那声音知道我们的过去和未来，绝不会责备我们的任何决定和选择，默默地接纳一切历史。</blockquote>
+        <blockquote>它实在太蓝了，仿佛是人工制造的，这片蓝天就像赝品似的。</blockquote>
+        <blockquote>在被雨水模糊的世界里，只有那里鲜艳夺目。</blockquote>
+        <blockquote>阳菜不再看着戒指，抬起头看向我。她的瞳仁略带蓝色，深处藏着某种摇摆不定的情感。可那是什么，我并不知道。我只是点了点头说</blockquote>
+        <blockquote>不久，阳菜开口了。我好不容易将视线从她身上移开，看着她的脸。她泫然欲泣，却突然露出柔和的笑容。“你在看哪里呢？”“没看哪里……”我条件反射地说道。不，不可以。我不能哭。虽然不能哭，但是我……“我看着你呢……”眼睛像坏了似的涌出泪水。我拼命用双手拭去，用拳头抵着眼睛，真希望能把眼泪顶回去。“你为什么哭呢……”阳菜温柔地笑着。到了这种时候，你还在笑。我更加哭得停不下来。</blockquote></li>
+      <li data-size="150x220x26" data-kind="soft" data-color="#dfc8ca" data-style="modern" data-publisher="中信出版集团" data-marks="4" data-cover="wr621677.jpg" data-progress="9">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=69632d20597c6d6963b501b">情商</a> <span class="by">丹尼尔·戈尔曼</span>
+        <blockquote class="key">分析人类本性时无视情绪的力量是一种可悲的短视。</blockquote>
+        <blockquote>你会发现职位越高，智商和技术能力指标的重要性就越低。</blockquote>
+        <blockquote>人类的情绪起到了重要的指引作用，但随着文明社会的迅速发展，缓慢的进化过程已经跟不上现实的步伐。</blockquote>
+        <blockquote>人与动物的区别在于理性，人如果失去理性就是动物。人的欲望无限，而资源有限，因此必须学会管理欲望。情绪无限，而自由的空间有限，因此必须学会控制情绪，不能让情绪泛滥。</blockquote></li>
+      <li data-size="150x220x16" data-kind="soft" data-color="#664f45" data-style="modern" data-publisher="九州出版社" data-marks="4" data-cover="wr3300144986.jpg" data-progress="36">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=70132e70813ab9f22g016f9c">洞穴奇案</a> <span class="by">[美]彼得·萨伯</span>
+        <blockquote class="key">一个人可以违反法律的表面规定而不违反法律本身。</blockquote>
+        <blockquote>所有实定法应该建立在人类可能共存这个基础之上。</blockquote>
+        <blockquote>不管我们的各个法律分支追求的具体目标是什么，稍加思考就不难明白其所有目标的根本指向都在于促进和改善人的共存状态，调节共存状态下相互之间关系的公正和平等</blockquote>
+        <blockquote>人们不断尝试着调和自我防卫的法律处理和法令措辞之间的矛盾，但是在我看来，这些努力仅仅是巧妙的诡辩。事实上支持自我防卫的例外是不能与法律条文的字义调和的，能与之调和的只有法律条文的目的</blockquote></li>
+      <li data-size="148x210x20" data-kind="soft" data-color="#f6f4f0" data-style="modern" data-publisher="云南人民出版社" data-marks="4" data-cover="wr3300012940.jpg" data-progress="11">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=be832770813ab6b8eg01004a">法治的细节</a> <span class="by">罗翔</span>
+        <blockquote class="key">承认自己的无知，乃是开启智慧的大门。</blockquote>
+        <blockquote>怀疑的目的是修正，而不是彻底的破坏，从而陷入虚无。</blockquote>
+        <blockquote>我们认识的真理是有限的，但并不代表真理是相对的。</blockquote>
+        <blockquote>20世纪有一位杰出的自由主义思想家以赛亚·伯林(Isaiah Berlin)，他曾把思想家分为两种，狐狸与刺猬。刺猬之道，一以贯之，是为一元论，而狐狸则圆滑狡诈，可谓多元论。一元论，黑白分明，立场鲜明，试图以一个理论、一个体系囊括世间万象。而现在的人们很喜欢使用一元论的思维，因为这很容易迎合人们理智和情绪上的需要。但一元论的思维却在人类历史上带来了无数浩劫，比如德国纳粹对种族的不宽容。相较而言，承认理性有限，立足现实的多元论却少了很多刀光剑影。</blockquote>
+        <blockquote>电车难题最早是由哲学家菲利帕·福特(Philippa Ruth Foot)在1967年提出的，用来批判伦理哲学中的功利主义。然而电车难题不仅仅涉及哲学和伦理学，更涉及刑法学。</blockquote></li>
+      <li data-size="160x230x48" data-kind="hard" data-color="#d56105" data-style="literary" data-publisher="天津人民出版社" data-marks="4" data-cover="wr26408000.jpg" data-read="2026 年 9 月">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=abc326b07192f440abcfa9e">福尔摩斯探案全集</a> <span class="by">柯南·道尔</span>
+        <blockquote class="key">东风肯定会来的，英国还从没刮过这种风，它冰冷刺骨，我们很多人都会随风凋零。不管怎样，这是上帝的旨意，风暴过后，阳光下的这片土地一定会更纯净、更美好、更强大。</blockquote>
+        <blockquote>我们无法预知某个人要做什么，但能确定某个群体将做什么。正如统计学家所说，个性常变，共性恒定。</blockquote>
+        <blockquote>我确实放走了一个重犯，但也可能拯救了一个灵魂。</blockquote>
+        <blockquote>九月的傍晚，七点钟不到，天色阴沉，灰茫茫的浓雾笼罩伦敦城。乌云悬浮在泥泞的街道上空，昏暗阴郁。混沌中，河岸街的路灯晕成了淡淡光点，微弱的亮光洒在湿滑的人行道上。商店橱窗射出刺眼的黄光，穿透朦胧的雾气，照着车来人往的大街。一张张面孔犹如鬼魅掠过狭长的光束，有的悲伤，有的快乐，有的疲惫，有的兴奋。整个人类何尝不是这样？从黑暗匆匆走向光明，又从光明匆匆回到黑暗。</blockquote></li>
+      <li data-size="130x184x11" data-kind="hard" data-color="#ddddd8" data-style="literary" data-publisher="天津人民出版社" data-marks="3" data-cover="wr23736455.jpg" data-progress="73">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=39e323e0716a308739e70be">窄门</a> <span class="by">[法]纪德</span>
+        <blockquote class="key">你们要努力进窄门。</blockquote>
+        <blockquote>花香与山毛榉枯叶的味道融为一体。空气中漫溢着浓浓的秋意，阳光下的果树架被晒得暖烘烘的，东方的天空却格外明净。</blockquote>
+        <blockquote>她的声音平静又忧伤，但笑容又照亮了她，显得无比和煦静美。</blockquote>
+        <blockquote>我从未见她如此专注柔情，也从未见过她表现出如此深切的爱恋。</blockquote></li>
+      <li data-size="140x203x24" data-kind="soft" data-color="#f6f4f3" data-style="literary" data-publisher="商务印书馆" data-marks="3" data-cover="wr33889243.jpg" data-progress="19">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=40a32b8072051bdb40a6b87">理想国</a> <span class="by">[古希腊]柏拉图</span>
+        <blockquote class="key">但最大的惩罚还是你不去管人，却让比你坏的人来管你了。</blockquote>
+        <blockquote>好人就不肯为名为利来当官。</blockquote>
+        <blockquote>苏：你说正义就是恶吗？色：不，我认为正义是天性忠厚，天真单纯。</blockquote>
+        <blockquote>苏：色拉叙马霍斯，事情到此清楚了。没有一种技艺或统治术，是为它本身的利益的，而是像我们已经讲过的，一切营运部署都是为了对象，求取对象（弱者）的利益，而不是求取强者的利益。所以我刚才说，没有人甘愿充当一个治人者去揽人家的是非。做了统治者，他就要报酬，因为在治理技术范围内，他拿出自己全部能力努力工作，都不是为自己，而是为所治理的对象。所以要人家愿意担任这种工作，就该给报酬，或者给名，或者给利；如果他不愿意干，就给予惩罚。</blockquote></li>
+      <li data-size="170x240x34" data-kind="hard" data-color="#afa59a" data-style="modern" data-publisher="中信出版集团" data-marks="2" data-cover="wr837932.jpg" data-progress="16">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=62f321d0811e55664g016535">穷查理宝典</a> <span class="by">查理·芒格</span>
+        <blockquote class="key">迅速歼灭不该做的事情，接着对该做的事情发起熟练的、跨学科的攻击，然后，当合适的机会来临——只有当合适的机会来临——就采取果断的行动。</blockquote></li>
+      <li data-size="130x184x10" data-kind="soft" data-color="#ad8f2e" data-style="literary" data-publisher="上海译文出版社" data-marks="2" data-cover="wr22781912.jpg" data-read="2025 年 8 月">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=c7932430715b9fd8c7913fa">动物农场</a> <span class="by">乔治·奥威尔</span>
+        <blockquote class="key">所有动物一律平等，但有些动物比其他动物更加平等。</blockquote>
+        <blockquote>来自水平方向的脉脉斜晖在草地和苍翠欲滴的树篱上抹了一层金色。</blockquote></li>
+      <li data-size="155x230x48" data-kind="hard" data-color="#5c5d68" data-style="literary" data-publisher="重庆出版社" data-marks="2" data-cover="wr849878.jpg" data-read="2025 年 9 月">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=330322e05cf7d6330dfa225">冰与火之歌</a> <span class="by">乔治·R.R.马丁</span>
+        <blockquote class="key">凛冬将至。</blockquote>
+        <blockquote>恐惧像肚里一顿难以消化的饭菜。</blockquote>
+        <blockquote>树枝在风中微微悸动，伸出木指彼此搔抓。</blockquote></li>
+      <li data-size="150x220x20" data-kind="hard" data-color="#cfd7ba" data-style="modern" data-marks="1" data-cover="wr3300028322.jpg" data-progress="25">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=45a329e0813ab7190g012b04">千脑智能</a> <span class="by">杰夫·霍金斯</span>
+        <blockquote class="key">芒卡斯尔提出，智能的多样性也是基于一种基本算法。</blockquote></li>
+      <li data-size="155x230x34" data-kind="soft" data-color="#38436d" data-style="literary" data-publisher="中华书局" data-marks="1" data-cover="wr3300062728.jpg" data-progress="1">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=85f32ad0813ab7f00g0183dd">雍正传</a> <span class="by">冯尔康</span>
+        <blockquote class="key">朕就是这样汉子！就是这样秉性！就是这样皇帝！</blockquote></li>
+      <li data-size="140x210x22" data-kind="soft" data-color="#274264" data-style="literary" data-publisher="北京联合出版公司" data-marks="1" data-cover="wr25445353.jpg" data-progress="0">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=0c332090718443e90c34969">韩非子</a> <span class="by">[战国]韩非</span>
+        <blockquote class="key">法不阿贵，绳不挠曲。</blockquote>
+        <blockquote>凡说之务，在知饰所说之所矜而灭其所耻。</blockquote></li>
+      <li data-size="150x220x48" data-kind="hard" data-color="#efe0a4" data-style="literary" data-publisher="中国文史出版社" data-marks="1" data-cover="wr41595377.jpg" data-progress="0">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=7cb324e0727ab1f17cbf4c1">史记</a> <span class="by">[西汉]司马迁</span>
+        <blockquote class="key">嗟乎，燕雀安知鸿鹄之志哉！</blockquote>
+        <blockquote>旁罗日月星辰水波土石金玉。</blockquote></li>
+      <li data-size="145x210x36" data-kind="soft" data-color="#506e73" data-style="literary" data-publisher="上海译文出版社" data-marks="1" data-cover="wr31808223.jpg" data-progress="4">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=3be3244071e55adf3be703a">白痴</a> <span class="by">[俄]陀思妥耶夫斯基</span>
+        <blockquote class="key">美将拯救世界。</blockquote></li>
+      <li data-size="150x220x40" data-kind="hard" data-color="#d6c15f" data-style="literary" data-publisher="北京日报出版社" data-marks="1" data-cover="wr30272291.jpg" data-progress="0">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=ed032fa071cdeb23ed02e8a">曾文正公全集</a> <span class="by">[清]曾国藩</span>
+        <blockquote class="key">公秉凝粹雄玮之资，沉浸乎道德仁义之府。</blockquote></li>
+      <li data-size="145x210x45" data-kind="soft" data-color="#262930" data-style="modern" data-publisher="长江出版社" data-marks="1" data-cover="wr933334.jpg" data-read="读完">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=05e329405e3dd605ee04cec">龙族</a> <span class="by">江南</span>
+        <blockquote class="key">在起落的裙摆和双足之间，一直迟到的夏天仿佛忽然间降临了。</blockquote>
+        <blockquote>雷声在刹那远去，雨中的长街像是在慢镜头中被拉得很长很长。</blockquote></li>
+      <li data-size="145x210x20" data-kind="soft" data-color="#e4d8ba" data-style="literary" data-publisher="北京联合出版公司" data-marks="1" data-cover="wr623386.jpg" data-read="2025 年 9 月">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=0ce3255059831a0ce16547b">一个人的朝圣</a> <span class="by">蕾秋·乔伊斯</span>
+        <blockquote class="key">头顶绿树成荫，蓊郁的枝叶连成一条隧道，尖尖的新芽和云一样的花簇缠绕其中。</blockquote></li>
+      <li data-size="128x182x45" data-kind="soft" data-color="#d4cfd1" data-style="modern" data-publisher="广州天闻角川动漫" data-marks="0" data-cover="wr37726140.jpg" data-progress="13">
+        <a href="https://weread.qq.com/book-detail?type=1&amp;v=85b32940723fa7bc85b6871">刀剑神域</a> <span class="by">川原砾</span>
+        <blockquote class="key">这虽然是游戏，但可不是闹着玩的。</blockquote></li>
+    </ul>
+  </section>
+
+  <section id="photos" data-nav="Photos">
+    <h2>Photos</h2>
+    <!--
+      3D 版里钉在挂钟下面的软木板上：点软木板，镜头凑近，照片散着钉在板上（互相压着、角卷起来），可以拖着换位置。
+      照片先用 blender/age_photos.py 做旧：原图放 photos-src/，跑完得到 assets/photos/名字.webp 和 名字.board.webp，
+      还有一份 assets/photos/photos.json（照片列表）；有这份列表，3D 版就钉这些照片。这两个文件夹都不进 Git。
+      下面是公开仓库里的占位照片（assets/photos-sample/，--demo 1 生成的），本地没有真实照片时用。p 是一行说明，可以不写。
+    -->
+    <ul class="photos">
+      <li><img src="assets/photos-sample/demo-sea.webp" alt="海边的日落" loading="lazy"> <p>海边，太阳落下去之前。</p></li>
+      <li><img src="assets/photos-sample/demo-mountain.webp" alt="远山" loading="lazy"> <p>山。</p></li>
+      <li><img src="assets/photos-sample/demo-street.webp" alt="夜里的楼" loading="lazy"> <p>城市的夜晚。</p></li>
+      <li><img src="assets/photos-sample/demo-tree.webp" alt="草地上的一棵树" loading="lazy"> <p>一棵树。</p></li>
+    </ul>
+  </section>
+
+  <section id="writing" lang="zh-CN">
+    <h2>写过的东西</h2>
+    <!--
+      没有 data-nav：不进导航栏。3D 版里是书架第二层左头那本牛皮纸本子（彩蛋）：翻开左页是第一篇，右页是第二篇。
+        article.essay   一篇文章：h3 标题（small 是副标题），p 一段
+        data-sealed     这一篇上了锁：正文不在这个文件里，只在 data-sealed 指向的密文里（AES-GCM，口令只有作者知道）。
+                        3D 版和纯文字版都只看得到一层马赛克，在本子的面板里输入口令，浏览器里解开才看得到正文。
+                        密文用 npm run seal 生成（scripts/seal.mjs），原稿不进仓库
+    -->
+    <article class="essay">
+      <h3>于是到了这一天</h3>
+      <p>一转眼，树叶便褪去了翠绿，金黄爬上了树梢。奶茶鼠走在落叶铺成的柔软地毯上，不时扒开看看有没有漏掉的坚果。天气已经开始转凉，可能是树木为自己的母亲换下绿衣，做成冬装吧，她这样想着。树上的橡果已经被其他松鼠或者麻雀作为过冬的储粮，所剩无几，她的树洞里也储备不足了。她爬上树，远处，山丘连绵起伏，小鸟们在树林里纷飞，河流像绸带缠绕在山峦的腰肢上。她饿了，啃着刚刚收集到的坚果。</p>
+      <p>“那里有很多麻雀”，她想，之前经常和猫咪手下一起在那里玩耍。</p>
+      <p>“后面的树丛里有很多花，猫咪手下曾经给我编过花环”，她在那里想啊想，一会儿，坚果就吃完了，她知道自己该走了。</p>
+      <p>她回到自己的树洞，储粮的仓库已经见底，铺着一层坚果碎屑，屋子里最醒目的位置摆着猫咪手下给的花环，她在阳光好的秋天，放在太阳底下做成了干花。那天，她坐在树洞里，看着五颜六色的花朵点缀着秋日，看着夕阳伸出长长的手指渐渐抹掉万物的色彩，她把这一幕牢牢定格在了心中。</p>
+      <p>树下，仓鼠正在往洞穴里铺上厚厚的叶子，她把金黄色的秋叶撕成小条，再卷成一捆捆的，推进洞穴里。</p>
+      <p>“你好啊～”，她跳下树，落在松软的“地毯”上，发出“咯吱”一声，“这是用来干嘛的啊？”</p>
+      <p>仓鼠慈爱地笑笑：“用来做成暖和的枕头过冬”</p>
+      <p>“哇哦”，她想：仓鼠连枕头都做好了。</p>
+      <p>“真好，我也想有，但是我连存粮都不多了”，她现在的枕头是猫咪手下送给她的，表面是玉米叶，里面填满了捶打过的麦秸秆和稻谷壳。</p>
+      <p>“存粮？存粮是从夏末就要开始收集的，我收集了一个整秋天呢。”</p>
+      <p>她略微低了低头，夏末秋初是森林里最好的时节，有着清爽的空气和晚开的花朵，她和猫咪手下经常见面，虽说猫咪手下住在山的那边还要远的地方。他有吃的吃嘛，住处安顿好了吗？</p>
+      <p>她想他了。</p>
+      <p>“如果没吃的，那就最好向南方走，南方现在仍然暖和，而且花朵正旺盛。”仓鼠没看到奶茶鼠惆怅的神情，仍在整理洞穴。</p>
+      <p>南方……猫咪手下过冬也得去南方，或许……</p>
+      <p>她向仓鼠道了谢，回到了自己的树洞。</p>
+      <p>树洞里暖和和的，她看到去年春天自己做的树枝板凳，看到和猫咪手下一起做的秋千，看到一颗一颗亲手收集的坚果，他的花环……树洞里暖和舒适，她丝毫看不到冬天的身影……“只想在这里”，她趴下了。</p>
+      <p>那一夜非常漫长，她并未怎么睡着。她倾听风穿过树枝的声音，静静地看一片片影子从枝头落下。等到鸟儿在枝头扑棱起翅膀，天空一片钴蓝的时候，她便起身了。</p>
+      <p>于是到了这一天，她把花环小心翼翼地装进松枝篮子里，带了一点风干的橡果，自己踏上了旅途。</p>
+      <p>熟悉的松树离她越来越远，她回头张望，那棵树已经深深融入了一片绿色之中，她定睛，泪水却又将视线模糊。</p>
+      <p>她白天饮用泉水，吃橡果，晚上就在树枝上休息。有时也能看到长着浆果的灌木丛，她就把浆果当做零食。</p>
+      <p>一旦迈出第一步，事情似乎就容易许多。她仍想念自己的树洞，仍然在路上期待着猫咪手下的身影，但她看着自己光洁亮丽的皮毛，自己敏捷的步伐，知道已经到了这一天：</p>
+      <p>她的毛皮厚实，可以抗住凌冽的寒风，她也会收集橡果，也可以走过长长的旅途。</p>
+      <p>树叶变得稀少，她沿着缓缓起伏的平原向南进发，青草长到齐腰之高，株株野麦随风轻曳。白天大多数时间温暖明亮，不知名的野花星星点点得分布。又走了不一会儿，她来到了一个小乡镇，一队牛车隆隆南行，满载着谷物和一袋袋羊毛，郊外的哨兵树和悬铃木仍有绿意，阔叶松则已经披上金色和绿色的斗篷，甚至脱去了斗篷，裸露的褐色枝干像爪子一样伸向天空。每当有风吹过，压满车辙的路面上便荡漾起无数盘旋的枯叶。一条蜿蜒的小河穿过连片的楼房，水花“窸窣”地撞击着一个小巧的水车。在乡镇中央，伫立着高大的风车，一排排乌鸦给它披上了一层黑灰色的羽衣，她在一个又一个紧排着的房顶跳来跳去，想像自己在树上玩耍。</p>
+      <p>“嘿，你从哪来？”，一只乌鸦瞥见了她。</p>
+      <p>“来自北方”</p>
+      <p>“哦，那你一定是要去南方喽”</p>
+      <p>她点点头。</p>
+      <p>“我见过太多来自北方的傻子了，他们都想去南方。”他往风车底下啐了一口，不屑地扑棱扑棱翅膀。</p>
+      <p>“你是一只松鼠，不是候鸟”，又一只乌鸦发话了，她用着刺耳的声音，面孔流露出嫌弃和可怜。</p>
+      <p>“相信我，只有候鸟才能去到真正的南方。”</p>
+      <p>“那这里算南方吗？”</p>
+      <p>“这里？”乌鸦狠劲摇了摇头，像是要甩掉头上的虱子。“这里根本不算南”</p>
+      <p>“怎么不算？”第一只乌鸦争执道，“看看河边繁茂的哨兵树，再问问这家伙，她的家乡肯定已经冰天雪地了。”</p>
+      <p>“你为什么没看到发黄的树呢？这里根本不算南。”</p>
+      <p>“凭什么不算南，就因为有几根秃树？”他嘎嘎乱叫道，用力扑棱起来，荡起一阵阵尘土。</p>
+      <p>奶茶鼠不愿听他们争斗，这令她的耳朵疼，她跳下屋顶，不禁担心起猫咪手下：</p>
+      <p>“那里真的已经开始下雪了吗？”她没留意过具体什么时候下雪，她的树洞总是很柔软很暖和。她开始想念自己的松枝秋千，橡木小床和干花环。想到花环，她小心翼翼地把它取出来，纵使不那么光鲜，它依旧嗅起来充满阳光的味道。奶茶鼠跑到小溪边，仔仔细细地把它挂在脖子上，小溪里的自己看起来多了许多夏天的味道。她也不确信这里是不是南方，但这里看起来很多食物，也有合适的地方让她过冬。白天，她跑到谷地里收集掉落下来的谷子，然后把他们藏在牛棚角落的稻草堆里，晚上她也就在那里过夜。</p>
+      <p>“反正我也不缺那一小块地方”，公牛一边发出哞哞的声音，一边用尾巴甩走蚊蝇。牛棚里的牛一共有五头，他们白天被拉出去劳作，晚上则对任何事情漫不经心。奶茶鼠用一些干草做成一个垫子枕在上面，无聊的时候就对着牛群碎碎念，但回答她的总是沉默，不过回窝的时候，她有时会发现一小坨干草堆积在角落。</p>
+      <p>她学会了如何储存谷子，学会了在浅水游泳，学会了如何忽略乌鸦们的吵闹。她也试着自己编花环，但几乎所有的都送给了小溪旁陪她说话的麻雀们。</p>
+      <p>气温日益变低，小镇安静的时间越来越早，溪边的土壤也越来越硬。慢慢的，她闲下来了，好奇地盼着这个冬天的来，一个别样的冬天。</p>
+      <p>小镇的冬天来得格外安静，并没有她心目中的那样猛烈。雪一下，一切颜色便无所遁形，奶茶鼠走在及踝深的雪地上，洁白的雪花在她红彤彤的脸上融化。河面上闪烁的微光，像是锻治中的繁星。上游的谷地更加崎岖，浓密的森林不复出现。远方的地平线上，山脉好似雄浑的阴影，一片接一片，直至灰白模糊，参差的峰峦上多年积雪，纵然遥遥相望，它们依旧庞大。</p>
+      <p>但这也只是小镇外的景象，夜晚，小镇上的灯火就像是坠落的群星，它们比星星闪亮但是不会闪烁。一天一天，她在心里默数着，有时则大喊出来。碔弱的花环有时被戴在头上，有时挂在脖颈处，有时被安顿在松枝篮子里。太阳缓缓地坠落又慢慢地升起就像隔壁的老牛啃着干草。风车上的乌鸦一批接着一批，牛车上的货物一车接着一车。</p>
+      <p>她觉得时间就像是流动的蜂蜜，不紧不慢，不管不顾。乌鸦们却似倾倒下来的豆子，聒聒噪噪，也没被人记得。</p>
+      <p>后来，风车顶上栖息的不止是黑色的乌鸦了，她还看到燕子和南归的候鸟。冰雪也渐渐稀少，整个世界好像流动起来，聒噪得好像五六岁的孩童。</p>
+      <p>于是到了这一天。</p>
+      <p>她从干草堆里爬出来。</p>
+      <p>“你要走了？”一头牛开腔。</p>
+      <p>她只是看向草堆。</p>
+      <p>“那就去吧”，公牛并无他言。</p>
+      <p>于是，她告别了草堆，老牛和鲜花。告别了小溪，水车和谷地。告别麻雀，风车甚至乌鸦。</p>
+      <p>然后，她看着春日里秋天的风景，沿着森林里过去的足迹，走向家。</p>
+      <p>“喵咪手下还等着我，还有秋千和小家。”</p>
+    </article>
+    <article class="essay sealed" data-sealed="assets/writing/nandemonai.sealed.json">
+      <h3>没什么大不了 <small>なんでもない</small></h3>
+      <p class="seal-note">这一篇上了锁，只有作者能打开。</p>
+    </article>
+  </section>
+
+  <section id="online" data-nav="Contact">
+    <h2>Contact</h2>
+    <ul class="links">
+      <li><a href="https://example.com/github">GitHub</a> <span>@your-name</span></li>
+      <li><a href="https://example.com/x">X / Twitter</a> <span>@your-name</span></li>
+      <li><a href="https://example.com/mail">邮箱</a> <span>you@example.com</span></li>
+    </ul>
+  </section>
+
+  <section id="credits">
+    <h2>Credits</h2>
+    <!-- 下面的列表由 node scripts/credits_html.mjs 生成（来自 assets/vendor/credits.json），别手改 -->
+    <p class="intro">The models in the desk room come from Sketchfab and Poly Haven and are used under their own licences; each entry lists the author, the original, the licence and how it was changed. The walls, desk, window view and the remaining small objects are built with Blender scripts, the wood grain is procedural, and the 3D runs on <a href="https://threejs.org/">three.js</a> (MIT). Fonts: Cinzel, EB Garamond and Playfair Display (SIL Open Font License).</p>
+    <!-- credits:begin -->
+    <ul class="credit-list">
+      <li><a href="https://sketchfab.com/3d-models/persian-rug-fe13eecfc9b8405dab1fe76c5dd28a4c">Persian Rug</a> <span class="by">Nicholas Record · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+      <li><a href="https://sketchfab.com/3d-models/snake-plant-scan-lowpoly-6f136e24e4184f758aeb8ef376099e2a">Snake plant scan LOWPOLY</a> <span class="by">sixonetwo · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+      <li><a href="https://sketchfab.com/3d-models/old-pc-5aa0b296714b4347ac796c0774653cf4">Old PC</a> <span class="by">LiliumLetifer · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+      <li><a href="https://sketchfab.com/3d-models/victorian-desk-lamp-11bcb1c2e9264457814bcfdca6860ad8">Victorian Desk Lamp</a> <span class="by">Faheem Yusuf · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+      <li><a href="https://sketchfab.com/3d-models/vhs-15ff40eeb9a14a67abf76e2791527a19">VHS</a> <span class="by">Ilgis (Dolgov) Fatykhov · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+      <li><a href="https://sketchfab.com/3d-models/retro-crt-tv-6bc462b233ce4c78904dfcadf5123e29">Retro CRT TV</a> <span class="by">meipal · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+      <li><a href="https://sketchfab.com/3d-models/wooden-bookcase-e7ad8f190f1a4b15ad63572dd8dcf335">Wooden bookcase</a> <span class="by">stanislau.see · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+      <li><a href="https://sketchfab.com/3d-models/elegan-old-book-pack-4cc9ecf0531b463dada8262851ca87f8">Elegan old book pack</a> <span class="by">3D_for_everyone · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+      <li><a href="https://sketchfab.com/3d-models/retro-camera-ac8af9a9330346d2a1b1436476bd9010">Retro Camera</a> <span class="by">Tom Seddon · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+      <li><a href="https://sketchfab.com/3d-models/cassette-tapes-820777808625494581401700ccc3e7f7">Cassette tapes</a> <span class="by">FEDDYFAZBARE · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+      <li><a href="https://sketchfab.com/3d-models/monstera-deliciosa-potted-mid-century-plant-1ab9bf841df04c07b1819be596327629">Monstera Deliciosa Potted Mid-Century plant</a> <span class="by">Giora · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+      <li><a href="https://sketchfab.com/3d-models/wall-calendar-tear-off-with-wind-blowing-1cfb64b810d14c089e6a0480a8bbb58a">Wall Calendar / Tear off , with wind blowing</a> <span class="by">gokulsanjeevan · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+      <li><a href="https://sketchfab.com/3d-models/yamaha-tt-300-record-player-3577a2a1a0c24218bd5d768beccf218e">Yamaha TT-300 Record Player</a> <span class="by">AleixoAlonso · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+      <li><a href="https://sketchfab.com/3d-models/free-pothos-potted-plant-money-plant-e9832f38484f4f85b3f9081b51fa3799">[FREE] Pothos Potted Plant - Money Plant</a> <span class="by">AllQuad · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+      <li><a href="https://sketchfab.com/3d-models/cork-board-9534ee2ad4344ea6b02b95b61bd4a913">Cork Board</a> <span class="by">rickmaolly · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+      <li><a href="https://polyhaven.com/a/potted_plant_04">Potted Plant 04</a> <span class="by">James Ray Cock · Poly Haven</span> <a class="lic" href="https://creativecommons.org/publicdomain/zero/1.0/">CC0 1.0</a>
+        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+      <li><a href="https://polyhaven.com/a/hanging_picture_frame_02">Hanging Picture Frame 02</a> <span class="by">James Ray Cock · Poly Haven</span> <a class="lic" href="https://creativecommons.org/publicdomain/zero/1.0/">CC0 1.0</a>
+        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+    </ul>
+    <!-- credits:end -->
+    <p class="intro">The tower study lists its own models under "Credits" at the bottom of that scene. The full record, including candidates that were not used, is in <a href="assets/vendor/credits.json">credits.json</a>.</p>
+  </section>
+</main>
+
+<div id="room" hidden>
+  <canvas id="gl" aria-hidden="true"></canvas>
+  <div id="loading" class="loading" role="status"><div class="bar"><i></i></div><p>Setting up the room… <b>0%</b></p></div>
+  <div id="hint" class="hint" aria-hidden="true"></div>
+  <button id="back" class="back" type="button" hidden>← Back</button>
+  <aside id="panel" class="panel" hidden></aside>
+  <div id="help" class="help">Click things to explore · Drag to look around · <a href="?plain=1">Text version</a></div>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
