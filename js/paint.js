@@ -30,7 +30,7 @@ export function paintNote({ name, links }, W = 512, H = 717) {
   x.fillStyle = '#1f3b6e'; // 和桌上那支笔一个颜色
   x.textBaseline = 'alphabetic';
   x.font = `bold 44px ${HAND}`;
-  x.fillText('联系我 ✎', 80, top + gap - 12);
+  x.fillText('Contact me', 80, top + gap - 12);
   const fit = (s, maxW, size) => {
     do { x.font = `${size}px ${HAND}`; } while (x.measureText(s).width > maxW && --size > 16);
   };
@@ -87,8 +87,8 @@ export function paintParchment({ name, links }, W = 512, H = 683) {
   const left = 56, right = W * 0.78;
   x.save();
   x.rotate(0.008);
-  fit('寄信给我', right - left, 50, 'bold ');
-  x.fillText('寄信给我', left, 118);
+  fit('Write to me', right - left, 50, 'bold ');
+  x.fillText('Write to me', left, 118);
   // 标题下一道手画的墨线
   x.strokeStyle = 'rgba(42,28,18,0.75)';
   x.lineWidth = 2.5;
