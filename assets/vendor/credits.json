@@ -1,0 +1,395 @@
+{
+  "_说明": "第三方 3D 素材清单。每一项的许可证以 license 字段为准，不受仓库代码许可证约束。changes 记录我们对原作做了哪些修改（CC BY 4.0 要求注明）。",
+  "assets": [
+    {
+      "id": "sketchfab/old-pc",
+      "source": "Sketchfab",
+      "title": "Old PC",
+      "zh": "米色老式台式电脑",
+      "authors": [
+        "LiliumLetifer"
+      ],
+      "authorUrl": "https://sketchfab.com/LiliumLetifer",
+      "url": "https://sketchfab.com/3d-models/old-pc-5aa0b296714b4347ac796c0774653cf4",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "5aa0b296714b4347ac796c0774653cf4",
+        "format": "glb",
+        "textureMaxResolution": 4096,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间书桌上的电脑：放大到 1.1 倍摆在书桌正中；去掉从机身里长出来的草叶；鼠标拆出来缩小、挪到键盘右边，原来的鼠标线删掉、重新拉了一根；贴图缩到 2048 px、只保留底色贴图，污渍减淡；屏幕玻璃改成深色，上面叠网页画的实时画面；前面加了自己搭的键盘和键盘线；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "sketchfab/retro-crt-tv",
+      "source": "Sketchfab",
+      "title": "Retro CRT TV",
+      "zh": "复古 CRT 电视",
+      "authors": [
+        "meipal"
+      ],
+      "authorUrl": "https://sketchfab.com/ashabbugaev12",
+      "url": "https://sketchfab.com/3d-models/retro-crt-tv-6bc462b233ce4c78904dfcadf5123e29",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "6bc462b233ce4c78904dfcadf5123e29",
+        "format": "glb",
+        "textureMaxResolution": 2048,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间录像机上的电视：缩放摆放；去掉一个部件；贴图缩到 1024 px、只保留底色贴图；屏幕玻璃改成深色，上面叠网页画的实时画面；加了两根天线；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "sketchfab/cassette-tapes",
+      "source": "Sketchfab",
+      "title": "Cassette tapes",
+      "zh": "一叠磁带",
+      "authors": [
+        "FEDDYFAZBARE"
+      ],
+      "authorUrl": "https://sketchfab.com/FEDDYFAZBARE",
+      "url": "https://sketchfab.com/3d-models/cassette-tapes-820777808625494581401700ccc3e7f7",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "820777808625494581401700ccc3e7f7",
+        "format": "glb",
+        "textureMaxResolution": 1024,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间书架上的三盘磁带：只用了外壳不透明的三盘（Object_8、Object_11、Object_14），拆开单独摆放；减面到约 30%；贴图缩到 512 px、只保留底色贴图；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "sketchfab/vhs",
+      "source": "Sketchfab",
+      "title": "VHS",
+      "zh": "录像带",
+      "authors": [
+        "Ilgis (Dolgov) Fatykhov"
+      ],
+      "authorUrl": "https://sketchfab.com/Dolgov12",
+      "url": "https://sketchfab.com/3d-models/vhs-15ff40eeb9a14a67abf76e2791527a19",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "15ff40eeb9a14a67abf76e2791527a19",
+        "format": "glb",
+        "textureMaxResolution": 1024,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间书桌上的录像带架：只用了单独放着的那一盘带子（转正、减面到约 50%，四盘共用同一份贴图）和尺寸正好的那个纸盒；纸盒重新排了 UV、原来的电影封面换成网页里画的作品包装；贴图只保留底色贴图；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "sketchfab/retro-camera",
+      "source": "Sketchfab",
+      "title": "Retro Camera",
+      "zh": "复古相机",
+      "authors": [
+        "Tom Seddon"
+      ],
+      "authorUrl": "https://sketchfab.com/bloodmeat08",
+      "url": "https://sketchfab.com/3d-models/retro-camera-ac8af9a9330346d2a1b1436476bd9010",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "ac8af9a9330346d2a1b1436476bd9010",
+        "format": "glb",
+        "textureMaxResolution": 1024,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间书架上的 8 毫米摄影机：缩放摆放；贴图缩到 512 px、只保留底色贴图（去掉透明通道）；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "sketchfab/victorian-desk-lamp",
+      "source": "Sketchfab",
+      "title": "Victorian Desk Lamp",
+      "zh": "台灯",
+      "authors": [
+        "Faheem Yusuf"
+      ],
+      "authorUrl": "https://sketchfab.com/FameProductions",
+      "url": "https://sketchfab.com/3d-models/victorian-desk-lamp-11bcb1c2e9264457814bcfdca6860ad8",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "11bcb1c2e9264457814bcfdca6860ad8",
+        "format": "glb",
+        "textureMaxResolution": 1024,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间的书桌台灯：缩放摆放；删掉原来的灯泡，换成发光小球；贴图缩到 512 px、只保留底色贴图；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "sketchfab/yamaha-tt-300-record-player",
+      "source": "Sketchfab",
+      "title": "Yamaha TT-300 Record Player",
+      "zh": "唱机",
+      "authors": [
+        "AleixoAlonso"
+      ],
+      "authorUrl": "https://sketchfab.com/AleixoAlonso",
+      "url": "https://sketchfab.com/3d-models/yamaha-tt-300-record-player-3577a2a1a0c24218bd5d768beccf218e",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "3577a2a1a0c24218bd5d768beccf218e",
+        "format": "glb",
+        "textureMaxResolution": 1024,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间餐边柜上的唱机：缩放摆放；去掉防尘盖；唱臂和机身减面；贴图缩到 1024 px、只保留底色贴图；唱片换成单色几何体；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "sketchfab/monstera-deliciosa-potted-mid-century-plant",
+      "source": "Sketchfab",
+      "title": "Monstera Deliciosa Potted Mid-Century plant",
+      "zh": "龟背竹",
+      "authors": [
+        "Giora"
+      ],
+      "authorUrl": "https://sketchfab.com/ChubbyPanda",
+      "url": "https://sketchfab.com/3d-models/monstera-deliciosa-potted-mid-century-plant-1ab9bf841df04c07b1819be596327629",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "1ab9bf841df04c07b1819be596327629",
+        "format": "glb",
+        "textureMaxResolution": 1024,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间左后角的落地龟背竹：缩放摆放；气根减面到约 50%；贴图缩到 512 px、只保留底色贴图（叶片留着透明通道，网页里镂空）；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "sketchfab/free-pothos-potted-plant-money-plant",
+      "source": "Sketchfab",
+      "title": "[FREE] Pothos Potted Plant - Money Plant",
+      "zh": "绿萝",
+      "authors": [
+        "AllQuad"
+      ],
+      "authorUrl": "https://sketchfab.com/AllQuad",
+      "url": "https://sketchfab.com/3d-models/free-pothos-potted-plant-money-plant-e9832f38484f4f85b3f9081b51fa3799",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "e9832f38484f4f85b3f9081b51fa3799",
+        "format": "glb",
+        "textureMaxResolution": 1024,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间餐边柜上的绿萝：缩放摆放；花盆和木脚减面到约 40%；贴图缩到 512 px、只保留底色贴图（叶片留着透明通道，网页里镂空）；烘焙进房间光照。书架上另摆了一份，只用叶子（缩小到 80%），配一个自己搭的陶土盆"
+      ]
+    },
+    {
+      "id": "sketchfab/snake-plant-scan-lowpoly",
+      "source": "Sketchfab",
+      "title": "Snake plant scan LOWPOLY",
+      "zh": "虎尾兰",
+      "authors": [
+        "sixonetwo"
+      ],
+      "authorUrl": "https://sketchfab.com/evan4129",
+      "url": "https://sketchfab.com/3d-models/snake-plant-scan-lowpoly-6f136e24e4184f758aeb8ef376099e2a",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "6f136e24e4184f758aeb8ef376099e2a",
+        "format": "glb",
+        "textureMaxResolution": 1024,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间书桌右端的虎尾兰：缩放摆放；贴图缩到 512 px、只保留底色贴图；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "sketchfab/wall-calendar-tear-off-with-wind-blowing",
+      "source": "Sketchfab",
+      "title": "Wall Calendar / Tear off , with wind blowing",
+      "zh": "撕页日历",
+      "authors": [
+        "gokulsanjeevan"
+      ],
+      "authorUrl": "https://sketchfab.com/gokulsanjeevan",
+      "url": "https://sketchfab.com/3d-models/wall-calendar-tear-off-with-wind-blowing-1cfb64b810d14c089e6a0480a8bbb58a",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "1cfb64b810d14c089e6a0480a8bbb58a",
+        "format": "glb",
+        "textureMaxResolution": 512,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间窗边的撕页日历：缩放摆放；被风吹卷的纸页铺平（下角稍微翘起）；日历本改成深红色；纸页在网页里换成按当天日期画的画面；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "sketchfab/cork-board",
+      "source": "Sketchfab",
+      "title": "Cork Board",
+      "zh": "软木板",
+      "authors": [
+        "rickmaolly"
+      ],
+      "authorUrl": "https://sketchfab.com/rickmaolly",
+      "url": "https://sketchfab.com/3d-models/cork-board-9534ee2ad4344ea6b02b95b61bd4a913",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "9534ee2ad4344ea6b02b95b61bd4a913",
+        "format": "glb",
+        "textureMaxResolution": 1024,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间右墙的软木板：缩放摆放；减面到约 12%；贴图缩到 1024 px、只保留底色贴图；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "sketchfab/persian-rug",
+      "source": "Sketchfab",
+      "title": "Persian Rug",
+      "zh": "波斯地毯",
+      "authors": [
+        "Nicholas Record"
+      ],
+      "authorUrl": "https://sketchfab.com/nrecord",
+      "url": "https://sketchfab.com/3d-models/persian-rug-fe13eecfc9b8405dab1fe76c5dd28a4c",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "fe13eecfc9b8405dab1fe76c5dd28a4c",
+        "format": "glb",
+        "textureMaxResolution": 1024,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间的地毯：缩放摆放；贴图缩到 1024 px、只保留底色贴图；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "polyhaven/potted_plant_04",
+      "source": "Poly Haven",
+      "title": "Potted Plant 04",
+      "zh": "小仙人掌",
+      "authors": [
+        "James Ray Cock"
+      ],
+      "url": "https://polyhaven.com/a/potted_plant_04",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "fetch": {
+        "polyhaven": "potted_plant_04",
+        "res": "1k",
+        "format": "gltf"
+      },
+      "changes": [
+        "怀旧房间窗台上的小盆多肉：缩放摆放；减面到约 30%；贴图缩到 512 px、只保留底色贴图；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "polyhaven/hanging_picture_frame_02",
+      "source": "Poly Haven",
+      "title": "Hanging Picture Frame 02",
+      "zh": "木画框",
+      "authors": [
+        "James Ray Cock"
+      ],
+      "url": "https://polyhaven.com/a/hanging_picture_frame_02",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "fetch": {
+        "polyhaven": "hanging_picture_frame_02",
+        "res": "1k",
+        "format": "gltf"
+      },
+      "changes": [
+        "怀旧房间右墙的挂画：缩放摆放；去掉玻璃；贴图缩到 1024 px、只保留底色贴图；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "sketchfab/wooden-bookcase",
+      "source": "Sketchfab",
+      "title": "Wooden bookcase",
+      "zh": "雕花木书柜",
+      "authors": [
+        "stanislau.see"
+      ],
+      "authorUrl": "https://sketchfab.com/stanislau.see",
+      "url": "https://sketchfab.com/3d-models/wooden-bookcase-e7ad8f190f1a4b15ad63572dd8dcf335",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "e7ad8f190f1a4b15ad63572dd8dcf335",
+        "format": "glb",
+        "textureMaxResolution": 4096,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间书桌左边的书柜：缩放到 0.85 倍（2.32 米高）靠后墙摆放；贴图缩到 2048 px、只保留底色贴图；格子里摆上旧书、自己搭的真书和摆件；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "sketchfab/elegan-old-book-pack",
+      "source": "Sketchfab",
+      "title": "Elegan old book pack",
+      "zh": "一套精装旧书",
+      "authors": [
+        "3D_for_everyone"
+      ],
+      "authorUrl": "https://sketchfab.com/boglarka4",
+      "url": "https://sketchfab.com/3d-models/elegan-old-book-pack-4cc9ecf0531b463dada8262851ca87f8",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "4cc9ecf0531b463dada8262851ca87f8",
+        "format": "glb",
+        "textureMaxResolution": 2048,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间书柜里的书：挑了其中几排和几本单本，缩到 0.82 倍，有的立着、有的横着摞；贴图缩到 512 px、只保留底色贴图；烘焙进房间光照"
+      ]
+    }
+  ],
+  "excluded": [
+    {
+      "title": "Old Map 3D Model",
+      "authors": [
+        "Johana-PS"
+      ],
+      "source": "Sketchfab",
+      "url": "https://sketchfab.com/3d-models/old-map-3d-model-c8f056e093f74be99b2e83034099c40a",
+      "reason": "模型标的是 CC BY 4.0，但作者说明里写了纸面贴图来自 photoshopsupply.com 和 textures4photoshop.com，这两张图不归作者所有，不能跟着模型一起再分发。"
+    },
+    {
+      "title": "Retro computer",
+      "authors": [
+        "Urpo"
+      ],
+      "source": "Sketchfab",
+      "url": "https://sketchfab.com/3d-models/retro-computer-f844c0357d284fd8baa1435e9ff31bb2",
+      "reason": "以前书桌上用的电脑（CC BY 4.0）。显像管四角圆、边框厚，屏幕上能放的字太少，换成了 Old PC。"
+    }
+  ]
+}

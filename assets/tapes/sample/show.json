@@ -1,0 +1,55 @@
+{
+  "note": "样例节目单：演示片头、代码画的动画、数字卡和片尾。换成自己的项目时，照着 js/tapes/show.js 开头的说明加章节（图、前后对比、视频、左右对比都可以）；图和视频放在这个节目单旁边，路径相对这个文件。",
+  "chapters": [
+    {
+      "type": "title",
+      "dur": 4,
+      "kicker": { "zh": "项目 · 第 1 盘", "en": "PROJECT · TAPE 1" },
+      "line": { "zh": "一句话说清楚这个项目", "en": "One line on what this project is" },
+      "sub": {
+        "zh": "片头卡：带子的名字来自 index.html 里 #work 的 <a>，这一行和上面的小字写在节目单里。",
+        "en": "The title card: the tape's name comes from the <a> in #work; this line and the kicker come from the programme file."
+      },
+      "cover": { "anim": "sample-chart", "t": 4 }
+    },
+    {
+      "type": "anim",
+      "anim": "sample-chart",
+      "dur": 6,
+      "tag": true,
+      "heading": { "zh": "代码画的动画", "en": "An animation drawn in code" },
+      "bars": [32, 48, 61, 88],
+      "labels": [
+        { "zh": "第一版", "en": "v1" },
+        { "zh": "第二版", "en": "v2" },
+        { "zh": "第三版", "en": "v3" },
+        { "zh": "现在", "en": "now" }
+      ],
+      "sub": {
+        "zh": "动画写在 js/tapes/anims.js 里，章节用名字引用它；左下角的“示意动画”来自 tag。",
+        "en": "Animations live in js/tapes/anims.js and are referenced by name; the corner badge comes from \"tag\"."
+      }
+    },
+    {
+      "type": "number",
+      "dur": 4.5,
+      "items": [
+        { "value": "88%", "from": "32%", "label": { "zh": "一个关键指标，从多少涨到多少", "en": "A key metric, from where it started to where it ended" } },
+        { "value": "1,200+", "label": { "zh": "另一个能说明规模的数字", "en": "Another number that shows the scale" } }
+      ],
+      "sub": {
+        "zh": "数字卡：数字从 0（或者 from）数上去。",
+        "en": "Number cards count up from zero, or from \"from\"."
+      }
+    },
+    {
+      "type": "end",
+      "dur": 4,
+      "line": { "zh": "一句话总结", "en": "A one-line takeaway" },
+      "sub": {
+        "zh": "放完从头再来；整盘放完，电视换下一盘。",
+        "en": "The programme loops; when it ends, the TV moves on to the next tape."
+      }
+    }
+  ]
+}

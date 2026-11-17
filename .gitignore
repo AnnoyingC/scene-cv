@@ -1,0 +1,56 @@
+# macOS and editor temporary files
+.DS_Store
+._*
+*.swp
+*.swo
+*~
+
+# Local secrets and machine-specific configuration
+.env
+.env.*
+!.env.example
+.claude/settings.local.json
+
+# Python caches and local environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Node dependencies and logs
+node_modules/
+*.log
+
+# Blender automatic backups; keep the editable .blend source
+*.blend[0-9]*
+*.blend@
+
+# 第三方素材的原始文件：体积大，用 node scripts/fetch_assets.mjs 重新下载
+vendor-src/
+
+# Local previews, generated packages, screenshots and reports
+dist/
+.claude/
+.envrc
+*.pem
+*.key
+*.p12
+*.pfx
+*.sqlite*
+*.db
+coverage/
+output/
+.playwright-cli/
+
+# 配乐：mp3 放在 assets/audio/，曲目写在 js/music-tracks.js（音乐有版权，不进仓库）
+assets/audio/
+
+# 个人内容：书的真实封面（出版社的版权）、个人照片、真实简历和联系方式（电话、邮箱、照片、PDF）。
+# 公开的 index.html 里放样例，这些只在本地用（见 README 的"改内容"）
+assets/books/covers/
+photos-src/
+assets/photos/
+assets/resume/
+
+# 发布检查用的本地词表（scripts/audit_public.py 读，一行一个不该出现在公开文件里的词）
+.private-terms

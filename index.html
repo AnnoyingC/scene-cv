@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SceneCV · Step into my résumé</title>
+<meta name="description" content="SceneCV：可探索的 3D 场景化简历模板，在一间书桌房间里呈现介绍、简历、作品、书单、照片与联系方式。">
+<script>document.documentElement.classList.add('js')</script>
+<link rel="stylesheet" href="css/style.css">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+
+<!--
+  内容层：网站的真实内容都写在这里（以后可以换成 CMS / Markdown 生成）。
+  3D 房间启动时从这里读数据；设备跑不动 3D 时，这一层本身就是静态版网站。
+  每个带 data-nav 的 section 会在顶部导航栏里出现一项（data-nav 是导航栏上显示的名字）。
+-->
+<main id="content">
+  <header class="hero">
+    <h1 data-name>Your Name</h1>
+    <p class="tagline">One line about you: what you do, where, and what you care about.</p>
+    <p class="notice" id="try-room" hidden>Your device may struggle with the 3D room, so this text version is shown first. <a href="?room=1">Try the 3D room anyway →</a></p>
+  </header>
+
+  <section id="about" data-nav="About">
+    <h2>About</h2>
+    <p>A short introduction: what you are working on now, what you did before, and why it interests you.</p>
+    <p>A second paragraph can cover what you are learning, what you are looking for, or what people should get in touch about.</p>
+    <p>In the 3D room this text is typed out letter by letter on the old computer's screen.</p>
+    <!--
+      书桌房间那台旧电脑上的菜单（js/pc.js）：放简历装不下的东西，和桌上的纸质简历、电视里的作品各管一摊。
+      上面几段 p 是没有菜单时电脑上的字，菜单不影响它们。
+        div.pc-menu        一种语言一份菜单：lang 是语言，data-label 是电脑上切换语言时显示的名字；电脑默认用和 <html lang> 一样的那份
+        article            菜单里的一项：data-cmd 是电脑上显示的命令名，h3 是这一项的中文 / 英文名字
+          只有 p           一页文字（打字机效果一个字一个字打出来）；data-updated 是"更新于"
+          ol > li          一个列表（时间线、笔记、问答）：b 是这一条的标题，p 是点开以后的内容；
+                           data-when 是时间；data-tape 写作品里某盘录像带标题里的一个词，点开后可以"在电视上播放"
+      下面都是样例，换成你自己的话；用不上的项整段删掉就行。
+    -->
+    <div class="pc-menu" lang="zh-CN" data-label="中文">
+      <article data-cmd="WHOAMI">
+        <h3>自我介绍</h3>
+        <p>用两三句话介绍自己：在哪里读书或工作，研究或关心什么方向。</p>
+        <p>再写一段一路怎么走过来的：从哪个方向起步，后来转向了什么，为什么。</p>
+        <p>这台电脑里放的是简历装不下的东西：现在在做什么、一路怎么走过来、怎么想问题。纸质简历在桌上，点一下就能拿起来；做过的东西在右边的电视里。</p>
+      </article>
+      <article data-cmd="NOW" data-updated="2026.11">
+        <h3>最近</h3>
+        <p>最近在做的事：在哪里、做什么、想解决什么问题。</p>
+        <p>接下来想找的机会，或者正在准备的东西。</p>
+      </article>
+      <article data-cmd="TIMELINE">
+        <h3>一路走来</h3>
+        <ol>
+          <li data-when="2023.09"><b>进入某某大学 · 某某专业</b>
+            <p>点开以后的一两句话：这一步是什么、有什么收获。</p></li>
+          <li data-when="2024" data-tape="Project A"><b>第一个项目</b>
+            <p>写了 data-tape 的条目，点开以后最后一行是"在电视上播放"，会换上作品里名字带这个词的那盘带子。</p></li>
+          <li data-when="2025" data-tape="Project B"><b>一段实习</b>
+            <p>在哪里、做什么、带来了什么结果。</p></li>
+          <li data-when="2026" data-tape="Project C"><b>一篇论文或一个比赛</b>
+            <p>问题、你负责的部分、最关键的一个结果。</p></li>
+        </ol>
+      </article>
+      <article data-cmd="NOTES">
+        <h3>我怎么想问题</h3>
+        <ol>
+          <li><b>一个你相信的做法</b>
+            <p>它是什么，从哪件事里学到的。</p></li>
+          <li><b>另一个做法</b>
+            <p>可以举一个具体的例子，配一个数字。</p></li>
+        </ol>
+      </article>
+      <article data-cmd="ASK">
+        <h3>问我</h3>
+        <ol>
+          <li><b>别人常问你的一个问题？</b>
+            <p>你的回答。</p></li>
+          <li><b>怎么联系你？</b>
+            <p>联系方式在桌上的记事本里；纸质简历也在桌上，点一下就能拿起来看。</p></li>
+        </ol>
+      </article>
+    </div>
+    <div class="pc-menu" lang="en" data-label="EN">
+      <article data-cmd="WHOAMI">
+        <h3>Who I am</h3>
+        <p>Two or three sentences about yourself: where you study or work, and what you research or care about.</p>
+        <p>Another paragraph on how you got here: where you started, what you moved on to, and why.</p>
+        <p>This computer holds what a résumé can't: what I'm doing now, how I got here, and how I think about problems. The paper résumé is on the desk — click it to pick it up. The work itself plays on the TV to the right.</p>
+      </article>
+      <article data-cmd="NOW" data-updated="2026.11">
+        <h3>What I'm up to</h3>
+        <p>What you are working on right now: where, what, and which problem it solves.</p>
+        <p>The next opportunity you are looking for, or what you are preparing.</p>
+      </article>
+      <article data-cmd="TIMELINE">
+        <h3>How I got here</h3>
+        <ol>
+          <li data-when="2023.09"><b>Your University · Your Major</b>
+            <p>A sentence or two that opens when clicked: what this step was and what you took from it.</p></li>
+          <li data-when="2024" data-tape="Project A"><b>A first project</b>
+            <p>Entries with data-tape end with "Play on the TV", which loads the tape whose name contains that word.</p></li>
+          <li data-when="2025" data-tape="Project B"><b>An internship</b>
+            <p>Where, what you did, and what changed because of it.</p></li>
+          <li data-when="2026" data-tape="Project C"><b>A paper or a competition</b>
+            <p>The problem, your part, and the one result that matters most.</p></li>
+        </ol>
+      </article>
+      <article data-cmd="NOTES">
+        <h3>How I think</h3>
+        <ol>
+          <li><b>A way of working you believe in</b>
+            <p>What it is, and what taught it to you.</p></li>
+          <li><b>Another one</b>
+            <p>A concrete example, ideally with a number.</p></li>
+        </ol>
+      </article>
+      <article data-cmd="ASK">
+        <h3>Ask me</h3>
+        <ol>
+          <li><b>A question people often ask you?</b>
+            <p>Your answer.</p></li>
+          <li><b>How can I reach you?</b>
+            <p>Contact details are in the notepad on the desk. The paper résumé is on the desk too — click it to pick it up.</p></li>
+        </ol>
+      </article>
+    </div>
+  </section>
+
+  <section id="resume" data-nav="Résumé">
+    <h2>Résumé</h2>
+    <!--
+      每个 article.cv-page 是一张 A4 纸。3D 版里是书桌上那两张打印纸：点纸，纸从桌上浮起来，在眼前叠成一摞（js/resume.js），
+      左右翻着看；中英文放在同一摞里，上面的按钮直接翻到那种语言。纯文字版里就是一张张白纸卡片。
+        lang          这一页的语言（同一种语言连着写，比如中文 1 页、英文 2 页）
+        data-label    切换按钮上显示的名字
+        data-pdf      这种语言的 PDF（可选，有了就显示下载按钮）
+      纸上的结构：.cv-side 左栏（照片 img.cv-photo、名字 h3.cv-name、dl.cv-kv 联系方式、h4 小标题、ul.cv-awards 奖项、
+      dl.cv-skills 技能、ul.cv-roles 职务），.cv-main 右栏（h4 小标题、.cv-item 一段经历：.cv-head 标题 + 时间、p.cv-sub 副标题、ul 要点）。
+      3D 版的纸是固定的 A4 大小，字放不下会自动整体缩小一点。
+      下面是样例。也可以把真实简历（电话、邮箱、照片）写在 assets/resume/resume.html（写法和下面一样），这个文件夹不进 Git；
+      有它的时候网页启动后换成它，公开的 index.html 里就不用写个人信息。
+    -->
+    <div class="cv-deck">
+      <article class="cv-page" lang="zh-CN" data-label="中文">
+        <div class="cv-side">
+          <div class="cv-photo" role="img" aria-label="照片占位"></div>
+          <h3 class="cv-name">你的名字</h3>
+          <dl class="cv-kv">
+            <dt>电话</dt><dd>138 0000 0000</dd>
+            <dt>邮箱</dt><dd>you@example.com</dd>
+            <dt>城市</dt><dd>某某市</dd>
+          </dl>
+          <h4>教育背景</h4>
+          <p>某某大学</p>
+          <p>2023.09 - 至今　某某专业本科在读</p>
+          <p>研究方向　<b>写下你关心的方向</b></p>
+          <h4>获奖经历</h4>
+          <ul class="cv-awards">
+            <li><b>某某全国大学生竞赛</b><span>一等奖<time>2026</time></span></li>
+            <li><b>某某数学建模竞赛</b><span>二等奖<time>2025</time></span></li>
+            <li><b>某某创新创业大赛</b><span>省级三等奖<time>2024</time></span></li>
+          </ul>
+          <h4>相关技能</h4>
+          <dl class="cv-skills">
+            <dt>编程</dt><dd>Python、C++</dd>
+            <dt>方向</dt><dd>写下你熟悉的工具和框架</dd>
+            <dt>语言</dt><dd>英语 CET-6</dd>
+          </dl>
+          <h4>校园经历</h4>
+          <ul class="cv-roles">
+            <li>某某社团负责人</li>
+            <li>某某志愿活动组织者</li>
+          </ul>
+        </div>
+        <div class="cv-main">
+          <h4>实习经历</h4>
+          <div class="cv-item">
+            <div class="cv-head"><b>某某公司 · 某某岗位实习生</b><time>2026.01 - 2026.03</time></div>
+            <ul>
+              <li>一句话写清楚你做了什么、<b>用了什么方法</b>、带来了什么结果。</li>
+              <li>能量化就量化：比如把某个指标从 <b>A 提升到 B</b>。</li>
+              <li>每段经历写 2 到 4 条，重要的放前面。</li>
+            </ul>
+          </div>
+          <h4>科研经历</h4>
+          <div class="cv-item">
+            <div class="cv-head"><b>论文或课题的标题</b><time>2025</time></div>
+            <p class="cv-sub">会议或期刊名称 · 当前状态</p>
+            <ul>
+              <li>要解决的问题，以及为什么值得解决。</li>
+              <li>你负责的部分：<b>方法设计、实验、分析</b>。</li>
+              <li>最关键的一个结果。</li>
+            </ul>
+          </div>
+          <h4>项目经历</h4>
+          <div class="cv-item">
+            <div class="cv-head"><b>一个项目的名字</b><time>2024–2025</time></div>
+            <p class="cv-sub">项目的来源或性质</p>
+            <ul>
+              <li>项目是什么、给谁用。</li>
+              <li>你做的部分和用到的技术。</li>
+            </ul>
+          </div>
+          <h4>其他荣誉</h4>
+          <p>2024–2025 学年：<b>某某奖学金</b></p>
+        </div>
+      </article>
+      <article class="cv-page" lang="en" data-label="English">
+        <div class="cv-side">
+          <div class="cv-photo" role="img" aria-label="Photo placeholder"></div>
+          <h3 class="cv-name">Your Name</h3>
+          <dl class="cv-kv">
+            <dt>Phone</dt><dd>+86 138 0000 0000</dd>
+            <dt>Email</dt><dd>you@example.com</dd>
+            <dt>City</dt><dd>Your city</dd>
+          </dl>
+          <h4>Education</h4>
+          <p>Your University</p>
+          <p>B.Eng. in Your Major, 2023.09 – Present</p>
+          <p>Research interests: <b>what you care about</b></p>
+          <h4>Awards</h4>
+          <ul class="cv-awards">
+            <li><b>National Undergraduate Competition</b><span>First Prize<time>2026</time></span></li>
+            <li><b>Mathematical Contest in Modeling</b><span>Second Prize<time>2025</time></span></li>
+          </ul>
+          <h4>Skills</h4>
+          <dl class="cv-skills">
+            <dt>Programming</dt><dd>Python, C++</dd>
+            <dt>Tools</dt><dd>Frameworks you know well</dd>
+          </dl>
+        </div>
+        <div class="cv-main">
+          <h4>Experience</h4>
+          <div class="cv-item">
+            <div class="cv-head"><b>Company - Role Intern</b><time>2026.01 – 2026.03</time></div>
+            <ul>
+              <li>One line on what you did, <b>how you did it</b>, and what changed because of it.</li>
+              <li>Quantify when you can: moved a metric <b>from A to B</b>.</li>
+            </ul>
+          </div>
+          <h4>Research</h4>
+          <div class="cv-item">
+            <div class="cv-head"><b>Title of a Paper or Project</b><time>2025</time></div>
+            <p class="cv-sub">Venue · Status</p>
+            <ul>
+              <li>The problem, and why it matters.</li>
+              <li>Your part: <b>method, experiments, analysis</b>.</li>
+            </ul>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section id="work" data-nav="Work">
+    <h2>Work</h2>
+    <!--
+      每个 li 是一盘录像带：data-tape 选画面效果（bars / synth / bounce / rain），data-color 是纸盒书脊和电视灯的颜色。
+      data-tape="show" 是一档按章节放的小节目：data-show 指向节目单（assets/tapes/<名字>/show.json，写法见 js/tapes/show.js），
+      电视下面显示每一章的字幕，↑↓ 或点电视换章节。节目放完一遍，电视自动换下一盘，打开网站以后几盘轮流放。
+      a 的文字 = 带子的名字（印在纸盒的书脊和封面上；电脑屏幕菜单里 data-tape 的词按这个名字找带子）。
+      没有链接就不写 href。p 是一两句简介（第一句写身份或出处）。桌上的架子放得下 4 盘。
+      下面四盘都是样例，共用 assets/tapes/sample/show.json 这一份节目单；换成自己的项目时每盘写一份。
+    -->
+    <ol class="tapes">
+      <li data-tape="show" data-show="assets/tapes/sample/show.json" data-color="#e8b04a">
+        <a href="https://example.com/project-a">Project A</a> <span class="years">2026</span>
+        <p>Your role, then one line on what the project is and what you did in it.</p>
+      </li>
+      <li data-tape="show" data-show="assets/tapes/sample/show.json" data-color="#e0577a">
+        <a href="https://example.com/project-b">Project B</a> <span class="years">2025</span>
+        <p>Another project. The TV picture and the light in the room follow the colour of the tape.</p>
+      </li>
+      <li data-tape="show" data-show="assets/tapes/sample/show.json" data-color="#4fa3e0">
+        <a href="https://example.com/project-c">Project C</a> <span class="years">2024</span>
+        <p>Each tape is a short programme of chapters with subtitles, written as a JSON file.</p>
+      </li>
+      <li data-tape="show" data-show="assets/tapes/sample/show.json" data-color="#59c27a">
+        <a href="https://example.com/project-d">Project D</a> <span class="years">2023</span>
+        <p>To add a project, write another li here and a programme for it.</p>
+      </li>
+    </ol>
+  </section>
+
+  <section id="shelf" data-nav="Books" lang="zh-CN">
+    <h2 lang="en">Books</h2>
+    <!--
+      读过的书（下面是样例，按划线多少排）。3D 版里每个 li 是书架上的一本真书：点它会抽出来、翻开，左页是这本书的标志句，右页是划线。
+        data-size     书的宽 × 高 × 厚（毫米），烘焙脚本按这个尺寸建模（改了要重新烘焙房间）；套装按一本合订本的厚度算
+        data-kind     hard = 精装（封板比书芯大一圈），soft = 平装
+        data-color    书脊 / 封面的主色（有真实封面时网页会直接从封面取色）；data-ink 字的颜色
+        data-style    没有真实封面时自动画的封面样式：literary（素净文学）/ modern（粗体现代）/ sea（插画海岛）
+        真实封面    不写在这里：图片和 covers.json（书名 → 文件名）放在 assets/books/covers/，这个文件夹不进 Git，
+                      只在本地和你自己的网站上用（js/main.js 加载时按书名补上 data-cover）；没有就用 data-style 自动画的封面
+        data-read     读完的时间；还没读完的写 data-progress（读到百分之几）
+        data-publisher / data-marks  出版社、划线一共多少条：划线少的书，翻开后右页下面印一张阅读卡（可以不写）
+      blockquote.key 是左页单独印的那一句（这本书最有名、最能代表它的话），其余的 blockquote 是划线：翻开后从右页往后排，一页放不下就翻页（每本最多放 24 条）。
+    -->
+    <ul class="books">
+      <li data-size="150x220x55" data-kind="soft" data-color="#b09b5d" data-style="modern" data-publisher="某某出版社" data-marks="6" data-read="2026 年 2 月">
+        <a href="https://example.com/book-01">书名 01</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote>
+        <blockquote>右页从这里开始排划线，每一条单独一段。</blockquote>
+        <blockquote>一页放不下就排到下一页：点右页往后翻，点左页往回翻，← → 也能翻。</blockquote>
+        <blockquote>每本最多放 24 条划线。</blockquote>
+        <blockquote>data-read 写读完的时间；还没读完的写 data-progress，读到百分之几。</blockquote>
+        <blockquote>划线少的书，右页下面会印一张阅读卡：出版社、划线一共多少条、读书状态。</blockquote>
+        <blockquote>真实封面放在 assets/books/covers/（这个文件夹不进 Git），没有就按 data-style 自动画一个封面。</blockquote></li>
+      <li data-size="148x210x24" data-kind="hard" data-color="#f4f4f3" data-style="modern" data-publisher="某某出版社" data-marks="2" data-read="2026 年 3 月">
+        <a href="https://example.com/book-02">书名 02</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote>
+        <blockquote>这里放一条划线。</blockquote>
+        <blockquote>再放一条。</blockquote></li>
+      <li data-size="165x235x34" data-kind="soft" data-color="#302a23" data-style="literary" data-publisher="某某出版社" data-marks="0" data-progress="56">
+        <a href="https://example.com/book-03">书名 03</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
+      <li data-size="145x210x32" data-kind="hard" data-color="#5f656d" data-style="literary" data-publisher="某某出版社" data-marks="0" data-read="2026 年 5 月">
+        <a href="https://example.com/book-04">书名 04</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
+      <li data-size="150x220x22" data-kind="hard" data-color="#656060" data-style="modern" data-publisher="某某出版社" data-marks="0" data-read="2026 年 6 月">
+        <a href="https://example.com/book-05">书名 05</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
+      <li data-size="130x184x12" data-kind="soft" data-color="#d2cdcc" data-style="literary" data-publisher="某某出版社" data-marks="2" data-progress="17">
+        <a href="https://example.com/book-06">书名 06</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote>
+        <blockquote>这里放一条划线。</blockquote>
+        <blockquote>再放一条。</blockquote></li>
+      <li data-size="170x240x42" data-kind="hard" data-color="#aeaeb0" data-style="modern" data-publisher="某某出版社" data-marks="0" data-read="2026 年 8 月">
+        <a href="https://example.com/book-07">书名 07</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
+      <li data-size="155x230x50" data-kind="soft" data-color="#5a1f1b" data-ink="#e8d9b0" data-style="literary" data-publisher="某某出版社" data-marks="0" data-read="2026 年 9 月">
+        <a href="https://example.com/book-08">书名 08</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
+      <li data-size="150x220x18" data-kind="soft" data-color="#d1c4b9" data-style="literary" data-publisher="某某出版社" data-marks="0" data-progress="68">
+        <a href="https://example.com/book-09">书名 09</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
+      <li data-size="130x190x16" data-kind="soft" data-color="#8d2521" data-style="literary" data-publisher="某某出版社" data-marks="2" data-read="2026 年 11 月">
+        <a href="https://example.com/book-10">书名 10</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote>
+        <blockquote>这里放一条划线。</blockquote>
+        <blockquote>再放一条。</blockquote></li>
+      <li data-size="170x230x16" data-kind="soft" data-color="#e8eaf1" data-style="sea" data-publisher="某某出版社" data-marks="0" data-read="2026 年 12 月">
+        <a href="https://example.com/book-11">书名 11</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
+      <li data-size="130x190x18" data-kind="soft" data-color="#9c5869" data-style="literary" data-publisher="某某出版社" data-marks="0" data-progress="29">
+        <a href="https://example.com/book-12">书名 12</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
+      <li data-size="148x210x18" data-kind="hard" data-color="#f6f4f0" data-style="modern" data-publisher="某某出版社" data-marks="0" data-read="2026 年 2 月">
+        <a href="https://example.com/book-13">书名 13</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
+      <li data-size="130x184x8" data-kind="soft" data-color="#e23a32" data-style="modern" data-publisher="某某出版社" data-marks="2" data-read="2026 年 3 月">
+        <a href="https://example.com/book-14">书名 14</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote>
+        <blockquote>这里放一条划线。</blockquote>
+        <blockquote>再放一条。</blockquote></li>
+      <li data-size="145x210x18" data-kind="soft" data-color="#6a7174" data-style="literary" data-publisher="某某出版社" data-marks="0" data-progress="80">
+        <a href="https://example.com/book-15">书名 15</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
+      <li data-size="150x210x13" data-kind="soft" data-color="#d8cac3" data-style="modern" data-publisher="某某出版社" data-marks="0" data-read="2026 年 5 月">
+        <a href="https://example.com/book-16">书名 16</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
+      <li data-size="155x230x32" data-kind="soft" data-color="#85afca" data-style="literary" data-publisher="某某出版社" data-marks="0" data-read="2026 年 6 月">
+        <a href="https://example.com/book-17">书名 17</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
+      <li data-size="130x190x14" data-kind="hard" data-color="#b08545" data-style="literary" data-publisher="某某出版社" data-marks="2" data-progress="41">
+        <a href="https://example.com/book-18">书名 18</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote>
+        <blockquote>这里放一条划线。</blockquote>
+        <blockquote>再放一条。</blockquote></li>
+      <li data-size="150x220x26" data-kind="soft" data-color="#b11924" data-style="modern" data-publisher="某某出版社" data-marks="0" data-read="2026 年 8 月">
+        <a href="https://example.com/book-19">书名 19</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
+      <li data-size="165x235x26" data-kind="soft" data-color="#9dc4c9" data-style="modern" data-publisher="某某出版社" data-marks="0" data-read="2026 年 9 月">
+        <a href="https://example.com/book-20">书名 20</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
+      <li data-size="128x182x16" data-kind="soft" data-color="#8bc2e1" data-style="literary" data-publisher="某某出版社" data-marks="0" data-progress="92">
+        <a href="https://example.com/book-21">书名 21</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
+      <li data-size="150x220x26" data-kind="soft" data-color="#dfc8ca" data-style="modern" data-publisher="某某出版社" data-marks="2" data-read="2026 年 11 月">
+        <a href="https://example.com/book-22">书名 22</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote>
+        <blockquote>这里放一条划线。</blockquote>
+        <blockquote>再放一条。</blockquote></li>
+      <li data-size="150x220x16" data-kind="soft" data-color="#664f45" data-style="modern" data-publisher="某某出版社" data-marks="0" data-read="2026 年 12 月">
+        <a href="https://example.com/book-23">书名 23</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
+      <li data-size="148x210x20" data-kind="soft" data-color="#f6f4f0" data-style="modern" data-publisher="某某出版社" data-marks="0" data-progress="53">
+        <a href="https://example.com/book-24">书名 24</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
+      <li data-size="160x230x48" data-kind="hard" data-color="#d56105" data-style="literary" data-publisher="某某出版社" data-marks="0" data-read="2026 年 2 月">
+        <a href="https://example.com/book-25">书名 25</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
+      <li data-size="130x184x11" data-kind="hard" data-color="#ddddd8" data-style="literary" data-publisher="某某出版社" data-marks="2" data-read="2026 年 3 月">
+        <a href="https://example.com/book-26">书名 26</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote>
+        <blockquote>这里放一条划线。</blockquote>
+        <blockquote>再放一条。</blockquote></li>
+      <li data-size="140x203x24" data-kind="soft" data-color="#f6f4f3" data-style="literary" data-publisher="某某出版社" data-marks="0" data-progress="14">
+        <a href="https://example.com/book-27">书名 27</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
+      <li data-size="170x240x34" data-kind="hard" data-color="#afa59a" data-style="modern" data-publisher="某某出版社" data-marks="0" data-read="2026 年 5 月">
+        <a href="https://example.com/book-28">书名 28</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
+      <li data-size="130x184x10" data-kind="soft" data-color="#ad8f2e" data-style="literary" data-publisher="某某出版社" data-marks="0" data-read="2026 年 6 月">
+        <a href="https://example.com/book-29">书名 29</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
+      <li data-size="155x230x48" data-kind="hard" data-color="#5c5d68" data-style="literary" data-publisher="某某出版社" data-marks="2" data-progress="65">
+        <a href="https://example.com/book-30">书名 30</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote>
+        <blockquote>这里放一条划线。</blockquote>
+        <blockquote>再放一条。</blockquote></li>
+      <li data-size="150x220x20" data-kind="hard" data-color="#cfd7ba" data-style="modern" data-publisher="某某出版社" data-marks="0" data-read="2026 年 8 月">
+        <a href="https://example.com/book-31">书名 31</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
+      <li data-size="155x230x34" data-kind="soft" data-color="#38436d" data-style="literary" data-publisher="某某出版社" data-marks="0" data-read="2026 年 9 月">
+        <a href="https://example.com/book-32">书名 32</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
+      <li data-size="140x210x22" data-kind="soft" data-color="#274264" data-style="literary" data-publisher="某某出版社" data-marks="0" data-progress="26">
+        <a href="https://example.com/book-33">书名 33</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
+      <li data-size="150x220x48" data-kind="hard" data-color="#efe0a4" data-style="literary" data-publisher="某某出版社" data-marks="2" data-read="2026 年 11 月">
+        <a href="https://example.com/book-34">书名 34</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote>
+        <blockquote>这里放一条划线。</blockquote>
+        <blockquote>再放一条。</blockquote></li>
+      <li data-size="145x210x36" data-kind="soft" data-color="#506e73" data-style="literary" data-publisher="某某出版社" data-marks="0" data-read="2026 年 12 月">
+        <a href="https://example.com/book-35">书名 35</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
+      <li data-size="150x220x40" data-kind="hard" data-color="#d6c15f" data-style="literary" data-publisher="某某出版社" data-marks="0" data-progress="77">
+        <a href="https://example.com/book-36">书名 36</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
+      <li data-size="145x210x45" data-kind="soft" data-color="#262930" data-style="modern" data-publisher="某某出版社" data-marks="0" data-read="2026 年 2 月">
+        <a href="https://example.com/book-37">书名 37</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
+      <li data-size="145x210x20" data-kind="soft" data-color="#e4d8ba" data-style="literary" data-publisher="某某出版社" data-marks="2" data-read="2026 年 3 月">
+        <a href="https://example.com/book-38">书名 38</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote>
+        <blockquote>这里放一条划线。</blockquote>
+        <blockquote>再放一条。</blockquote></li>
+      <li data-size="128x182x45" data-kind="soft" data-color="#d4cfd1" data-style="modern" data-publisher="某某出版社" data-marks="0" data-progress="38">
+        <a href="https://example.com/book-39">书名 39</a> <span class="by">作者</span>
+        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
+    </ul>
+  </section>
+
+  <section id="photos" data-nav="Photos">
+    <h2>Photos</h2>
+    <!--
+      3D 版里钉在挂钟下面的软木板上：点软木板，镜头凑近，照片散着钉在板上（互相压着、角卷起来），可以拖着换位置。
+      照片先用 blender/age_photos.py 做旧：原图放 photos-src/，跑完得到 assets/photos/名字.webp 和 名字.board.webp，
+      还有一份 assets/photos/photos.json（照片列表）；有这份列表，3D 版就钉这些照片。这两个文件夹都不进 Git。
+      下面是样例：几张空白的做旧照片（assets/photos-sample/，--demo 1 生成的），本地没有真实照片时用。p 是一行说明，可以不写。
+    -->
+    <ul class="photos">
+      <li><img src="assets/photos-sample/blank-1.webp" alt="一张空白的旧照片" loading="lazy"> <p>一行说明，可以不写。</p></li>
+      <li><img src="assets/photos-sample/blank-2.webp" alt="一张空白的旧照片" loading="lazy"> <p>照片换成自己的：原图放 photos-src/，用 blender/age_photos.py 做旧。</p></li>
+      <li><img src="assets/photos-sample/blank-3.webp" alt="一张空白的旧照片" loading="lazy"></li>
+      <li><img src="assets/photos-sample/blank-4.webp" alt="一张空白的旧照片" loading="lazy"></li>
+      <li><img src="assets/photos-sample/blank-5.webp" alt="一张空白的旧照片" loading="lazy"></li>
+      <li><img src="assets/photos-sample/blank-6.webp" alt="一张空白的旧照片" loading="lazy"></li>
+    </ul>
+  </section>
+
+  <section id="online" data-nav="Contact">
+    <h2>Contact</h2>
+    <!--
+      下面是样例。真实的邮箱、电话也可以写在 assets/resume/contact.html（几个 li，这个文件夹不进 Git），
+      js/main.js 加载时有这个文件就整份换进下面的列表；纯文字版和 3D 版（记事本、联系面板）看到的是同一份。
+    -->
+    <ul class="links">
+      <li><a href="https://github.com/your-name">GitHub</a> <span>@your-name</span></li>
+      <li><a href="https://example.com">Website</a> <span>example.com</span></li>
+    </ul>
+  </section>
+
+  <section id="credits">
+    <h2>Credits</h2>
+    <!-- 下面的列表由 node scripts/credits_html.mjs 生成（来自 assets/vendor/credits.json），别手改 -->
+    <p class="intro">The models in the desk room come from Sketchfab and Poly Haven and are used under their own licences; each entry lists the author, the original, the licence and how it was changed. The walls, desk, window view and the remaining small objects are built with Blender scripts, the wood grain is procedural, and the 3D runs on <a href="https://threejs.org/">three.js</a> (MIT). Fonts: Cinzel, EB Garamond and Playfair Display (SIL Open Font License).</p>
+    <!-- credits:begin -->
+    <ul class="credit-list">
+      <li><a href="https://sketchfab.com/3d-models/persian-rug-fe13eecfc9b8405dab1fe76c5dd28a4c">Persian Rug</a> <span class="by">Nicholas Record · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+      <li><a href="https://sketchfab.com/3d-models/snake-plant-scan-lowpoly-6f136e24e4184f758aeb8ef376099e2a">Snake plant scan LOWPOLY</a> <span class="by">sixonetwo · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+      <li><a href="https://sketchfab.com/3d-models/old-pc-5aa0b296714b4347ac796c0774653cf4">Old PC</a> <span class="by">LiliumLetifer · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+      <li><a href="https://sketchfab.com/3d-models/victorian-desk-lamp-11bcb1c2e9264457814bcfdca6860ad8">Victorian Desk Lamp</a> <span class="by">Faheem Yusuf · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+      <li><a href="https://sketchfab.com/3d-models/vhs-15ff40eeb9a14a67abf76e2791527a19">VHS</a> <span class="by">Ilgis (Dolgov) Fatykhov · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+      <li><a href="https://sketchfab.com/3d-models/retro-crt-tv-6bc462b233ce4c78904dfcadf5123e29">Retro CRT TV</a> <span class="by">meipal · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+      <li><a href="https://sketchfab.com/3d-models/wooden-bookcase-e7ad8f190f1a4b15ad63572dd8dcf335">Wooden bookcase</a> <span class="by">stanislau.see · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+      <li><a href="https://sketchfab.com/3d-models/elegan-old-book-pack-4cc9ecf0531b463dada8262851ca87f8">Elegan old book pack</a> <span class="by">3D_for_everyone · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+      <li><a href="https://sketchfab.com/3d-models/retro-camera-ac8af9a9330346d2a1b1436476bd9010">Retro Camera</a> <span class="by">Tom Seddon · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+      <li><a href="https://sketchfab.com/3d-models/cassette-tapes-820777808625494581401700ccc3e7f7">Cassette tapes</a> <span class="by">FEDDYFAZBARE · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+      <li><a href="https://sketchfab.com/3d-models/monstera-deliciosa-potted-mid-century-plant-1ab9bf841df04c07b1819be596327629">Monstera Deliciosa Potted Mid-Century plant</a> <span class="by">Giora · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+      <li><a href="https://sketchfab.com/3d-models/wall-calendar-tear-off-with-wind-blowing-1cfb64b810d14c089e6a0480a8bbb58a">Wall Calendar / Tear off , with wind blowing</a> <span class="by">gokulsanjeevan · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+      <li><a href="https://sketchfab.com/3d-models/yamaha-tt-300-record-player-3577a2a1a0c24218bd5d768beccf218e">Yamaha TT-300 Record Player</a> <span class="by">AleixoAlonso · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+      <li><a href="https://sketchfab.com/3d-models/free-pothos-potted-plant-money-plant-e9832f38484f4f85b3f9081b51fa3799">[FREE] Pothos Potted Plant - Money Plant</a> <span class="by">AllQuad · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+      <li><a href="https://sketchfab.com/3d-models/cork-board-9534ee2ad4344ea6b02b95b61bd4a913">Cork Board</a> <span class="by">rickmaolly · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+      <li><a href="https://polyhaven.com/a/potted_plant_04">Potted Plant 04</a> <span class="by">James Ray Cock · Poly Haven</span> <a class="lic" href="https://creativecommons.org/publicdomain/zero/1.0/">CC0 1.0</a>
+        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+      <li><a href="https://polyhaven.com/a/hanging_picture_frame_02">Hanging Picture Frame 02</a> <span class="by">James Ray Cock · Poly Haven</span> <a class="lic" href="https://creativecommons.org/publicdomain/zero/1.0/">CC0 1.0</a>
+        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+    </ul>
+    <!-- credits:end -->
+    <p class="intro">The full record is in <a href="assets/vendor/credits.json">credits.json</a>.</p>
+  </section>
+</main>
+
+<div id="room" hidden>
+  <canvas id="gl" aria-hidden="true"></canvas>
+  <div id="loading" class="loading" role="status"><div class="bar"><i></i></div><p>Setting up the room… <b>0%</b></p></div>
+  <div id="hint" class="hint" aria-hidden="true"></div>
+  <button id="back" class="back" type="button" hidden>← Back</button>
+  <aside id="panel" class="panel" hidden></aside>
+  <div id="help" class="help">Click things to explore · Drag to look around · <a href="?plain=1">Text version</a></div>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
