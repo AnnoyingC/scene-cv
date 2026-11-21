@@ -31,9 +31,11 @@ async function polyhavenFiles({ polyhaven: id, res, format, maps }) {
   const r = await fetch(`https://api.polyhaven.com/files/${encodeURIComponent(id)}`, { headers: UA });
   if (!r.ok) throw new Error(`Poly Haven API ${r.status}：${id}`);
   const files = await r.json();
-  if (format === 'gltf') {
-    const g = files.gltf?.[res]?.gltf;
-    if (!g) throw new Error(`${id} 没有 ${res} 的 glTF`);
+  // gltf 和 blend 都是「主文件 + include 里的贴图」，落到同一个文件夹。
+  // 台灯用 blend：里面有骨骼，才能把灯夹拧开、灯头拧过去。发布的 glTF 是焊死的姿势，烘焙不读它。
+  if (format === 'gltf' || format === 'blend') {
+    const g = files[format]?.[res]?.[format];
+    if (!g) throw new Error(`${id} 没有 ${res} 的 ${format}`);
     return [{ rel: g.url.split('/').pop(), ...g }, ...Object.entries(g.include || {}).map(([rel, f]) => ({ rel, ...f }))];
   }
   return maps.map((m) => {
@@ -58,7 +60,10 @@ for (const a of assets) {
   const size = list.reduce((s, f) => s + f.size, 0);
   total += size;
   console.log(`${a.id}  ${list.length} 个文件  ${mb(size)}`);
-  if (dry) continue;
+  if (dry) {
+    for (const f of list) console.log(`    ${f.rel}`);
+    continue;
+  }
   for (const f of list) {
     const dest = inside(dir, f.rel);
     const old = await readFile(dest).catch(() => null);

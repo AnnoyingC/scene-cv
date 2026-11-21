@@ -141,30 +141,98 @@ def _islands(bm):
     return out
 
 
+def _link_blend(path):
+    """把 blend 里的物件追加进当前场景（glTF 里没有骨骼时，用这份带绑定的文件摆姿势）。"""
+    if not os.path.isfile(path):
+        raise SystemExit(f'[vendor] 找不到 {path}')
+    with bpy.data.libraries.load(path, link=False) as (data_from, data_to):
+        data_to.objects = list(data_from.objects)
+    new = []
+    for obj in data_to.objects:
+        if obj is None:
+            continue
+        bpy.context.scene.collection.objects.link(obj)
+        new.append(obj)
+    tex = os.path.join(os.path.dirname(path), 'textures')
+    for img in bpy.data.images:
+        if not img.filepath:
+            continue
+        name = os.path.basename(img.filepath.replace('\\', '/'))
+        cand = os.path.join(tex, name)
+        if not os.path.isfile(cand):
+            stem = os.path.splitext(name)[0]
+            cand = next((os.path.join(tex, stem + ext) for ext in ('.jpg', '.png') if os.path.isfile(os.path.join(tex, stem + ext))), '')
+        if cand:
+            img.filepath = cand
+            try:
+                img.reload()
+            except Exception:
+                pass
+    return new
+
+
+def _drop_material_faces(me, patterns):
+    """删掉用了这些材质的面（比如灯泡），并拆掉空出来的材质槽。"""
+    kill = [i for i, m in enumerate(me.materials) if m and any(fnmatch(m.name, p) for p in patterns)]
+    if not kill:
+        return
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    gone = {i for i in kill}
+    bmesh.ops.delete(bm, geom=[f for f in bm.faces if f.material_index in gone], context='FACES')
+    bm.to_mesh(me)
+    bm.free()
+    for i in sorted(kill, reverse=True):
+        me.materials.pop(index=i)
+
+
 class Asset:
     """一个素材文件。pieces：子物件名 → 网格（Blender 坐标，素材自己的原点和单位）。"""
 
-    def __init__(self, source, prefix, texsize=512, drop=(), decimate=None, cutout=(), by_parent=False):
-        """by_parent：子物件按上一层空物件的名字认（有的素材网格都叫 defaultMaterial，有意义的名字在父节点上）。"""
+    def __init__(self, source, prefix, texsize=512, drop=(), decimate=None, cutout=(), by_parent=False,
+                 blend=None, pose=None, keep=(), drop_mats=()):
+        """by_parent：子物件按上一层空物件的名字认（有的素材网格都叫 defaultMaterial，有意义的名字在父节点上）。
+        blend：改从这份带骨骼的 blend 读；pose(物件列表) 在取网格之前改姿势。取网格时把修改器（骨骼、曲线）应用上。
+        keep：只留名字匹配的网格。drop_mats：这些材质上的面不要（灯泡换成自己的发光球）。"""
         self.source, self.prefix = source, prefix
-        path = asset_path(source)
         before, mats_before = set(bpy.data.objects), set(bpy.data.materials)
         imgs_before = set(bpy.data.images)
-        bpy.ops.import_scene.gltf(filepath=path)
-        new = [o for o in bpy.data.objects if o not in before]
+        if blend:
+            new = _link_blend(blend)
+            if pose:
+                pose(new)
+            bpy.context.view_layer.update()
+        else:
+            bpy.ops.import_scene.gltf(filepath=asset_path(source))
+            new = [o for o in bpy.data.objects if o not in before]
         self.pieces, self.alias = {}, {}  # alias：子物件 → 原来的材质名（有的素材子物件名字没意义，按材质名认）
+        deps = bpy.context.evaluated_depsgraph_get() if blend else None
         for o in new:
             mname = o.data.materials[0].name if o.type == 'MESH' and o.data.materials and o.data.materials[0] else ''
             key = o.parent.name if by_parent and o.parent else o.name
             if o.type != 'MESH' or any(fnmatch(key, p) or fnmatch(mname, p) for p in drop):
                 continue
+            if keep and not any(fnmatch(key, p) for p in keep):
+                continue
             if key in self.pieces:
                 raise SystemExit(f'[vendor] {prefix}: 两个子物件都叫 {key}')
             self.alias[key] = mname
-            me = o.data.copy()
-            me.transform(o.matrix_world)
-            keep = uv_name_for(me.materials[0] if me.materials else None, me)
-            for layer in [l.name for l in me.uv_layers if l.name != keep]:
+            if blend:
+                ev = o.evaluated_get(deps)
+                src = ev.to_mesh()
+                me = src.copy()
+                me.transform(ev.matrix_world)  # 修改器作用在物件本地，再乘到世界坐标，和 glTF 那条路一样
+                ev.to_mesh_clear()
+            else:
+                me = o.data.copy()
+                me.transform(o.matrix_world)
+            if drop_mats:
+                _drop_material_faces(me, drop_mats)
+            if not me.polygons:
+                bpy.data.meshes.remove(me)
+                continue
+            keep_uv = uv_name_for(me.materials[0] if me.materials else None, me)
+            for layer in [l.name for l in me.uv_layers if l.name != keep_uv]:
                 me.uv_layers.remove(me.uv_layers[layer])
             if me.uv_layers:
                 me.uv_layers[0].name = 'UVMap'

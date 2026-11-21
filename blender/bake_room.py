@@ -399,6 +399,7 @@ def hot_boxes(pad=0.004):
 # ---------- 第三方模型：导入、整理见 room_vendor.py；这里负责摆放、记热点、记用了哪些素材 ----------
 PLACED = []  # (物件, lightmap 精度)
 USED = []    # 素材 id（和 assets/vendor/credits.json 一样），写进 manifest.vendor
+AABB = []    # (名字, lo, hi) 世界坐标，预览前查有没有叠在一起
 CUTOUT = []  # 镂空的材质名（叶片），写进 manifest.cutout
 
 
@@ -410,6 +411,7 @@ def put(asset, at, uvk=10, **kw):
     if HOT_ID:
         HOT_PTS.setdefault(HOT_ID, []).extend(map(tuple, pts))
     lo, hi = pts.min(0), pts.max(0)
+    AABB.append((asset.prefix, lo.copy(), hi.copy()))
     print(f'[put] {asset.prefix:10s} x {lo[0]:+.2f}..{hi[0]:+.2f}  y {lo[1]:.2f}..{hi[1]:.2f}  z {lo[2]:+.2f}..{hi[2]:+.2f}')
     if asset.source not in USED:
         USED.append(asset.source)
@@ -522,16 +524,16 @@ for side, back in [(sd, bk) for sd in SIDES for bk in (False, True)]:  # 正面�
     T.tag([T.bm.faces.new((grid[j][i], grid[j + 1][i], grid[j + 1][i + 1], grid[j][i + 1])) for j in range(NY) for i in range(NX)], cm)
 K = 10
 
-# ---------- 书桌：窗下，宽 1.5 米；右头挨着电视推车，左头离左后墙角留出空地，电脑正对窗户中间 ----------
+# ---------- 书桌：窗下；左头和窗台石板的左头齐平，右头和电脑都没动，电脑正对窗户中间 ----------
 # 厚重的实木书桌（胡桃木拼板，木纹是颜色贴图）：5.5 厘米厚的桌面，前沿上下各倒一个角；右边三抽的抽屉柜，
 # 抽屉面板凸出柜体、中间再起一块线脚，黄铜拉手；左边一整块侧板；腿下的空当后面有挡板，前面一条横档带个扁抽屉
 K = 25
-DESK_EXT = 0.26                    # 比原来 1.24 米的桌子往左多出来的一截（右头和电脑都没动）
-DESK_W, DESK_D, DESK_T = 1.24 + DESK_EXT, 0.8, 0.055
 DESK_X = WIN['x']                  # 电脑的中线（正对窗户中间）；桌上的东西都按它摆
-DESK_RX = DESK_X + 0.62            # 桌子右头
-DESK_LX = DESK_RX - DESK_W         # 桌子左头
-g = G(((DESK_LX + DESK_RX) / 2, 0, BACK + 0.43))
+DESK_RX = DESK_X + 0.62            # 桌子右头（不动）
+DESK_LX = WIN['x'] - (WIN['w'] + 0.1) / 2   # 左头 = 窗台石板左头
+DESK_W, DESK_D, DESK_T = DESK_RX - DESK_LX, 0.8, 0.055
+DESK_Z = BACK + 0.43               # 桌面中线；后沿 = DESK_Z - 深/2，前沿 = DESK_Z + 深/2
+g = G(((DESK_LX + DESK_RX) / 2, 0, DESK_Z))
 wood, brass = mat('desk', '#6a4428'), mat('brass', '#b8945a')
 rnd_w = random.Random(11)
 dx, dz, ch, yb = DESK_W / 2, DESK_D / 2, 0.008, TOP - DESK_T  # 半宽、半深、倒角、桌面底
@@ -577,6 +579,9 @@ K = 25
 wbox(xr - xl, 0.075, 0.02, (xl + xr) / 2, yb - 0.0375, pf - 0.01)  # 前横档
 wbox(0.44, 0.052, 0.012, (xl + xr) / 2, yb - 0.0375, pf + 0.006)  # 扁抽屉
 pull((xl + xr) / 2, yb - 0.0375, pf + 0.012, half=0.03)
+DESK_BACK, DESK_FRONT = DESK_Z - DESK_D / 2, DESK_Z + DESK_D / 2
+print(f'[desk] 左头 {DESK_LX:+.3f} 右头 {DESK_RX:+.3f} 宽 {DESK_W:.3f} 后沿 {DESK_BACK:+.3f} 前沿 {DESK_FRONT:+.3f}')
+# 侧板、后挡板、前横档、扁抽屉都按 dx = DESK_W/2 从右头往左排，桌子加长以后跟着左头走
 
 # 电脑：米色的老式台式机，显示器压在卧式主机上，软驱里插着一张软盘，显示器侧面贴着便利贴（素材自带的）。
 # 素材是真实尺寸（米），正面朝 +x，转 -90° 朝屋里；子物件按父节点认：PC（机身 + 鼠标 + 鼠标线）、NOTAS（便利贴）、CD（软盘）、HOJAS（长出来的草叶，不要）。
@@ -657,8 +662,8 @@ def keyboard(g, u=0.0185):
 
 
 # 键盘：在显示器正前方，稍微斜一点；鼠标在右边；两根线都从桌面上绕到主机后面
-KB_ROT = 0.035
-KB_Z = PC_FRONT + 0.135  # 键盘中心：离机箱前面 13.5 厘米（软盘探出来 9 厘米，键盘后沿还空着一点）
+KB_ROT = 0          # 摆正，正对开场镜头
+KB_Z = PC_FRONT + 0.155  # 往前 2 厘米：软盘探出机箱前面，键盘后沿不再插进去
 g = G((DESK_X - 0.015, TOP, KB_Z), (0, KB_ROT, 0))
 with hot('about', KB_ROT):
     KB_W, KB_D = keyboard(g)
@@ -667,7 +672,7 @@ lie = TOP + 0.004  # 线躺在桌面上时的中心高度（压在打印纸上�
 tube(spline([world(g, (-0.13, 0.03, -KB_D / 2 + 0.004)), world(g, (-0.135, 0.006, -KB_D / 2 - 0.03)),
              (PC_L - 0.015, lie, PC_FRONT + 0.02), (PC_L - 0.02, lie, PC_FRONT - 0.15), (PC_L - 0.012, lie, PC_BACK + 0.03),
              (PC_L + 0.06, TOP + 0.03, PC_BACK + 0.02)], 5), 0.0028, cable)
-MOUSE_ROT = math.pi + 0.15  # 素材里鼠标线从 +z 那头（按键那头）出来：转 180° 让它朝屏幕，再往左斜一点（右手拿着的样子）
+MOUSE_ROT = math.pi + 0.08  # 素材里鼠标线从 +z 那头（按键那头）出来：转 180° 让它朝屏幕，再往左斜一点（右手拿着的样子）
 with hot('about', MOUSE_ROT):
     _, T_mouse = put(PC, G((DESK_X + KB_W / 2 + 0.06, TOP, KB_Z + 0.01), (0, MOUSE_ROT, 0)), pieces=['MOUSE'], uvk=25, scale=0.75)
 plug = at3(T_mouse, (0.29, 0.016, 0.152))
@@ -676,6 +681,21 @@ tube(spline([tuple(plug), tuple(plug + back * 0.03 + Vector((0, lie - plug.y, 0)
              (PC_R + 0.02, lie, PC_FRONT + 0.04), (PC_R + 0.014, lie, PC_FRONT - 0.12), (PC_R + 0.01, lie, PC_BACK + 0.03),
              (PC_R - 0.06, TOP + 0.03, PC_BACK + 0.02)], 5), 0.0024, cable)
 print(f'[pc] 电脑 x {PC_L:+.3f}..{PC_R:+.3f}，机箱前面 z {PC_FRONT:+.3f}，深 {PC_DEPTH:.3f}；键盘 {KB_W:.3f} × {KB_D:.3f}，中心 z {KB_Z:+.3f}')
+
+
+def flat_aabb(name, x, z, w, d, yaw, y0, y1):
+    """平放的盒子（绕 Y 轴 yaw）的世界包围盒，记下来和 [put] 一起查有没有叠住。"""
+    cs, sn = math.cos(yaw), math.sin(yaw)
+    xs, zs = [], []
+    for sx in (-w / 2, w / 2):
+        for sz in (-d / 2, d / 2):
+            xs.append(x + cs * sx + sn * sz)
+            zs.append(z - sn * sx + cs * sz)
+    AABB.append((name, np.array((min(xs), y0, min(zs))), np.array((max(xs), y1, max(zs)))))
+
+
+flat_aabb('kb', DESK_X - 0.015, KB_Z, KB_W, KB_D, KB_ROT, TOP, TOP + 0.05)
+AABB.append(('wing', np.array((DESK_LX, 0.0, DESK_BACK)), np.array((DESK_RX - 1.50, TOP, DESK_FRONT))))  # 新加的左翼：旧左头在右头往左 1.50 米
 
 # 开场镜头：绕着电脑转（orbit）。镜头站在电脑正前方、略微俯视，目标点在屏幕中心正上方一点：电脑在画面正中，窗户框着它；
 # 右边的电视露出一半（斜着朝向镜头，看得到彩条），往右拖就整个出来；
@@ -686,50 +706,301 @@ CAM = dict(target=tuple(Vector(PC_SCREEN['pos']) + Vector((0, 0.08, -0.1))), dis
            yawRange=(-1.0, 1.2), pitchRange=(-0.6, 0.06), distRange=(1.1, 2.4),
            box=dict(x=(x0 + 0.75, x1 - 0.25), z=z1 - 0.25, y=(0.45, RH - 0.3)))
 
-# 书桌台灯：银行家台灯，放在左后方，灯罩朝右前方（键盘、记事本）。
-# 素材里的灯泡面删掉，原地放一个 Glow 小球；灯光（spot + 点光）也放在灯泡那里，往前下方照
-LAMP = Asset('sketchfab/victorian-desk-lamp', 'lamp', texsize=512)
-bulb = LAMP.islands('*', (-243.6, 67.0, -13.6), (-238.0, 72.6, -8.2), delete=True)
-LAMP_ROT = -0.95  # 素材正面（+x）转到世界的 (0.58, 0, 0.81)
-STACK = [(0.26, 0.035, 0.19, '#5a2e2e'), (0.24, 0.03, 0.18, '#2f4a3d')]  # 台灯垫在两本旧书上（宽、厚、深、颜色）
-STACK_H = sum(h for _, h, _, _ in STACK)
-with hot('lamp'):
-    lamp_obs, T_lamp = put(LAMP, G((DESK_X - 0.56, TOP + STACK_H, -1.78), (0, LAMP_ROT, 0)), uvk=25, height=0.42)
-    LAMP_HEAD = at3(T_lamp, bulb.mean(0))
-    fwd = Vector((math.cos(LAMP_ROT), 0, -math.sin(LAMP_ROT)))
-    LAMP_DIR = (fwd * 0.55 + Vector((0, -1, 0))).normalized()
-    r_bulb = float((bulb.max(0) - bulb.min(0)).max()) / 2 * T_lamp.to_scale()[0]
-    with glow():
-        ball(tuple(LAMP_HEAD), r_bulb, emit('emit.lamp.bulb', 'lamp', '#ffe2b8', 6.0), 2)
-print(f'[lamp] 灯泡 {tuple(round(v, 3) for v in LAMP_HEAD)}，半径 {r_bulb * 1000:.0f} mm')
+# 按人的习惯只留这一套：台灯夹在左后角；靠窗那一排是看的东西，正面朝开场镜头；
+# 手边是用的东西；音乐的东西挨着电脑左边。新加长的左边那一截，前半留空，当写字的地方。
+LAMP_CLAMP_AT = (DESK_LX + 0.07, TOP - DESK_T / 2, DESK_BACK)  # 夹子咬住后沿，离左头 7 厘米
+# 灯头离桌面 52 厘米、对着简历和键盘之间：光铺满左半张桌子（开关一眼看得出），纸不在光斑正中心。
+# 低到 38 厘米、正对着纸时，光只照亮一张纸：亮了就过曝，暗了开关又看不出区别
+LAMP_HEAD_AT = (DESK_X - 0.66, TOP + 0.52, -1.58)             # 灯头中心
+LAMP_AIM_AT = (DESK_X - 0.40, TOP, -1.40)                     # 灯罩口对着简历右边、键盘左边
+NOTE_X, NOTE_Z, NOTE_ROT = DESK_X + 0.44, -1.32, -0.06        # 记事本在键盘右边
+MUG_AT = (DESK_X + 0.31, -1.58)
+CAL_X, CAL_Z, DCAL_YAW = DESK_X - 0.84, -1.84, 0.30           # 万年历在台灯右边，字朝开场镜头
+SHEETS = ((DESK_X - 0.45, -1.37, 0.06), (DESK_X - 0.43, -1.39, -0.03))  # 两张简历，落在灯下面
 
-# 台灯下面的书（摆在灯座正下方：灯座 = 最低 1 厘米的顶点）、记事本、笔、笔筒
-pts = world_points(lamp_obs)
-base = pts[pts[:, 1] < pts[:, 1].min() + 0.01]
-g = G(((base[:, 0].min() + base[:, 0].max()) / 2, TOP, (base[:, 2].min() + base[:, 2].max()) / 2), (0, 0.22, 0))
-y = 0
-for i, (w, h, d, c) in enumerate(STACK):
-    box(g, w, h, d, mat(f'stack{i}', c), 0.005 * i, y + h / 2, 0, (0, (-1) ** i * 0.06, 0))
-    y += h
-# 台灯的电线：从灯座后面出来，翻过书的后沿，顺着桌面爬到后墙，垂到地上
-bc = Vector(((base[:, 0].min() + base[:, 0].max()) / 2, 0, (base[:, 2].min() + base[:, 2].max()) / 2))
+# 摇臂灯。发布的 glTF 是大约 88 厘米的静止姿势，没有骨骼；绑定在同一份素材的 blend 里。
+# 灯夹夹在桌子左后角的后沿，灯头和灯罩口按上面的坐标去够。姿势改的是控制骨，取网格时把骨骼应用到顶点上。
+LAMP_FIT = {}
+
+
+def pose_desk_lamp(objects):
+    """拧开钳口，再调灯臂和灯头，让灯泡落在目标、灯罩口朝向桌面上的那一点。"""
+    arm = next(o for o in objects if o.type == 'ARMATURE')
+    ctrl = arm.pose.bones['ctrl_top-position']
+    pivot = arm.pose.bones['ctrl_lamp_base_pivot']
+    rot_a = arm.pose.bones['ctrl_top_rotation_A']
+    rot_b = arm.pose.bones['ctrl_top_rotation_B']
+    holder = arm.pose.bones['ctrl_pivot-holder']
+    holder.location.y = -0.015  # 下钳口下降约 1.5 厘米，开口接近桌面厚度
+    pivot.rotation_mode = 'XYZ'
+    rot_a.rotation_mode = 'XYZ'
+    rot_b.rotation_mode = 'XYZ'
+    state = dict(yaw=1.53, lx=-0.27, ly=0.29, bz=0.30, ay=0.42)
+
+    def apply():
+        pivot.rotation_euler = (0.0, state['yaw'], 0.0)
+        ctrl.location.x = state['lx']
+        ctrl.location.y = state['ly']
+        rot_b.rotation_euler.z = state['bz']
+        rot_a.rotation_euler.y = state['ay']
+        bpy.context.view_layer.update()
+        return bpy.context.evaluated_depsgraph_get()
+
+    def sample(dg):
+        o = bpy.data.objects['geo_lamp-head']
+        ev = o.evaluated_get(dg)
+        me = ev.to_mesh()
+        mi = next(i for i, m in enumerate(me.materials) if m and 'light' in m.name)
+        bulb, nb = Vector(), 0
+        lo_b, hi_b = Vector((1e9, 1e9, 1e9)), Vector((-1e9, -1e9, -1e9))
+        shade = []
+        for p in me.polygons:
+            vs = [ev.matrix_world @ me.vertices[i].co for i in p.vertices]
+            if p.material_index == mi:
+                for v in vs:
+                    bulb += v
+                    nb += 1
+                    lo_b = Vector((min(lo_b.x, v.x), min(lo_b.y, v.y), min(lo_b.z, v.z)))
+                    hi_b = Vector((max(hi_b.x, v.x), max(hi_b.y, v.y), max(hi_b.z, v.z)))
+            else:
+                shade.extend(vs)
+        ev.to_mesh_clear()
+        bulb /= nb
+        holder_ob = bpy.data.objects['geo_pivot-holder'].evaluated_get(dg)
+        hme = holder_ob.to_mesh()
+        z_lo = max((holder_ob.matrix_world @ v.co).z for v in hme.vertices)
+        holder_ob.to_mesh_clear()
+        attach = np.array(arm.matrix_world @ arm.pose.bones['def_lamp_head'].head)
+        arr = np.array([(v.x, v.y, v.z) for v in shade])
+        dist = np.linalg.norm(arr - attach, axis=1)
+        rim = arr[dist >= np.quantile(dist, 0.9)].mean(0)
+        direction = Vector(tuple(rim)) - bulb
+        direction.normalize()
+        radius = float(max(hi_b[i] - lo_b[i] for i in range(3))) / 2
+        return bulb, direction, radius, z_lo
+
+    dg = apply()
+    _, _, _, z_lo = sample(dg)
+    anchor = Vector((0.0, 0.0, z_lo + DESK_T / 2))  # 钳口高度的中点，对着桌面板中心
+    # 臂长不够时，沿「夹子 → 灯头」收回来，最多 10 厘米。收回的是这份目标，罩口仍对着简历。
+    goal = Vector(LAMP_HEAD_AT)
+    aim_w = Vector(LAMP_AIM_AT)
+    clamp_w = Vector(LAMP_CLAMP_AT)
+    box = dict(pull=0.0, target=None, want=None, head=goal)
+    state0 = dict(state)
+
+    def retarget():
+        along = goal - clamp_w
+        box['head'] = goal if box['pull'] <= 0 else goal - along.normalized() * box['pull']
+        delta = box['head'] - clamp_w
+        box['target'] = anchor + Vector((delta.x, -delta.z, delta.y))  # three → Blender
+        want = (aim_w - box['head']).normalized()
+        box['want'] = Vector((want.x, -want.z, want.y)).normalized()
+
+    retarget()
+
+    def pos_err():
+        bulb, _, _, _ = sample(apply())
+        return (bulb - box['target']).length
+
+    def aim_err():
+        _, direction, _, _ = sample(apply())
+        return (direction - box['want']).length
+
+    def descend(keys, steps, err_fn):
+        best = err_fn()
+        for step in steps:
+            improved, guard = True, 0
+            while improved and guard < 24:
+                guard += 1
+                improved = False
+                for key in keys:
+                    for sgn in (1, -1):
+                        state[key] += sgn * step
+                        e = err_fn()
+                        if e + 1e-4 < best:
+                            best = e
+                            improved = True
+                            break
+                        state[key] -= sgn * step
+                    if improved:
+                        break
+        return best
+
+    pe = 1.0
+    for attempt in range(4):  # 转灯头会把灯泡带偏，所以位置和朝向交替收；够不到再把目标收回来重来
+        if attempt:
+            state.update(state0)
+        for i in range(3):
+            pe = descend(('yaw', 'lx', 'ly'), (0.08, 0.03) if i == 0 else (0.04, 0.015), pos_err)
+            ae = descend(('bz', 'ay'), (0.25, 0.08), aim_err)
+            print(f'[lamp] 第 {attempt + 1} 遍第 {i + 1} 轮 位置 {pe * 100:.1f} cm，朝向 {ae:.3f}，收回 {box["pull"] * 100:.1f} cm')
+        if pe <= 0.02 or box['pull'] >= 0.10 - 1e-6:
+            break
+        box['pull'] = min(0.10, box['pull'] + float(pe))
+        retarget()
+        print(f'[lamp] 灯头够不到，沿夹子到灯头收回 {box["pull"] * 100:.1f} cm')
+    bulb, direction, radius, z_lo = sample(apply())
+    LAMP_FIT.update(anchor=anchor, bulb=bulb, direction=direction, radius=radius, target=box['target'], want=box['want'],
+                    z_lo=z_lo, head_w=Vector(box['head']), pull=box['pull'])
+    print(f'[lamp] 姿势：yaw {state["yaw"]:+.2f} 臂 {state["lx"]:+.2f},{state["ly"]:+.2f} 头 {state["bz"]:+.2f},{state["ay"]:+.2f}')
+
+
+LAMP_BLEND = os.path.join(ROOT, 'vendor-src', 'polyhaven', 'desk_lamp_arm_01', 'desk_lamp_arm_01_1k.blend')
+LAMP = Asset('polyhaven/desk_lamp_arm_01', 'lamp', texsize=512, blend=LAMP_BLEND, pose=pose_desk_lamp,
+             keep=('geo_*',), drop_mats=('*light*',))
+_anc = LAMP_FIT['anchor']
+_anc_t = Vector((_anc.x, _anc.z, -_anc.y))
+_lo, _hi = LAMP.bounds()
+_frac = tuple((float(_anc_t[i]) - float(_lo[i])) / float(_hi[i] - _lo[i]) for i in range(3))
+lamp_obs, T_lamp = put(LAMP, G(LAMP_CLAMP_AT), uvk=25, anchor=tuple(_frac), scale=1.0)
+# 热点只框灯头（灯罩附近 14 厘米以内的顶点）：整盏灯从左后角斜伸到桌子中间，框整盏灯的盒子会把日历、随身听、
+# 桌面和墙都框进去，鼠标一放上去左后角一大片一起亮
+with hot('lamp'):
+    _bb = LAMP_FIT['bulb']
+    LAMP_HEAD = at3(T_lamp, (_bb.x, _bb.z, -_bb.y))
+    _db = LAMP_FIT['direction']
+    LAMP_DIR = Vector((_db.x, _db.z, -_db.y))
+    _aim = Vector(LAMP_AIM_AT)
+    if LAMP_DIR.dot(_aim - LAMP_HEAD) < 0:
+        LAMP_DIR = -LAMP_DIR
+    LAMP_DIR = LAMP_DIR.normalized()
+    # 发光的灯泡留在灯泡原位、35 毫米，整个藏在灯罩里。试过的两种都会穿模：48 毫米时从灯罩细的那头侧面穿出来
+    # （开场画面里一整团光晕、一条横穿窗户的光带）；顺着光的方向往灯罩口挪 5 厘米时从灯罩壁上穿出来
+    # （开灯一个亮斑、关灯一个黑斑）。开灯关灯的区别靠桌上那一大圈光
+    r_bulb = min(LAMP_FIT['radius'], 0.035)
+    with glow():
+        ball(tuple(LAMP_HEAD), r_bulb, emit('emit.lamp.bulb', 'lamp', '#ffe2b8', 4.0), 2)
+    _lp = world_points(lamp_obs)
+    _head = _lp[np.linalg.norm(_lp - np.array(tuple(LAMP_HEAD)), axis=1) < 0.14]
+    HOT_PTS.setdefault(HOT_ID, []).extend(map(tuple, _head))
+_want = LAMP_FIT['head_w']
+print(f'[lamp] 灯泡 {tuple(round(v, 3) for v in LAMP_HEAD)}，目标 {tuple(round(v, 3) for v in _want)}，'
+      f'偏差 {(LAMP_HEAD - _want).length * 100:.1f} cm，半径 {r_bulb * 1000:.0f} mm')
+# 电线从夹子沿桌子后沿落到墙根，不放进热点（不然点击盒子会一直拖到地板）
 wire = mat('wire', '#1c1a18')
-tube(spline([(bc.x - 0.02, TOP + STACK_H + 0.004, base[:, 2].min() + 0.012), (bc.x - 0.035, TOP + STACK_H + 0.003, bc.z - 0.105),
-             (bc.x - 0.045, TOP + 0.004, bc.z - 0.128), (bc.x - 0.03, TOP + 0.003, BACK + 0.045), (bc.x - 0.02, TOP - 0.06, BACK + 0.012),
-             (bc.x - 0.01, 0.03, BACK + 0.012), (bc.x + 0.12, 0.004, BACK + 0.016)], 5), 0.0025, wire)
-NOTE_ROT = 0.28  # 记事本 = 联系方式（浏览器在纸面上画字，材质名 notepad 的顶面）
-g = G((DESK_X - 0.4, TOP, -1.3), (0, NOTE_ROT, 0))
+_cx = LAMP_CLAMP_AT[0]
+tube(spline([(_cx, TOP - DESK_T / 2, DESK_BACK + 0.004), (_cx - 0.03, TOP - 0.02, DESK_BACK),
+             (_cx - 0.04, TOP - 0.06, BACK + 0.014), (_cx - 0.02, 0.04, BACK + 0.012),
+             (_cx + 0.08, 0.004, BACK + 0.016)], 5), 0.0025, wire)
+
+# 书柜上的旧磁带还用这份（外壳半透明的 02a 丢掉）。书桌上的那几摞换成下面的新素材。
+CASS = Asset('sketchfab/cassette-tapes', 'cassette', texsize=512, drop=('*02a*',), decimate={'*': 0.3})
+
+
+def _mesh_co(me):
+    a = np.empty(len(me.vertices) * 3, dtype=np.float64)
+    me.vertices.foreach_get('co', a)
+    return a.reshape(-1, 3)
+
+
+def _tape_groups(asset):
+    """三盘带子。名字里的 .001 / .002 是第二、第三盘。"""
+    groups = [[], [], []]
+    for name in asset.pieces:
+        groups[2 if '.002' in name else 1 if '.001' in name else 0].append(name)
+    return groups
+
+
+def _orient_tapes(asset, names, mode):
+    """绕外壳中心把一盘转正，零件跟着走。返回 (变换, 长边长度)。
+    stand：长边横着、短边竖着，标签朝 +z（开场镜头那面）。flat：标签朝上。
+    螺丝在背面，标签朝螺丝的反方向，免得字翻过去。"""
+    shell = next(n for n in names if n.startswith('Fita'))
+    co = _mesh_co(asset.pieces[shell])
+    c = co.mean(0)
+    x = co - c
+    _, evecs = np.linalg.eigh(np.cov(x.T))
+    thin, mid, long = (evecs[:, i].copy() for i in range(3))  # 特征值从小到大：厚、短、长
+    if float(np.dot(np.cross(long, mid), thin)) < 0:
+        thin = -thin
+    screws = [n for n in names if n.startswith('Parafusos')]
+    if screws:
+        sc = np.concatenate([_mesh_co(asset.pieces[n]) for n in screws]).mean(0)
+        if float(np.dot(sc - c, thin)) > 0:
+            thin, mid = -thin, -mid
+    # 列是 long、mid、thin 要去的方向（Blender 坐标）
+    target = np.column_stack([[1, 0, 0], [0, 0, 1], [0, -1, 0]] if mode == 'stand'
+                              else [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+    source = np.column_stack([long, mid, thin])
+    R = target @ np.linalg.inv(source)
+    M3 = Matrix((tuple(float(v) for v in R[0]), tuple(float(v) for v in R[1]), tuple(float(v) for v in R[2])))
+    origin = Vector(tuple(float(v) for v in c))
+    return Matrix.Translation(origin) @ M3.to_4x4() @ Matrix.Translation(-origin), float(np.ptp(x @ long))
+
+
+def _place_tape(asset, names, mode, at, scale):
+    xform = _orient_tapes(asset, names, mode)[0]
+    saved = {}
+    for n in names:
+        saved[n] = asset.pieces[n]
+        me = saved[n].copy()
+        me.transform(xform)
+        asset.pieces[n] = me
+    put(asset, at, uvk=25, pieces=names, anchor=(0.5, 0.0, 0.5), scale=scale)
+    for n in names:
+        bpy.data.meshes.remove(asset.pieces[n])
+        asset.pieces[n] = saved[n]
+
+
+# 随身听立在电脑左边。耳机围在机身两边，整份一起摆。耳机网格名有乱码，按部件位置认，不靠那两个字。
+# 正面小窗是半透明材质，烘焙只认登记过的玻璃，改成不透明的深色烟灰塑料。
+WALK = Asset('sketchfab/sony-walkman', 'walkman', texsize=1024)
+_body = next(n for n in WALK.pieces if n.startswith('Walkman'))
+_win = next(n for n in WALK.pieces if n.startswith('Window'))
+WALK.pieces[_win].materials.clear()
+WALK.pieces[_win].materials.append(plain_material('walkman_window', '#3a3e42'))
+_blo, _bhi = WALK.bounds([_body])
+_lo, _hi = WALK.bounds()
+_body_h = float(_bhi[1] - _blo[1])
+WALK_S = 0.135 / _body_h * 1.1  # 机身按真实的 13.5 厘米，再放大 1.1 倍，字才看得清
+_pivot = np.array([(_blo[0] + _bhi[0]) / 2, _lo[1], (_blo[2] + _bhi[2]) / 2])  # 机身的水平中心落在桌面上
+put(WALK, G((DESK_X - 0.54, TOP, -1.78), (0, 0.23, 0)), uvk=25,
+    anchor=tuple((_pivot - _lo) / (_hi - _lo)), scale=WALK_S)
+print(f'[walkman] 机身 {_body_h * 100:.1f} cm × {WALK_S:.3f} → {_body_h * WALK_S * 100:.1f} cm，'
+      f'中心 ({DESK_X - 0.54:+.3f}, -1.780)，转 0.23')
+
+# 彩虹标签磁带。贴图缩到 1024，开场画面里标签才清楚。三盘轮流用。
+FITA = Asset('sketchfab/cassette-tape-fita-cassete', 'fita', texsize=1024)
+FITA_G = _tape_groups(FITA)
+_, FITA_LONG = _orient_tapes(FITA, FITA_G[0], 'stand')
+FITA_S = 0.10 * 1.15 / FITA_LONG  # 长边 10 厘米，再放大 1.15 倍
+_shell = next(n for n in FITA_G[0] if n.startswith('Fita'))
+_saved_shell = FITA.pieces[_shell]
+_tmp = _saved_shell.copy()
+_tmp.transform(_orient_tapes(FITA, FITA_G[0], 'stand')[0])
+FITA.pieces[_shell] = _tmp
+_slo, _shi = FITA.bounds([_shell])
+FITA_SIZE = (_shi - _slo) * FITA_S  # three：宽、高、厚
+bpy.data.meshes.remove(_tmp)
+FITA.pieces[_shell] = _saved_shell
+print(f'[fita] 外壳 {FITA_SIZE[0] * 100:.1f} × {FITA_SIZE[1] * 100:.1f} × {FITA_SIZE[2] * 100:.1f} cm（宽×高×厚），缩放 {FITA_S:.6f}')
+
+# 两盘竖在后沿、窗台下面，标签朝开场镜头，往后仰约 11°。底边贴着桌面。
+# 名义中心是 DESK_X-0.42 / -0.31。外壳放大以后宽 11.5 厘米，右沿会贴上电脑左边（x≈-0.19），
+# 所以整对再往左 3.5 厘米，右沿离电脑留出 3 厘米以上。
+FITA_LEAN = -math.radians(11)
+for i, (dx, yaw) in enumerate(((-0.455, 0.15), (-0.345, -0.05))):
+    lift = float(FITA_SIZE[2]) / 2 * abs(math.sin(FITA_LEAN))  # 绕底面中心后仰，后边会沉进桌面，抬回来
+    at = G((DESK_X + dx, TOP + lift, -1.93)) @ M(rot=(FITA_LEAN, 0, 0)) @ M(rot=(0, yaw, 0))
+    _place_tape(FITA, FITA_G[i], 'stand', at, FITA_S)
+# 前面平放一摞三盘。固定种子，预览和烘焙是同一摞；最上面多转一截，露出标签。
+_fr = random.Random(4)
+for i, which in enumerate((2, 0, 1)):
+    yaw = _fr.uniform(-0.04, 0.04) + (0.25 if i == 2 else 0.0)
+    dx, dz = _fr.uniform(-0.004, 0.004), _fr.uniform(-0.004, 0.004)
+    at = G((DESK_X - 0.36 + dx, TOP + i * float(FITA_SIZE[2]), -1.81 + dz), (0, yaw, 0))
+    _place_tape(FITA, FITA_G[which], 'flat', at, FITA_S)
+
+# 记事本 = 联系方式（浏览器在纸面上画字，材质名 notepad 的顶面），在键盘右边
+g = G((NOTE_X, TOP, NOTE_Z), (0, NOTE_ROT, 0))
 with hot('online', NOTE_ROT):
     box(g, 0.15, 0.012, 0.21, mat('notepad', '#ddd5c2'), 0, 0.006, 0)
     box(g, 0.15, 0.004, 0.025, mat('notepad_top', '#8b2f2f'), 0, 0.014, -0.095)
     rod(world(g, (0.062, 0.017, 0.08)), world(g, (0.07, 0.017, -0.07)), 0.0045, mat('pen', '#1f3b6e'), 8)  # 笔压在右边沿，不挡纸上的字
+flat_aabb('note', NOTE_X, NOTE_Z, 0.15, 0.21, NOTE_ROT, TOP, TOP + 0.02)
 # 从正上方偏一点往下看，镜头转到和本子一样的角度，纸面在画面里是正的
 VIEWS['online'] = dict(target=world(g, (0, 0.012, 0.01)), size=(0.12, 0.14), dir=(math.sin(NOTE_ROT) * 0.45, 1.0, math.cos(NOTE_ROT) * 0.45))
-g = G((DESK_X + 0.29, TOP, -1.88))  # 笔筒：电脑右后方（鼠标线从它和电脑中间过去）
-cyl(g, 0.035, 0.035, 0.1, 16, mat('pencup', '#3d4a52'), (0, 0.05, 0))
-for i, c in enumerate(['#d8a53a', '#c94c3c', '#3a6db0']):
-    a = i * 2.1
-    rod(world(g, (math.cos(a) * 0.012, 0.03, math.sin(a) * 0.012)), world(g, (math.cos(a) * 0.03, 0.18, math.sin(a) * 0.03)), 0.0035, mat(f'pencil{i}', c), 6)
 
 # 录像带架：4 盘录像带（Sketchfab「VHS」，Ilgis (Dolgov) Fatykhov，CC BY）套着纸盒竖着插在架子上，纸盒的书脊朝前。
 # 素材里是一摞带子 + 两个电影纸盒：只取单独放着的那一盘带子和尺寸正好的那个纸盒（电影封面不用）。
@@ -830,23 +1101,9 @@ with hot('work'):
             sleeve_uv(ob, gi)
         K = 10
 
-# 咖啡杯（电脑右边）、眼镜（压在左边的打印纸上）、遥控器（记事本左边，竖着放）
-g = G((DESK_X + 0.31, TOP, -1.53))
-cup = mat('mug', '#e8e2d4')
-cyl(g, 0.042, 0.04, 0.095, 24, cup, (0, 0.0475, 0))
-cyl(g, 0.037, 0.037, 0.002, 24, mat('coffee', '#2a160c'), (0, 0.085, 0))
-box(g, 0.012, 0.055, 0.035, cup, 0.05, 0.05, 0)
-g = G((DESK_X - 0.42, TOP + 0.0016, -1.6), (0, -0.4, 0))
-gm = mat('glasses', '#1a1a1a')
-for sx in (-1, 1):
-    cyl(g, 0.026, 0.026, 0.004, 20, mat('lens', '#5d6d72'), (sx * 0.032, 0.026, 0), (math.pi / 2 - 0.25, 0, 0))
-    box(g, 0.004, 0.004, 0.13, gm, sx * 0.058, 0.008, -0.06, (0, sx * 0.12, 0))
-box(g, 0.016, 0.004, 0.004, gm, 0, 0.034, 0.004)
-g = G((DESK_X - 0.7, TOP, -1.34), (0, 0.15, 0))
-box(g, 0.05, 0.02, 0.17, mat('remote', '#2a2a2c'), 0, 0.01, 0)
-for i in range(6):
-    box(g, 0.01, 0.004, 0.01, mat('rbtn', '#8a8580'), (i % 2 - 0.5) * 0.02, 0.021, -0.05 + (i // 2) * 0.03)
-box(g, 0.014, 0.004, 0.014, mat('rbtn_red', '#b83a2e'), 0, 0.021, 0.055)
+# 马克杯（真实模型，连咖啡面和把手），高度缩到约 9.5 厘米
+MUG = Asset('sketchfab/coffee-mug-school-project', 'mug', texsize=512)
+put(MUG, G((MUG_AT[0], TOP, MUG_AT[1]), (0, 0.6, 0)), uvk=25, height=0.095)
 
 # 台灯前面一座木头万年历（Sketchfab「Wooden Perpetual Desk Calendar」，3DLover89，CC BY），斜着朝镜头。
 # 胡桃木底座上：两块枫木数字方块（一块 0–5，一块 0 1 2 6 7 8，6 倒过来当 9）、左边一根七棱的星期滚筒、后面三根四棱的月份条。
@@ -855,11 +1112,10 @@ box(g, 0.014, 0.004, 0.014, mat('rbtn_red', '#b83a2e'), 0, 0.021, 0.055)
 DCAL = Asset('sketchfab/wooden-perpetual-desk-calendar', 'deskcal', texsize=1024)
 DCAL_MOVE = {'cubeA': 'SM_CubeA', 'cubeB': 'SM_CubeB', 'roller': 'SM_DayRoller',
              'bar1': 'SM_MonthBar_01', 'bar2': 'SM_MonthBar_02', 'bar3': 'SM_MonthBar_03'}
-DCAL_YAW = 0.28  # 正面朝开场镜头
-DCAL_S = 1.25    # 素材是真实大小（19 厘米宽）；开场镜头里数字太小，放大一点
+DCAL_S = 1.25    # 素材是真实大小（19 厘米宽）；开场镜头里数字太小，放大一点。角度在上面，字朝开场镜头
 _dlo, _dhi = DCAL.bounds()
 _dorigin = _dlo + (_dhi - _dlo) * np.array((0.5, 0.0, 0.5))  # 整座日历的底面中心
-DCAL_AT = G((DESK_X - 0.6, TOP, -1.52), (0, DCAL_YAW, 0))
+DCAL_AT = G((CAL_X, TOP, CAL_Z), (0, DCAL_YAW, 0))
 
 
 def dcal_put(names, **kw):
@@ -938,9 +1194,9 @@ for k_, pc_ in DESKCAL['pieces'].items():
 paper, ink = mat('mug', '#e8e2d4'), mat('rbtn', '#8a8580')
 FLAT = (-math.pi / 2, 0, 0)  # quad 平放、朝上；本地 y（纸的上沿方向）→ 世界 -z
 rnd_p = random.Random(3)
-SHEETS = ((-0.27, -1.43, 0.35), (-0.31, -1.56, -0.12))
 for k, (px, pz, a) in enumerate(SHEETS):
-    g = G((DESK_X + px, TOP + 0.0006 + k * 0.0008, pz), (0, a, 0))
+    g = G((px, TOP + 0.0006 + k * 0.0008, pz), (0, a, 0))
+    flat_aabb(f'paper{k}', px, pz, 0.21, 0.297, a, TOP, TOP + 0.004)
     lines = [(-0.07, 0.02, 0.119, 0.125, ink)]  # 标题；纸面本地 y 朝纸的上沿
     for i in range(16):
         if i % 6 == 5:
@@ -951,32 +1207,6 @@ for k, (px, pz, a) in enumerate(SHEETS):
     with hot('resume', a):
         sheet(g, 0.21, 0.297, paper, lines, (0, 0, 0), FLAT)
 # 简历没有 VIEWS：镜头不凑过去，网页把纸从桌上"拿起来"举到眼前
-# 一摞三张软盘（桌子右前角，电话前面），最上面一张贴着标签
-chrome = mat('chrome', '#9a9a9a')
-g0 = G((DESK_X + 0.38, TOP, -1.245), (0, -0.3, 0))
-for k, (a, body) in enumerate(((0.25, mat('remote', '#2a2a2c')), (0.42, mat('book3', '#253650')), (0.16, mat('remote', '#2a2a2c')))):
-    g = g0 @ M((0.004 * k, 0.0033 * k, -0.003 * k), (0, a, 0))
-    box(g, 0.09, 0.0033, 0.094, body, 0, 0.00165, 0)
-    quad(g, 0.05, 0.03, chrome, (0.006, 0.0034, -0.031), FLAT)   # 金属滑盖（插进去的那头）
-    quad(g, 0.07, 0.042, paper, (0, 0.0034, 0.022), FLAT)       # 标签
-# 一部米色的按键电话（右前方，原来遥控器的位置），也是"联系方式"热点的一部分
-PH_ROT = -0.35
-g = G((DESK_X + 0.5, TOP, -1.42), (0, PH_ROT, 0))
-ph = mat('phone', '#cbbf9f')
-SL = math.atan2(0.035, 0.19)  # 机座顶面往前低下去的坡度
-ytop = lambda z: 0.035 + (0.095 - z) / 0.19 * 0.035  # noqa: E731
-with hot('online', PH_ROT):
-    wedge(g, 0.17, 0.19, 0.035, 0.07, ph)
-    hy = ytop(-0.055)
-    for sx in (-1, 1):  # 听筒两头（听、说）：圆的，扣在机座后半截上
-        cyl(g, 0.024, 0.027, 0.024, 16, ph, (sx * 0.068, hy + 0.01, -0.055), (SL, 0, 0))
-    rod(world(g, (-0.092, hy + 0.03, -0.058)), world(g, (0.092, hy + 0.03, -0.058)), 0.014, ph, 10)  # 听筒的把手
-    for r in range(4):
-        for c in range(3):
-            z = 0.078 - r * 0.019
-            box(g, 0.017, 0.006, 0.013, paper, (c - 1) * 0.024, ytop(z) + 0.002, z, (SL, 0, 0))
-    coil([world(g, (-0.094, hy + 0.02, -0.05)), world(g, (-0.13, 0.035, -0.03)), world(g, (-0.125, 0.006, 0.04)),
-          world(g, (-0.1, 0.008, 0.07)), world(g, (-0.084, 0.018, 0.055))], 0.0055, 0.0015, 0.0055, ph)
 
 # ---------- 书桌右边：电视推车（黑铁架子、两层木板，带小轮子），斜着朝向开场镜头 ----------
 # 上层：自己搭的薄录像机 + 上面的 CRT 电视 + 天线；下层：几盒录像带、一摞杂志。
@@ -1247,7 +1477,7 @@ with hot('shelf'):
     # 第 3 层右头：一台老的 8 毫米摄影机，镜头朝右前方；第 2 层右头：三盘随手摞着的磁带
     CAMERA = Asset('sketchfab/retro-camera', 'camera', texsize=512)
     put(CAMERA, g @ M((SH_RIGHT - 0.1, SHELF_FLOOR[2], -0.09), (0, 1.1, 0)), uvk=15, height=0.15)
-    CASS = Asset('sketchfab/cassette-tapes', 'cassette', texsize=512, drop=('*02a*',), decimate={'*': 0.3})  # 02a 那三盘的外壳是半透明的，不要
+    # 书柜这三盘仍是旧素材（半透明外壳的已经丢掉）；书桌上的换成新的了
     for k, (name, a, dx) in enumerate((('Object_8', 0.12, 0.0), ('Object_11', -0.14, 0.006), ('Object_14', 0.32, -0.004))):
         put(CASS, g @ M((SH_RIGHT - 0.075 + dx, SHELF_FLOOR[1] + k * 0.0102, -0.07), (0, a, 0)), uvk=15, pieces=[name], scale=1.0)
 # 点书架：正对着书柜中间那几层、稍微从右边看
@@ -1277,8 +1507,8 @@ if CORNER == 'studio':
     STUDIO = Asset('sketchfab/easel-with-painting', 'easel', texsize=1024)
     ST_YAW, ST_S = 1.17, (0.72, 1.0, 0.6)                                     # 朝向；横、竖、前后的缩放
     ST_AT = G((-1.6, 0, -1.6), (0, ST_YAW, 0)) @ Matrix.Diagonal((*ST_S, 1.0))
-    with hot('art', ST_YAW):
-        put(STUDIO, ST_AT, uvk=20, pieces=['Easel_Easel_0'], scale=1.0)  # 压窄以后托板很细，光照贴图给多一点，不然发黑
+    # 画架本身不算热点：2 米高的盒子会把墙角、地板一起框进去，鼠标放上去一大片发亮；能点的只是上面那幅画
+    put(STUDIO, ST_AT, uvk=20, pieces=['Easel_Easel_0'], scale=1.0)  # 压窄以后托板很细，光照贴图给多一点，不然发黑
     # 素材里量的（以底面中心为原点，three 坐标，未缩放）：托板顶面 0.766 米；0.77 米高处立杆前面在 z = 0.263；立杆往后仰 0.265 / 1.58
     _tilt = math.atan(0.265 * ST_S[2] / (1.58 * ST_S[1]))
     # 画（试摆用的开关）：sunrise = 莫奈《印象·日出》（1872，横幅，金框转成横放），parasol = 莫奈《撑阳伞的女人》（1875，竖幅）
@@ -1667,8 +1897,26 @@ def orbit_pose(yaw, pitch, dist):
     return t - f * dist, f
 
 
+def report_overlaps():
+    """桌上的东西、以及新加长的左翼，包围盒交到一起就记一笔。"""
+    def hit(a, b, pad):
+        return all(a[0][i] < b[1][i] - pad and b[0][i] < a[1][i] - pad for i in range(3))
+
+    n = 0
+    for i in range(len(AABB)):
+        ni, lo, hi = AABB[i]
+        for nj, lo2, hi2 in AABB[i + 1:]:
+            pad = 0.008 if ni == nj else 0.003
+            if hit((lo, hi), (lo2, hi2), pad):
+                print(f'[overlap] {ni} × {nj}  x {max(lo[0], lo2[0]):+.2f}..{min(hi[0], hi2[0]):+.2f}'
+                      f'  z {max(lo[2], lo2[2]):+.2f}..{min(hi[2], hi2[2]):+.2f}')
+                n += 1
+    print(f'[overlap] {n} 对')
+
+
 def preview_shots(out):
     """Workbench 快速预览：从开场镜头和左右转、低头、抬头到头的几个角度拍（颜色贴图 + 简单光照，不是烘焙效果）。"""
+    report_overlaps()
     os.makedirs(out, exist_ok=True)
     me.uv_layers.active = me.uv_layers['UVMap']
     scene.render.engine = 'BLENDER_WORKBENCH'
@@ -1700,6 +1948,17 @@ def preview_shots(out):
         cam.rotation_euler = tb(f).to_track_quat('-Z', 'Y').to_euler()
         scene.render.filepath = os.path.join(out, f'{name}.png')
         bpy.ops.render.render(write_still=True)
+    # 俯视：正交，从正上方装下整张桌子，前后再各留 10 厘米
+    cd.type = 'ORTHO'
+    cd.sensor_fit = 'HORIZONTAL'
+    aspect = scene.render.resolution_x / scene.render.resolution_y
+    cd.ortho_scale = max(DESK_W + 0.18, (DESK_D + 0.20) * aspect)
+    cx, cz = (DESK_LX + DESK_RX) / 2, DESK_Z
+    cam.location = tb((cx, RH - 0.35, cz))  # 在天花板下面，从房间里往下看；架到屋外会被天花板挡住
+    cam.rotation_euler = tb(Vector((0, -1, 0))).to_track_quat('-Z', 'Y').to_euler()
+    scene.render.filepath = os.path.join(out, 'top.png')
+    bpy.ops.render.render(write_still=True)
+    print('[preview] top', 'ortho', round(cd.ortho_scale, 2), 'center', (round(cx, 2), round(cz, 2)))
 
 
 if A.preview:
@@ -1813,8 +2072,10 @@ LAYERS = {
         # 书架前 75 厘米、稍高处一块看不见的暖色面光，朝着书架：书脊看得清，又没有一条条发亮的灯带
         light('shelf_fill', 'AREA', 4, '#ffd6a8', world(SHG, (0, 1.35, 0.6)), tuple(BC_R @ Vector((0, -0.2, -1))), shape='RECTANGLE', size=0.9, size_y=1.6),
     ],
+    # 摇臂灯：灯头离桌面 52 厘米，光圈开到 120°、边缘放软，11 W 铺满左半张桌子（开关前后看得出区别），
+    # 纸离灯约 60 厘米、在光斑偏左，不会照成死白（8 W 时开关只差一点点）
     'lamp': [
-        light('lamp_spot', 'SPOT', 9, '#ffd2a0', tuple(LAMP_HEAD), tuple(LAMP_DIR), spot_size=math.radians(105), spot_blend=0.45, shadow_soft_size=0.025),
+        light('lamp_spot', 'SPOT', 11, '#ffd2a0', tuple(LAMP_HEAD), tuple(LAMP_DIR), spot_size=math.radians(120), spot_blend=0.6, shadow_soft_size=0.025),
         light('lamp_bulb', 'POINT', 0.8, '#ffd2a0', tuple(LAMP_HEAD - LAMP_DIR * 0.02), shadow_soft_size=0.02),
     ],
     'tv': [

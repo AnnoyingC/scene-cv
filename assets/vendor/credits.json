@@ -64,7 +64,51 @@
         "manual": true
       },
       "changes": [
-        "怀旧房间书架上的三盘磁带：只用了外壳不透明的三盘（Object_8、Object_11、Object_14），拆开单独摆放；减面到约 30%；贴图缩到 512 px、只保留底色贴图；烘焙进房间光照"
+        "怀旧房间书柜第 2 层的磁带：只用了外壳不透明的三盘（Object_8、Object_11、Object_14），拆开单独摆。右头三盘随手摞着，每盘稍微转开、错开几毫米。减面到约 30%；贴图缩到 512 px、只保留底色贴图；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "sketchfab/cassette-tape-fita-cassete",
+      "source": "Sketchfab",
+      "title": "Cassette tape (Fita cassete)",
+      "zh": "彩虹标签磁带",
+      "authors": [
+        "Anderson Ferreira"
+      ],
+      "authorUrl": "https://sketchfab.com/AndersonFS",
+      "url": "https://sketchfab.com/3d-models/cassette-tape-fita-cassete-48ba5a6d926b490c99ff5cd6b6a02530",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "48ba5a6d926b490c99ff5cd6b6a02530",
+        "format": "glb",
+        "textureMaxResolution": 1024,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间电脑左边的磁带：三盘不同的带子轮流用。两盘竖着立在桌子后沿、往后仰大约 11°，彩虹标签朝开场镜头；前面平放一摞三盘，每盘转开、错开几毫米，最上面多转一截露出标签。外壳按约 10×6.4 厘米缩到真实大小后再放大 1.15 倍；贴图缩到 1024 px、只保留底色贴图；外壳贴图带着一点透明边，收成不透明（烘焙的半透明只留给登记过的玻璃）；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "sketchfab/sony-walkman",
+      "source": "Sketchfab",
+      "title": "Sony Walkman",
+      "zh": "随身听",
+      "authors": [
+        "julius.j.bib"
+      ],
+      "authorUrl": "https://sketchfab.com/julius.j.bib",
+      "url": "https://sketchfab.com/3d-models/sony-walkman-6fcd4ae9f82844219ec465b49d4b69e0",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "6fcd4ae9f82844219ec465b49d4b69e0",
+        "format": "glb",
+        "textureMaxResolution": 1024,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间电脑左边的随身听：立着放，耳机围在机身两边，印字的一面朝开场镜头。机身按约 13.5 厘米高再放大 1.1 倍；正面小窗原来是半透明材质，改成不透明的深色烟灰塑料（烘焙的半透明只留给登记过的玻璃）；贴图缩到 1024 px、只保留底色贴图，正面的字才看得清；烘焙进房间光照"
       ]
     },
     {
@@ -112,25 +156,46 @@
       ]
     },
     {
-      "id": "sketchfab/victorian-desk-lamp",
-      "source": "Sketchfab",
-      "title": "Victorian Desk Lamp",
-      "zh": "台灯",
+      "id": "polyhaven/desk_lamp_arm_01",
+      "source": "Poly Haven",
+      "title": "Desk Lamp Arm 01",
+      "zh": "橙色摇臂台灯",
       "authors": [
-        "Faheem Yusuf"
+        "Kuutti Siitonen",
+        "Yann Kervran"
       ],
-      "authorUrl": "https://sketchfab.com/FameProductions",
-      "url": "https://sketchfab.com/3d-models/victorian-desk-lamp-11bcb1c2e9264457814bcfdca6860ad8",
+      "url": "https://polyhaven.com/a/desk_lamp_arm_01",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "fetch": {
+        "polyhaven": "desk_lamp_arm_01",
+        "res": "1k",
+        "format": "blend"
+      },
+      "changes": [
+        "怀旧房间的书桌台灯：用带骨骼的 blend 摆姿势（发布的 glTF 没有骨骼，灯夹和灯头拧不动，所以不下那一份）；灯夹夹在桌子左后角的后沿，灯头对着左边的简历，够不到就沿夹子到灯头收回来，最多 10 厘米；灯泡换成发光小球；贴图缩到 512 px、只保留底色贴图（粗糙、法线、金属这几张 blend 会带上，烘焙时丢掉）；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "sketchfab/coffee-mug-school-project",
+      "source": "Sketchfab",
+      "title": "Coffee Mug (School Project)",
+      "zh": "马克杯",
+      "authors": [
+        "Ole Gunnar Isager"
+      ],
+      "authorUrl": "https://sketchfab.com/FrenchBaguette",
+      "url": "https://sketchfab.com/3d-models/coffee-mug-school-project-5f5ccee1514c440887c072fae8e0d699",
       "license": "CC-BY-4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
       "fetch": {
-        "sketchfab": "11bcb1c2e9264457814bcfdca6860ad8",
+        "sketchfab": "5f5ccee1514c440887c072fae8e0d699",
         "format": "glb",
-        "textureMaxResolution": 1024,
+        "textureMaxResolution": 512,
         "manual": true
       },
       "changes": [
-        "怀旧房间的书桌台灯：缩放摆放；删掉原来的灯泡，换成发光小球；贴图缩到 512 px、只保留底色贴图；烘焙进房间光照"
+        "怀旧房间书桌上的马克杯：缩到约 9.5 厘米高摆在电脑旁边；贴图缩到 512 px、只保留底色贴图；烘焙进房间光照"
       ]
     },
     {
@@ -262,7 +327,7 @@
         "manual": true
       },
       "changes": [
-        "怀旧房间书桌上台灯前的万年历：放大到 1.25 倍、斜着朝镜头摆放；贴图缩到 1024 px；数字方块、星期滚筒、月份条各用一份材质，在网页里拆出来转到当天的日期（点它会拨乱再拨回）；转过的面改用烘焙时同方向那个面的光照；烘焙进房间光照"
+        "怀旧房间书桌上的万年历：放大到 1.25 倍、斜着朝镜头摆放；贴图缩到 1024 px；数字方块、星期滚筒、月份条各用一份材质，在网页里拆出来转到当天的日期（点它会拨乱再拨回）；转过的面改用烘焙时同方向那个面的光照；烘焙进房间光照"
       ]
     },
     {
@@ -621,6 +686,15 @@
       "source": "Sketchfab",
       "url": "https://sketchfab.com/3d-models/retro-computer-f844c0357d284fd8baa1435e9ff31bb2",
       "reason": "以前书桌上用的电脑（CC BY 4.0）。显像管四角圆、边框厚，屏幕上能放的字太少，换成了 Old PC。"
+    },
+    {
+      "title": "Victorian Desk Lamp",
+      "authors": [
+        "Faheem Yusuf"
+      ],
+      "source": "Sketchfab",
+      "url": "https://sketchfab.com/3d-models/victorian-desk-lamp-11bcb1c2e9264457814bcfdca6860ad8",
+      "reason": "以前书桌上的银行家台灯（CC BY 4.0）。换成 Poly Haven 的橙色摇臂灯，灯夹可以夹在桌子后沿。"
     }
   ]
 }
