@@ -14,8 +14,8 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 PRIVATE_ROOTS = {'.claude', 'vendor-src', 'dist', 'output', 'node_modules'}
 PRIVATE_FILES = {'.env', '.envrc', '.private-terms'}
-# 只在本地用的个人内容：真实简历（电话、邮箱、照片、PDF）、书的真实封面、个人照片
-PRIVATE_PREFIXES = ('assets/resume/', 'assets/books/covers/', 'assets/photos/', 'photos-src/')
+# 只在本地用的个人内容：真实简历（电话、邮箱、照片、PDF）、书的真实封面、个人照片、墙上的海报（有版权的封面）
+PRIVATE_PREFIXES = ('assets/resume/', 'assets/books/covers/', 'assets/photos/', 'assets/posters/', 'photos-src/')
 PATTERNS = {
     'personal_home_path': rb'/(?:Users|home)/[^/\s\x00]+/',
     'private_key': rb'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----',
@@ -26,15 +26,20 @@ PATTERNS = {
 }
 
 # 本地词表（不进 Git）：一行一个不该出现在公开文件里的词（真名、学校、公司、项目名……），# 开头是注释；不区分大小写。
+# ! 开头的一行是放行的词组：它里面碰巧含着某个词（比如一个地名），整个词组出现时不算。
 # 公开的检查脚本里写不了这些词，所以放在仓库外面；查到了只报文件名，不打印是哪个词。
 TERMS_FILE = ROOT / '.private-terms'
-TERMS = [t.strip().lower().encode() for t in (TERMS_FILE.read_text(encoding='utf-8').splitlines() if TERMS_FILE.is_file() else [])
-         if t.strip() and not t.strip().startswith('#')]
+_LINES = [t.strip() for t in (TERMS_FILE.read_text(encoding='utf-8').splitlines() if TERMS_FILE.is_file() else [])
+          if t.strip() and not t.strip().startswith('#')]
+TERMS = [t.lower().encode() for t in _LINES if not t.startswith('!')]
+ALLOW = [t[1:].strip().lower().encode() for t in _LINES if t.startswith('!') and t[1:].strip()]
 
 
 def inspect(name, data):
     problems = []
     lower = data.lower()
+    for a in ALLOW:
+        lower = lower.replace(a, b' ')
     if any(t in lower for t in TERMS):
         problems.append('private_term')
     path = Path(name)

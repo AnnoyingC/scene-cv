@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { LICENSES, render, roomInputs, splice } from '../scripts/credits_html.mjs';
+import { LICENSE_HOSTS, LICENSES, render, roomInputs, splice } from '../scripts/credits_html.mjs';
 
 const index = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 
@@ -20,8 +20,8 @@ test('房间用到的素材都有作者、原作链接、许可链接和改动�
     assert.ok(LICENSES[a.license], `${id}: 许可 ${a.license} 不在允许的列表里`);
     assert.ok(a.authors?.length && a.authors.every(Boolean), `${id}: 缺作者`);
     assert.match(a.url, /^https:\/\//, `${id}: 缺原作链接`);
-    assert.match(a.licenseUrl || '', /^https:\/\/creativecommons\.org\//, `${id}: 缺许可链接`);
-    if (a.license === 'CC-BY-4.0') assert.ok(a.changes?.length, `${id}: CC BY 要注明改动`);
+    assert.ok((a.licenseUrl || '').startsWith(`https://${LICENSE_HOSTS[a.license]}/`), `${id}: 缺许可链接（应该在 ${LICENSE_HOSTS[a.license]}）`);
+    if (a.license !== 'CC0-1.0' && a.license !== 'OFL-1.1') assert.ok(a.changes?.length, `${id}: 要注明改动`);
   }
 });
 

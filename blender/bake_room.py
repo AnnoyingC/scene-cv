@@ -1,6 +1,6 @@
 # 用 Python 驱动 Blender：搭房间 → Cycles 分层烘焙光照 → 导出 glTF + lightmap。
 #
-#   /Applications/Blender.app/Contents/MacOS/Blender -b --factory-startup --python blender/bake_room.py -- --size 2048 --samples 256
+#   /Applications/Blender.app/Contents/MacOS/Blender -b --factory-startup --python blender/bake_room.py -- --size 2048 --samples 1024
 #
 # 先跑 render_view.py（窗外夜景），这里会把 view_full.jpg 当成窗外的发光板，让城市的光照进屋里。
 #
@@ -33,12 +33,12 @@ from mathutils import Euler, Matrix, Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import random  # noqa: E402
-from shared import BACK, MOON, OUT, ROOM, TOP, VIEW, WIN, get_args, srgb, tree, clear_scene, use_metal  # noqa: E402
-from room_vendor import Asset, plain_material, screen_grid, soften_dirt, world_points  # noqa: E402
+from shared import BACK, MOON, OUT, ROOM, ROOT, TOP, VIEW, WIN, get_args, srgb, tree, clear_scene, use_metal  # noqa: E402
+from room_vendor import Asset, clean_plastic, plain_material, screen_grid, world_points  # noqa: E402
 
 # --skip-bake 1：几何没变、只改了热点 / 镜头时用，沿用现有的光照贴图
 # --preview 目录：只搭几何，用 Workbench 从开场镜头拍几张图（几秒钟），摆位置的时候用，不烘焙也不导出
-A = get_args(size=2048, samples=256, out='', skip_bake=0, preview='')
+A = get_args(size=2048, samples=1024, out='', skip_bake=0, preview='')  # 1024 次采样：256 次时大面积的墙上会留下一团团的深浅（烘焙不降噪）
 OUTD = A.out or OUT
 os.makedirs(OUTD, exist_ok=True)
 scene = bpy.context.scene
@@ -102,7 +102,9 @@ def box(g, w, h, d, mi, x=0, y=0, z=0, rot=(0, 0, 0)):
 def quad(g, w, h, mi, pos, rot=(0, 0, 0)):
     m = C @ g @ M(pos, rot)
     vs = [T.bm.verts.new(m @ Vector((sx * w / 2, sy * h / 2, 0))) for sx, sy in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
-    T.tag([T.bm.faces.new(vs)], mi)
+    fs = [T.bm.faces.new(vs)]
+    T.tag(fs, mi)
+    return fs
 
 
 def _cuts(lo, hi, marks, a, b, n=1):
@@ -425,47 +427,16 @@ def at3(Tm, p):
     return Tm @ Vector(tuple(p))
 
 
-def flatten_page(asset, material, lift=0.05):
-    """日历纸页：素材里的纸被风吹得卷起来（只在 x-y 平面里弯，每一列的 z 不变）。把每一列按弧长铺直，
-    贴在日历本正面（素材的 +x 面），只让下沿翘起 lift（素材单位，越往下翘得越多）；素材里纸页的法线朝里，顺便翻过来。"""
-    for name in asset.names([material]):
-        me = asset.pieces[name]
-        uvd = me.uv_layers[0].data
-        v_uv = np.zeros(len(me.vertices))
-        for lp in me.loops:
-            v_uv[lp.vertex_index] = uvd[lp.index].uv[1]
-        co = np.array([(v.co.x, v.co.z, -v.co.y) for v in me.vertices])  # Blender → three
-        s_arc = np.zeros(len(co))
-        order = np.argsort(co[:, 2])  # 分列：按 z 排好，相邻两点 z 差得多就是下一列（同一列里 z 只差几毫米）
-        cols = np.split(order, np.flatnonzero(np.diff(co[order, 2]) > 0.02) + 1)
-        for col in cols:  # 一列一列：按 v（从钉住的顶上往下）排好，累加弧长
-            col = col[np.argsort(v_uv[col])]
-            s_arc[col] = np.r_[0, np.cumsum(np.linalg.norm(np.diff(co[col], axis=0), axis=1))]
-        t = s_arc / s_arc.max()
-        x = co[:, 0].min() + 0.004 + lift * t ** 4
-        y = co[:, 1].max() - s_arc
-        for v, p in zip(me.vertices, zip(x, y, co[:, 2])):
-            v.co = (p[0], -p[2], p[1])  # three → Blender
-        bm = bmesh.new()
-        bm.from_mesh(me)
-        bmesh.ops.reverse_faces(bm, faces=bm.faces)
-        bm.to_mesh(me)
-        bm.free()
-        me.update()
-        n = np.array([(p.normal.x, p.normal.z, -p.normal.y) for p in me.polygons]).mean(0)
-        print(f'[calendar] 纸页铺平：{len(cols)} 列，{np.ptp(co[:, 2]):.3f} × {s_arc.min():.3f}..{s_arc.max():.3f}（横 / 竖，素材单位），'
-              f'平均法线 {np.round(n, 2)}（应该朝 +x）')
-
-
 # ---------- 房间外壳：单面片，法线朝里（Cycles 里单面片也挡光） ----------
 x0, x1, z1, RH = ROOM['x0'], ROOM['x1'], ROOM['z1'], ROOM['h']
 W, Dp = x1 - x0, z1 - BACK
+XC = (x0 + x1) / 2  # 房间左右的中线（左墙 -1.8、右墙 1.5，不在 x = 0）
 wall = mat('wall', '#bdb3a0')
-quad(I, W, Dp, mat('floor', '#6e4d34'), (0, 0, (BACK + z1) / 2), (-math.pi / 2, 0, 0))
+quad(I, W, Dp, mat('floor', '#6e4d34'), (XC, 0, (BACK + z1) / 2), (-math.pi / 2, 0, 0))
 quad(I, Dp, RH, wall, (x0, RH / 2, (BACK + z1) / 2), (0, math.pi / 2, 0))
 quad(I, Dp, RH, wall, (x1, RH / 2, (BACK + z1) / 2), (0, -math.pi / 2, 0))
 K = 5  # 身后的墙几乎看不到，给少一点贴图
-quad(I, W, RH, wall, (0, RH / 2, z1), (0, math.pi, 0))
+quad(I, W, RH, wall, (XC, RH / 2, z1), (0, math.pi, 0))
 K = 10
 wx0, wx1 = WIN['x'] - WIN['w'] / 2, WIN['x'] + WIN['w'] / 2
 wy0, wy1 = WIN['y'] - WIN['h'] / 2, WIN['y'] + WIN['h'] / 2
@@ -474,20 +445,20 @@ quad(I, wx0 - x0, RH, wall, ((x0 + wx0) / 2, RH / 2, BACK))
 quad(I, x1 - wx1, RH, wall, ((x1 + wx1) / 2, RH / 2, BACK))
 quad(I, WIN['w'], wy0, wall, (WIN['x'], wy0 / 2, BACK))
 quad(I, WIN['w'], RH - wy1, wall, (WIN['x'], (wy1 + RH) / 2, BACK))
-quad(I, dep, WIN['h'], wall, (wx0, WIN['y'], BACK - dep / 2), (0, math.pi / 2, 0))
+quad(I, dep, WIN['h'], wall, (wx0, WIN['y'], BACK - dep / 2), (0, math.pi / 2, 0))   # 窗洞内侧：和墙一样贴墙纸
 quad(I, dep, WIN['h'], wall, (wx1, WIN['y'], BACK - dep / 2), (0, -math.pi / 2, 0))
 quad(I, WIN['w'], dep, wall, (WIN['x'], wy1, BACK - dep / 2), (math.pi / 2, 0, 0))
 sk = mat('skirting', '#3a2b20')
-box(I, W, 0.09, 0.015, sk, 0, 0.045, BACK + 0.008)
+box(I, W, 0.09, 0.015, sk, XC, 0.045, BACK + 0.008)
 box(I, 0.015, 0.09, Dp, sk, x0 + 0.008, 0.045, (BACK + z1) / 2)
 box(I, 0.015, 0.09, Dp, sk, x1 - 0.008, 0.045, (BACK + z1) / 2)
 # 天花板 + 一圈两层的石膏线（以前天花板只在烘焙时挡光、不导出，往上看或者竖屏时会看到黑的）
 K = 6
-quad(I, W, Dp, mat('ceiling', '#d8d2c6'), (0, RH, (BACK + z1) / 2), (math.pi / 2, 0, 0))
+quad(I, W, Dp, mat('ceiling', '#d8d2c6'), (XC, RH, (BACK + z1) / 2), (math.pi / 2, 0, 0))
 cove = mat('cove', '#e4dfd4')
 for h, d, y in ((0.10, 0.06, RH - 0.05), (0.035, 0.095, RH - 0.0175)):  # 下面一条窄而高，贴着天花板一条宽而薄
-    box(I, W, h, d, cove, 0, y, BACK + d / 2)
-    box(I, W, h, d, cove, 0, y, z1 - d / 2)
+    box(I, W, h, d, cove, XC, y, BACK + d / 2)
+    box(I, W, h, d, cove, XC, y, z1 - d / 2)
     box(I, d, h, Dp - 2 * d, cove, x0 + d / 2, y, (BACK + z1) / 2)
     box(I, d, h, Dp - 2 * d, cove, x1 - d / 2, y, (BACK + z1) / 2)
 K = 10
@@ -495,30 +466,37 @@ K = 10
 RUG = Asset('sketchfab/persian-rug', 'rug', texsize=1024)
 put(RUG, G((0.0, 0.002, -0.45), (0, math.pi / 2, 0)), uvk=8, scale=0.0045)
 
-# 窗：黑色细钢框，三扇竖分 + 上面一条横档；窗台是一块浅色石板
-fr = mat('frame', '#24211e')
-g = G((WIN['x'], WIN['y'], BACK - dep + 0.035))
-t, td = 0.05, 0.05
-box(g, WIN['w'], t, td, fr, 0, WIN['h'] / 2 - t / 2, 0)
-box(g, WIN['w'], t, td, fr, 0, -WIN['h'] / 2 + t / 2, 0)
-box(g, t, WIN['h'], td, fr, -WIN['w'] / 2 + t / 2, 0, 0)
-box(g, t, WIN['h'], td, fr, WIN['w'] / 2 - t / 2, 0, 0)
-for x in (-WIN['w'] / 6, WIN['w'] / 6):
-    box(g, 0.035, WIN['h'], 0.04, fr, x, 0, 0)
-box(g, WIN['w'], 0.035, 0.04, fr, 0, WIN['h'] / 2 - 0.3, 0)
+# 窗：一整扇白色的格子窗（Sketchfab「Window」，JeanLescano，CC BY），填满窗洞：从窗台一直到石膏线下面，没有把手。
+# 素材是 SketchUp 做的：单位英寸、绕竖轴斜着转了 60.8°、方的（47.2 英寸见方）。这里先转正、换成米，再横竖分别拉到窗洞的大小。
+# 玻璃换成淡灰蓝色的半透明玻璃（manifest.glass）：窗外的夜景隔着一层玻璃，不那么扎眼；烘焙时这层玻璃完全透光，
+# 城市的光、月光照常进屋。窗台是一块浅色石板（比桌面高一点），上面摆着小盆栽和书
+K = 12
+WINDOW = Asset('sketchfab/classic-window', 'window', texsize=512)
+win_glass = plain_material('window_glass', '#9fb0b8')
+_wb = next(n for n in win_glass.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
+_wb.inputs['Alpha'].default_value = 0.0                                      # 烘焙时透光
+WIN_SIDE = 47.17 * 0.0254                                                    # 素材转正以后一边多长（米，量出来的）
+_wh = WIN['h'] - 0.03                                                        # 窗台石板上面那一截
+at = G((WIN['x'], wy0 + 0.03 + _wh / 2, BACK - dep + 0.06)) @ Matrix.Diagonal((WIN['w'] / WIN_SIDE, _wh / WIN_SIDE, 1.0, 1.0)) @ M(rot=(0, 1.061, 0))
+win_obs, _ = put(WINDOW, at, uvk=12, scale=0.0254, anchor=(0.5, 0.5, 0.5))
+for ob in win_obs:                                                           # 素材的玻璃材质换成我们的
+    for k_, m_ in enumerate(ob.data.materials):
+        if m_ and m_.name == WINDOW.mat.get('Glass_Crystal'):
+            ob.data.materials[k_] = win_glass
 box(I, WIN['w'] + 0.1, 0.03, dep + 0.05, mat('sill', '#d6d0c4'), WIN['x'], wy0 + 0.015, BACK - dep / 2 + 0.025)
+K = 10
 SILL = wy0 + 0.03
 # 窗台上的小东西：左边一小盆十二卷（白瓷盆的多肉），右边两本书、一盆虎尾兰（扫描模型，带盆）
 HAW = Asset('polyhaven/potted_plant_04', 'haworthia', texsize=512, decimate={'*': 0.3})
-put(HAW, G((wx0 + 0.3, SILL, BACK - 0.045), (0, 0.6, 0)), uvk=12, height=0.15)
-g = G((wx0 + 1.22, SILL, BACK - 0.035), (0, 0.1, 0))
+put(HAW, G((WIN['x'] - 0.32, SILL, BACK - 0.045), (0, 0.6, 0)), uvk=12, height=0.15)
+g = G((WIN['x'] + 0.6, SILL, BACK - 0.035), (0, 0.1, 0))
 box(g, 0.2, 0.03, 0.1, mat('book_a', '#3b5a7a'), 0, 0.015, 0)
 box(g, 0.18, 0.025, 0.09, mat('book_b', '#8a3b30'), 0.01, 0.0425, 0, (0, 0.12, 0))
 SNAKE = Asset('sketchfab/snake-plant-scan-lowpoly', 'snake', texsize=512)
-put(SNAKE, G((wx0 + 0.98, SILL, BACK - 0.06), (0, 0.4, 0)), uvk=12, height=0.4)
+put(SNAKE, G((WIN['x'] + 0.36, SILL, BACK - 0.06), (0, 0.4, 0)), uvk=12, height=0.4)
 
-# 窗右边一幅拉开、收成一束的窗帘（土黄色的布，褶子越往下越松），挂在窗上方的黄铜杆上
-CUR_Y, CUR_Z = 2.2, BACK + 0.07
+# 窗右边一幅拉开、收成一束的窗帘（土黄色的布，褶子越往下越松），挂在窗上方的黄铜杆上；从窗边收到右墙
+CUR_Y, CUR_Z = RH - 0.14, BACK + 0.075   # 杆子挂在石膏线下面、窗顶前面
 brass = mat('brass', '#b8945a')
 rod((wx0 - 0.07, CUR_Y, CUR_Z), (x1 - 0.025, CUR_Y, CUR_Z), 0.011, brass, 12)
 ball((wx0 - 0.085, CUR_Y, CUR_Z), 0.02, brass, 1)
@@ -526,12 +504,14 @@ for bx in (wx0 - 0.02, x1 - 0.11):
     box(I, 0.014, 0.03, CUR_Z - BACK, brass, bx, CUR_Y, (BACK + CUR_Z) / 2)
 cm = mat('curtain', '#a8823f')
 NX, NY, PLEATS = 36, 12, 6
-for back in (False, True):  # 正面带褶子；后面一层平的衬布（侧面看过去褶子的缝里不会露出墙）
+# t（0 = 顶，1 = 底）→ 左沿、右沿。靠窗那条边往下稍微往窗里收，靠墙那条边稍微往外散
+SIDES = [lambda t: (wx1 - 0.03 - 0.025 * t, x1 - 0.035 + 0.01 * t)]
+for side, back in [(sd, bk) for sd in SIDES for bk in (False, True)]:  # 正面带褶子；后面一层平的衬布（侧面看过去褶子的缝里不会露出墙）
     K = 4 if back else 10
     grid = []
     for j in range(NY + 1):
         t = j / NY
-        xa, xb = wx1 - 0.03 - 0.025 * t, x1 - 0.035 + 0.01 * t
+        xa, xb = side(t)
         amp = 0.02 + 0.012 * t
         row = []
         for i in range(NX + 1):
@@ -542,13 +522,16 @@ for back in (False, True):  # 正面带褶子；后面一层平的衬布（侧�
     T.tag([T.bm.faces.new((grid[j][i], grid[j + 1][i], grid[j + 1][i + 1], grid[j][i + 1])) for j in range(NY) for i in range(NX)], cm)
 K = 10
 
-# ---------- 书桌：窗下，宽 1.24 米，左边挨着书架，电脑放正中间 ----------
+# ---------- 书桌：窗下，宽 1.5 米；右头挨着电视推车，左头离左后墙角留出空地，电脑正对窗户中间 ----------
 # 厚重的实木书桌（胡桃木拼板，木纹是颜色贴图）：5.5 厘米厚的桌面，前沿上下各倒一个角；右边三抽的抽屉柜，
 # 抽屉面板凸出柜体、中间再起一块线脚，黄铜拉手；左边一整块侧板；腿下的空当后面有挡板，前面一条横档带个扁抽屉
 K = 25
-DESK_W, DESK_D, DESK_T = 1.24, 0.8, 0.055
-DESK_X = wx0 + 0.62 - 0.0  # 书桌左边挨着书架，正中放电脑
-g = G((DESK_X, 0, BACK + 0.43))
+DESK_EXT = 0.26                    # 比原来 1.24 米的桌子往左多出来的一截（右头和电脑都没动）
+DESK_W, DESK_D, DESK_T = 1.24 + DESK_EXT, 0.8, 0.055
+DESK_X = WIN['x']                  # 电脑的中线（正对窗户中间）；桌上的东西都按它摆
+DESK_RX = DESK_X + 0.62            # 桌子右头
+DESK_LX = DESK_RX - DESK_W         # 桌子左头
+g = G(((DESK_LX + DESK_RX) / 2, 0, BACK + 0.43))
 wood, brass = mat('desk', '#6a4428'), mat('brass', '#b8945a')
 rnd_w = random.Random(11)
 dx, dz, ch, yb = DESK_W / 2, DESK_D / 2, 0.008, TOP - DESK_T  # 半宽、半深、倒角、桌面底
@@ -599,11 +582,10 @@ pull((xl + xr) / 2, yb - 0.0375, pf + 0.012, half=0.03)
 # 素材是真实尺寸（米），正面朝 +x，转 -90° 朝屋里；子物件按父节点认：PC（机身 + 鼠标 + 鼠标线）、NOTAS（便利贴）、CD（软盘）、HOJAS（长出来的草叶，不要）。
 # 屏幕是方的、四角只有一点圆角，玻璃换成深色，浏览器在上面贴一块按玻璃弧度弯过的 canvas（弧度在这里量好写进 manifest）。
 # 鼠标原来在主机正前方（正好是键盘的位置），拆出来放到键盘右边；原来绕到机箱后面的鼠标线删掉，下面重新拉一根。
-# 素材的污渍画得很重（废土风），减淡一些；颜色贴图给 2048，点进"关于我"的时候边框就在眼前。
+# 素材的污渍画得很重（废土风），洗成干净的米色（便利贴留着）；颜色贴图给 2048，点进"关于我"的时候边框就在眼前。
 PC_S = 1.1  # 素材本身是真实尺寸（显示器宽 43 厘米、连主机高 52 厘米）；电脑是书桌的主角，放大一成
 PC = Asset('sketchfab/old-pc', 'pc', texsize=2048, by_parent=True, drop=('HOJAS',))
-soften_dirt(PC.image('PRINCIPAL'), 0.8)                 # 小斑点
-soften_dirt(PC.image('PRINCIPAL'), 0.6, radius=0.02)    # 连成片的脏印子（缝里、边角的暗处还留着）
+clean_plastic(PC.image('PRINCIPAL'))                    # 米色外壳洗干净：污渍、画上去的脏阴影都去掉，散热孔、缝线留着（便利贴在另一张贴图上，不动）
 pc_glass = plain_material('pc_glass', '#0c0f0e')
 PC.islands('PC', (0.17, 0.22, -0.18), (0.21, 0.5, 0.18), material=pc_glass, test=lambda a, b: (b - a)[1] > 0.2)  # 玻璃（框里还有两条窄边，按高度分开）
 PC.islands('PC', (-0.33, 0.005, -0.18), (0.3, 0.11, 0.31), delete=True, test=lambda a, b: a[0] < -0.3)  # 鼠标线：从机箱后面一直绕到鼠标
@@ -698,10 +680,11 @@ print(f'[pc] 电脑 x {PC_L:+.3f}..{PC_R:+.3f}，机箱前面 z {PC_FRONT:+.3f}�
 # 开场镜头：绕着电脑转（orbit）。镜头站在电脑正前方、略微俯视，目标点在屏幕中心正上方一点：电脑在画面正中，窗户框着它；
 # 右边的电视露出一半（斜着朝向镜头，看得到彩条），往右拖就整个出来；
 # 视角 34°，抬头最多到平视以上一点点（看不到天花板）；左右能转 50° 上下，转到头能看到侧墙靠里的一段（书架正面、唱机、软木板）。
-# box：镜头不能出这个范围（x 左右、z 最靠前、y 最低 / 最高），转到边上时自动拉近，免得钻进墙里
+# box：镜头不能出这个范围（x 左右、z 最靠前、y 最低 / 最高），转到边上时自动拉近，免得钻进墙里；
+# 左边界留出左墙书柜的深度（0.63 米）再多 12 厘米，往右转看唱机时镜头不会退进书柜里
 CAM = dict(target=tuple(Vector(PC_SCREEN['pos']) + Vector((0, 0.08, -0.1))), dist=2.25, yaw=0.0, pitch=-0.12, fov=34,
-           yawRange=(-1.0, 0.9), pitchRange=(-0.6, 0.06), distRange=(1.1, 2.4),
-           box=dict(x=(x0 + 0.3, x1 - 0.25), z=z1 - 0.25, y=(0.45, RH - 0.3)))
+           yawRange=(-1.0, 1.2), pitchRange=(-0.6, 0.06), distRange=(1.1, 2.4),
+           box=dict(x=(x0 + 0.75, x1 - 0.25), z=z1 - 0.25, y=(0.45, RH - 0.3)))
 
 # 书桌台灯：银行家台灯，放在左后方，灯罩朝右前方（键盘、记事本）。
 # 素材里的灯泡面删掉，原地放一个 Glow 小球；灯光（spot + 点光）也放在灯泡那里，往前下方照
@@ -711,7 +694,7 @@ LAMP_ROT = -0.95  # 素材正面（+x）转到世界的 (0.58, 0, 0.81)
 STACK = [(0.26, 0.035, 0.19, '#5a2e2e'), (0.24, 0.03, 0.18, '#2f4a3d')]  # 台灯垫在两本旧书上（宽、厚、深、颜色）
 STACK_H = sum(h for _, h, _, _ in STACK)
 with hot('lamp'):
-    lamp_obs, T_lamp = put(LAMP, G((DESK_X - 0.44, TOP + STACK_H, -1.78), (0, LAMP_ROT, 0)), uvk=25, height=0.42)
+    lamp_obs, T_lamp = put(LAMP, G((DESK_X - 0.56, TOP + STACK_H, -1.78), (0, LAMP_ROT, 0)), uvk=25, height=0.42)
     LAMP_HEAD = at3(T_lamp, bulb.mean(0))
     fwd = Vector((math.cos(LAMP_ROT), 0, -math.sin(LAMP_ROT)))
     LAMP_DIR = (fwd * 0.55 + Vector((0, -1, 0))).normalized()
@@ -853,17 +836,101 @@ cup = mat('mug', '#e8e2d4')
 cyl(g, 0.042, 0.04, 0.095, 24, cup, (0, 0.0475, 0))
 cyl(g, 0.037, 0.037, 0.002, 24, mat('coffee', '#2a160c'), (0, 0.085, 0))
 box(g, 0.012, 0.055, 0.035, cup, 0.05, 0.05, 0)
-g = G((DESK_X - 0.36, TOP + 0.0016, -1.58), (0, -0.4, 0))
+g = G((DESK_X - 0.42, TOP + 0.0016, -1.6), (0, -0.4, 0))
 gm = mat('glasses', '#1a1a1a')
 for sx in (-1, 1):
     cyl(g, 0.026, 0.026, 0.004, 20, mat('lens', '#5d6d72'), (sx * 0.032, 0.026, 0), (math.pi / 2 - 0.25, 0, 0))
     box(g, 0.004, 0.004, 0.13, gm, sx * 0.058, 0.008, -0.06, (0, sx * 0.12, 0))
 box(g, 0.016, 0.004, 0.004, gm, 0, 0.034, 0.004)
-g = G((DESK_X - 0.56, TOP, -1.32), (0, 0.15, 0))
+g = G((DESK_X - 0.7, TOP, -1.34), (0, 0.15, 0))
 box(g, 0.05, 0.02, 0.17, mat('remote', '#2a2a2c'), 0, 0.01, 0)
 for i in range(6):
     box(g, 0.01, 0.004, 0.01, mat('rbtn', '#8a8580'), (i % 2 - 0.5) * 0.02, 0.021, -0.05 + (i // 2) * 0.03)
 box(g, 0.014, 0.004, 0.014, mat('rbtn_red', '#b83a2e'), 0, 0.021, 0.055)
+
+# 台灯前面一座木头万年历（Sketchfab「Wooden Perpetual Desk Calendar」，3DLover89，CC BY），斜着朝镜头。
+# 胡桃木底座上：两块枫木数字方块（一块 0–5，一块 0 1 2 6 7 8，6 倒过来当 9）、左边一根七棱的星期滚筒、后面三根四棱的月份条。
+# 能动的六块各用自己的材质（deskcal_cubeA …），网页按材质名拆出来，转到今天的日期（js/deskcal.js）。
+# 这里记下每块的转轴中心、每个面印的字（法线 + 字的"上"方向，素材坐标），网页据此算出要转多少。
+DCAL = Asset('sketchfab/wooden-perpetual-desk-calendar', 'deskcal', texsize=1024)
+DCAL_MOVE = {'cubeA': 'SM_CubeA', 'cubeB': 'SM_CubeB', 'roller': 'SM_DayRoller',
+             'bar1': 'SM_MonthBar_01', 'bar2': 'SM_MonthBar_02', 'bar3': 'SM_MonthBar_03'}
+DCAL_YAW = 0.28  # 正面朝开场镜头
+DCAL_S = 1.25    # 素材是真实大小（19 厘米宽）；开场镜头里数字太小，放大一点
+_dlo, _dhi = DCAL.bounds()
+_dorigin = _dlo + (_dhi - _dlo) * np.array((0.5, 0.0, 0.5))  # 整座日历的底面中心
+DCAL_AT = G((DESK_X - 0.6, TOP, -1.52), (0, DCAL_YAW, 0))
+
+
+def dcal_put(names, **kw):
+    """摆素材里的几块：锚点按整座日历的包围盒算，各块之间的相对位置不变。"""
+    lo, hi = DCAL.bounds(names)
+    return put(DCAL, DCAL_AT, uvk=25, pieces=names, anchor=tuple((_dorigin - lo) / (hi - lo)), scale=DCAL_S, **kw)
+
+
+def dcal_faces(obs, T):
+    """一块的各个面：按法线分组，UV 中心落在贴图的哪一行哪一格 → 印的是什么；"上"= 贴图 v 增大的方向。返回素材坐标里的 [{label, n, up}]。"""
+    Ti = T.inverted()
+    R = Ti.to_3x3().normalized()
+    rows = [(0.917, '012345'), (0.75, '012678'), (0.628, ['JAN', 'FEB', 'MAR', 'APR']), (0.55, ['MAY', 'JUN', 'JUL', 'AUG']),
+            (0.472, ['SEP', 'OCT', 'NOV', 'DEC']), (0.394, ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'])]
+    groups = {}
+    for ob in obs:
+        uvl = ob.data.uv_layers[0]
+        for p in ob.data.polygons:
+            vs = [Vector((ob.data.vertices[i].co.x, ob.data.vertices[i].co.z, -ob.data.vertices[i].co.y)) for i in p.vertices]  # Blender → three
+            uv = [uvl.data[li].uv for li in p.loop_indices]
+            n = (R @ Vector((p.normal.x, p.normal.z, -p.normal.y))).normalized()
+            e1, e2 = vs[1] - vs[0], vs[2] - vs[0]
+            du1, dv1, du2, dv2 = uv[1].x - uv[0].x, uv[1].y - uv[0].y, uv[2].x - uv[0].x, uv[2].y - uv[0].y
+            det = du1 * dv2 - du2 * dv1
+            if abs(det) < 1e-12:
+                continue
+            dpdv = (e2 * du1 - e1 * du2) / det
+            key = tuple(round(c, 2) for c in n)
+            gr = groups.setdefault(key, dict(n=n, up=Vector(), u=0.0, v=0.0, a=0.0))
+            a = p.area
+            gr['up'] += (R @ dpdv) * a
+            gr['u'] += sum(t.x for t in uv) / len(uv) * a
+            gr['v'] += sum(t.y for t in uv) / len(uv) * a
+            gr['a'] += a
+    out = []
+    for gr in groups.values():
+        u, v = gr['u'] / gr['a'], gr['v'] / gr['a']
+        row = next((labels for rv, labels in rows if abs(v - rv) < 0.035), None)
+        if row is None:
+            continue
+        up = gr['up'] - gr['n'] * gr['up'].dot(gr['n'])
+        out.append(dict(label=row[min(len(row) - 1, int(u * len(row)))], n=[round(c, 4) for c in gr['n']],
+                        up=[round(c, 4) for c in up.normalized()]))
+    return out
+
+
+with hot('calendar', DCAL_YAW):
+    dcal_put([n for n in DCAL.names() if n not in DCAL_MOVE.values()])  # 底座、横档、黄铜轴和脚、插月份条的两根销子
+    DESKCAL = dict(pieces={}, yaw=DCAL_YAW)
+    for key, name in DCAL_MOVE.items():
+        obs, T_d = dcal_put([name])
+        for ob in obs:
+            for k_, m_ in enumerate(ob.data.materials):
+                m2 = m_.copy()
+                m2.name = f'deskcal_{key}'
+                ob.data.materials[k_] = m2
+        pts = world_points(obs)
+        Ti = T_d.inverted()
+        lo_l = np.min([tuple(Ti @ Vector(tuple(q))) for q in pts], axis=0)
+        hi_l = np.max([tuple(Ti @ Vector(tuple(q))) for q in pts], axis=0)
+        center = (lo_l + hi_l) / 2
+        DESKCAL['pieces'][key] = dict(mat=f'deskcal_{key}', center=[round(float(c), 5) for c in center],
+                                      faces=dcal_faces(obs, T_d))
+    # 滚筒绕黄铜轴转：轴心（素材坐标）= 黄铜轴的中心
+    _alo, _ahi = DCAL.bounds(['SM_Brass_Axle'])
+    _ax = (np.array(_alo) + np.array(_ahi)) / 2
+    _rc = DESKCAL['pieces']['roller']['center']
+    DESKCAL['pieces']['roller']['center'] = [_rc[0], round(float(_ax[1]), 5), round(float(_ax[2]), 5)]
+    DESKCAL['matrix'] = [round(T_d[r][c], 6) for c in range(4) for r in range(4)]  # 素材坐标 → 世界坐标（three，列主序，Matrix4.fromArray 用）
+for k_, pc_ in DESKCAL['pieces'].items():
+    print(f"[deskcal] {k_}: " + ', '.join(f"{f['label']} n{tuple(round(c, 1) for c in f['n'])} up{tuple(round(c, 1) for c in f['up'])}" for f in pc_['faces']))
 
 # ---------- 桌上的杂物：让桌子看起来有人在用 ----------
 # 两张打印纸，斜着叠在台灯和记事本之间（一张一半压在记事本、电脑底下），纸上一行行灰色的字。
@@ -917,7 +984,7 @@ with hot('online', PH_ROT):
 K = 12
 CART_ROT = -0.4  # 正面（+z）转到世界的 (-0.39, 0, 0.92)，对着书桌前面
 CART_W, CART_D, CART_H = 0.56, 0.42, 0.64
-gc = G((DESK_X + DESK_W / 2 + 0.4, 0, -1.6), (0, CART_ROT, 0))
+gc = G((DESK_RX + 0.4, 0, -1.6), (0, CART_ROT, 0))
 metal, board = mat('cart_metal', '#2a2826'), mat('cart_shelf', '#5b3d26')
 box(gc, CART_W, 0.025, CART_D, board, 0, CART_H - 0.0125, 0)
 for sx in (-1, 1):
@@ -952,7 +1019,7 @@ rod(world(g, (0.07, tv_top, -0.05)), world(g, (0.24, tv_top + 0.26, -0.1)), 0.00
 # 录像机后面的电线：顺着推车左后腿下到地上，插在窗下墙上的插座里
 K = 10
 px, pz = -(CART_W / 2 - 0.0125), -(CART_D / 2 - 0.0125)
-sock = (DESK_X + DESK_W / 2 + 0.33, 0.27)
+sock = (DESK_RX + 0.33, 0.27)
 tube(spline([world(g, (-0.12, 0.035, -VCR_D / 2 - 0.004)), world(gc, (px + 0.02, CART_H + 0.01, pz - 0.03)),
              world(gc, (px + 0.004, CART_H - 0.12, pz - 0.016)), world(gc, (px + 0.004, 0.12, pz - 0.016)), world(gc, (px + 0.01, 0.006, pz - 0.04)),
              (sock[0] - 0.02, 0.004, BACK + 0.03), (sock[0], 0.03, BACK + 0.008), (sock[0], sock[1] - 0.03, BACK + 0.008),
@@ -1037,7 +1104,7 @@ REAL = shelf_books()
 REAL_BOOKS = []  # 写进 manifest.books：每本书的中心（世界坐标）、尺寸、精装 / 平装、在第几层
 
 
-# ---------- 书桌左边：雕花木书柜（Sketchfab「Wooden bookcase」，stanislau.see，CC BY），靠后墙，开场镜头里露出右半边 ----------
+# ---------- 左墙：雕花木书柜（Sketchfab「Wooden bookcase」，stanislau.see，CC BY），背靠左墙、和书桌错开，开场镜头里看不到，往左转才转进来 ----------
 # 书柜是一整块网格：下面一个抽屉座、中间五层开放的格子、顶上雕花的冠头。格子里摆「Elegan old book pack」（3D_for_everyone，CC BY）
 # 的旧书（一排排立着、几本横着摞），真书见上面的 real_book。
 # 下面这些数字是在素材自己的坐标（three：x 宽、y 高、z 深，前面朝 +z）里量的：内侧板、每层的底面 / 顶面、格子的前沿和背板
@@ -1053,16 +1120,23 @@ BOOKS = [mat(f'book{i}', c) for i, c in enumerate(BOOK_COLORS)]  # 自己搭的�
 OLD = Asset('sketchfab/elegan-old-book-pack', 'oldbook', texsize=512)
 _blo, _bhi = BOOKCASE.bounds()
 SH_W = float(_bhi[0] - _blo[0]) * BC_S         # 连冠头的总宽（摆龟背竹、日历要用）
-SH_X = wx0 - 0.06 - SH_W / 2                   # 右边挨着书桌
 SH_D = float(_bhi[2] - _blo[2]) * BC_S
-with hot('shelf'):
-    _, T_bc = put(BOOKCASE, G((SH_X, 0, BACK + 0.005)), uvk=12, scale=BC_S, anchor=(0.5, 0.0, 0.0))
-ix0, ix1 = at3(T_bc, (BC_IN[0], 0, 0)).x, at3(T_bc, (BC_IN[1], 0, 0)).x
-zf, zb = at3(T_bc, (0, 0, BC_FRONT)).z, at3(T_bc, (0, 0, BC_BACK)).z
-SH_IN = ix1 - ix0                              # 内宽
-SH_DEPTH = zf - zb                             # 格子深
-g = G(((ix0 + ix1) / 2, 0, zf))                # 格子坐标：x 横着（-SH_IN/2 … SH_IN/2），y 世界高度，z = 0 是格子前沿、往里是负的
+# 书柜背靠左墙、正面朝屋里（+x）；BC_Z：书柜中线在墙上的位置（z）。
+# 书柜和书桌错开：靠里那头对齐书桌前沿，左后墙角空出约 1 × 0.8 米，留着放装饰品
+BC_ROT = math.pi / 2
+BC_Z = BACK + 0.43 + DESK_D / 2 + SH_W / 2
+MONSTERA_AT = (x0 + 0.36, 0, BC_Z + SH_W / 2 + 0.3)   # 书柜靠屋里那头的地上
+FLOOR_STACK_AT = (x0 + SH_D + 0.2, 0, BC_Z + SH_W / 2 - 0.12)  # 书柜前面的地上，看完还没放回去
+BC_R = M(rot=(0, BC_ROT, 0))                   # 书柜自己的朝向：本地 +z（正面）→ 世界 +x，本地 +x（看的人的右手）→ 世界 -z
+with hot('shelf', rot=BC_ROT):
+    _, T_bc = put(BOOKCASE, G((x0 + 0.005, 0, BC_Z), (0, BC_ROT, 0)), uvk=12, scale=BC_S, anchor=(0.5, 0.0, 0.0))
+_i0, _i1 = at3(T_bc, (BC_IN[0], 0, BC_FRONT)), at3(T_bc, (BC_IN[1], 0, BC_FRONT))
+SH_IN = (_i1 - _i0).length                     # 内宽
+SH_DEPTH = (at3(T_bc, (0, 0, BC_FRONT)) - at3(T_bc, (0, 0, BC_BACK))).length  # 格子深
+_o = (_i0 + _i1) / 2
+g = Matrix.Translation(Vector((_o.x, 0, _o.z))) @ BC_R  # 格子坐标：x 横着（-SH_IN/2 … SH_IN/2），y 世界高度，z = 0 是格子前沿、往里是负的
 SHG = g
+SH_OUT = BC_R @ Vector((0, 0, 1))              # 书柜正面朝哪（世界）：网页里把书往这个方向抽出来
 SHELF_FLOOR = [at3(T_bc, (0, y, 0)).y for y in BC_FLOOR]
 SHELF_CEIL = [at3(T_bc, (0, y, 0)).y for y in BC_CEIL]
 SH_RIGHT = SH_IN / 2 - 0.006
@@ -1177,28 +1251,197 @@ with hot('shelf'):
     for k, (name, a, dx) in enumerate((('Object_8', 0.12, 0.0), ('Object_11', -0.14, 0.006), ('Object_14', 0.32, -0.004))):
         put(CASS, g @ M((SH_RIGHT - 0.075 + dx, SHELF_FLOOR[1] + k * 0.0102, -0.07), (0, a, 0)), uvk=15, pieces=[name], scale=1.0)
 # 点书架：正对着书柜中间那几层、稍微从右边看
-VIEWS['shelf'] = dict(target=world(g, (0, 1.22, 0)), size=(0.42, 0.62), dir=(0.3, 0.08, 1))
+VIEWS['shelf'] = dict(target=world(g, (0, 1.22, 0)), size=(0.42, 0.62), dir=tuple(BC_R @ Vector((-0.3, 0.08, 1))))
 
-# 书柜左前方：落地龟背竹（盆下面是木脚架）。叶片是镂空的卡片；气根减面
+# 书柜靠屋里那头：落地龟背竹（盆下面是木脚架）。叶片是镂空的卡片；气根减面
 MONSTERA = Asset('sketchfab/monstera-deliciosa-potted-mid-century-plant', 'monstera', texsize=512,  # 叶片贴图是带透明的 PNG，1024 要 1 MB
                  cutout=('Mat.1*',), decimate={'*root*': 0.5})
-put(MONSTERA, G((SH_X - SH_W / 2 + 0.12, 0, BACK + SH_D + 0.22), (0, 0.6, 0)), uvk=6, height=1.0)  # 站在书柜左前方，叶子挡住书柜左边一角
+put(MONSTERA, G(MONSTERA_AT, (0, 0.6, 0)), uvk=6, height=1.0)
 
-# 书柜前面、挨着书桌的地上：一摞看完还没放回去的书，最上面一本杂志
-g = G((SH_X + SH_W / 2 - 0.12, 0, BACK + SH_D + 0.16), (0, 0.3, 0))
+# 书桌左边的地上：一摞看完还没放回去的书，最上面一本杂志
+g = G(FLOOR_STACK_AT, (0, 0.3, 0))
 y = 0
 for k, (w, h, d, ci, a) in enumerate(((0.25, 0.036, 0.18, 3, 0.0), (0.22, 0.042, 0.16, 0, 0.12), (0.2, 0.028, 0.15, 5, -0.08), (0.23, 0.03, 0.165, 6, 0.2))):
     box(g, w, h, d, BOOKS[ci], 0.006 * k, y + h / 2, 0, (0, a, 0))
     y += h
 box(g, 0.21, 0.006, 0.28, mat('mag1', '#8f3a2e'), 0.012, y + 0.003, 0.02, (0, -0.28, 0))
 
-# 左墙上的撕页日历（书柜加宽以后后墙没地方了）：素材里纸页被风吹得卷起来，这里按 UV 铺平贴在日历本上（下角稍微翘一点），日历本换成深红色；
-# 网页按今天的日期重画纸页（manifest.calendar.page = 纸页的材质名）
-CAL = Asset('sketchfab/wall-calendar-tear-off-with-wind-blowing', 'calendar', texsize=512)
-CAL.islands('*cs_blend_red*', (-99, -99, -99), (99, 99, 99), material=plain_material('calendar_block', '#7a2b22'))
-flatten_page(CAL, 'Material.049')
-put(CAL, G((x0, 1.55, BACK + SH_D + 0.42), (0, 0, 0)), uvk=20, height=0.34, anchor=(0.0, 0.5, 0.5))
-CALENDAR = {'page': CAL.mat['Material.049']}
+# 左后墙角放什么（试摆用的开关，定下来以后去掉）：studio = 画室画架 + 莫奈，easel = 自己搭的窄画架 + 莫奈，globe = 落地地球仪
+CORNER = os.environ.get('CORNER', 'studio')
+ART_TITLE = ''
+if CORNER == 'studio':
+    # 画室画架（Sketchfab「Easel | Мольберт | Easel with painting」里中间那个空画架，Every_3D，CC BY），托板上放金框的莫奈。
+    # 只管镜头看到的样子：画架横向压到 0.72、前后压到 0.6（腿收窄、站得浅，托板右头不伸进开场画面），左前腿脚底戳进书柜背面一点（那一面镜头看不到）。
+    # 画框中心离左墙 0.4 米、离后墙 0.55 米，正面转向往左转过来的镜头；又刚好在开场画面的左边界外面
+    K = 12
+    STUDIO = Asset('sketchfab/easel-with-painting', 'easel', texsize=1024)
+    ST_YAW, ST_S = 1.17, (0.72, 1.0, 0.6)                                     # 朝向；横、竖、前后的缩放
+    ST_AT = G((-1.6, 0, -1.6), (0, ST_YAW, 0)) @ Matrix.Diagonal((*ST_S, 1.0))
+    with hot('art', ST_YAW):
+        put(STUDIO, ST_AT, uvk=20, pieces=['Easel_Easel_0'], scale=1.0)  # 压窄以后托板很细，光照贴图给多一点，不然发黑
+    # 素材里量的（以底面中心为原点，three 坐标，未缩放）：托板顶面 0.766 米；0.77 米高处立杆前面在 z = 0.263；立杆往后仰 0.265 / 1.58
+    _tilt = math.atan(0.265 * ST_S[2] / (1.58 * ST_S[1]))
+    # 画（试摆用的开关）：sunrise = 莫奈《印象·日出》（1872，横幅，金框转成横放），parasol = 莫奈《撑阳伞的女人》（1875，竖幅）
+    PICS = {'sunrise': ('monet-impression-sunrise', True, 'Claude Monet · Impression, Sunrise, 1872'),
+            'parasol': ('monet-woman-with-a-parasol', False, 'Claude Monet · Woman with a Parasol, 1875')}
+    ART_PIC = os.environ.get('ART_PIC', 'sunrise')
+    _pic, _wide, ART_TITLE = PICS[ART_PIC]
+    ART = Asset('polyhaven/fancy_picture_frame_02', 'artframe', texsize=1024)
+    ART_S = 0.72 if _wide else 0.8                                            # 竖放 0.53 × 0.62 米；横放 0.55 × 0.48 米（再大右头就伸进开场画面）
+    _flo, _fhi = ART.bounds()
+    _fh, _fd = float(_fhi[0 if _wide else 1] - _flo[0 if _wide else 1]) * ART_S, float(_fhi[2] - _flo[2]) * ART_S
+    _up = Vector((0, math.cos(_tilt), -math.sin(_tilt)))
+    _fb = Vector((0, 0.766 * ST_S[1] + 0.005, 0.263 * ST_S[2] + 0.01 + _fd / 2))   # 画框底边中心：坐在托板上，背面贴着立杆前面
+    _fc = _fb + _up * (_fh / 2)
+    _st = G((-1.6, 0, -1.6), (0, ST_YAW, 0))                                  # 不带缩放的画架坐标
+    with hot('art', ST_YAW):
+        art_obs, _ = put(ART, _st @ M(tuple(_fc), (-_tilt, 0, 0)) @ M(rot=(0, 0, math.pi / 2 if _wide else 0)), uvk=15, scale=ART_S,
+                         anchor=(0.5, 0.5, 0.5))
+    monet = bpy.data.images.load(os.path.join(ROOT, 'vendor-src', 'commons', _pic, _pic + '.jpg'))
+    monet.scale(*((1024, 794) if _wide else (820, 1024)))
+    art_mat = plain_material('art_monet', '#ffffff')
+    _an = art_mat.node_tree
+    _at = _an.nodes.new('ShaderNodeTexImage')
+    _at.image = monet
+    _an.links.new(_at.outputs['Color'], next(n for n in _an.nodes if n.type == 'BSDF_PRINCIPLED').inputs['Base Color'])
+    for ob in art_obs:                                                        # 画布：换成莫奈，UV 拉满整张画
+        if 'canvas' not in ob.name:
+            continue
+        ob.data.materials.clear()
+        ob.data.materials.append(art_mat)
+        uvl = ob.data.uv_layers[0].data
+        us, vs = [d.uv.x for d in uvl], [d.uv.y for d in uvl]
+        u0, u1, v0, v1 = min(us), max(us), min(vs), max(vs)
+        for d in uvl:
+            un, vn = (d.uv.x - u0) / (u1 - u0), (d.uv.y - v0) / (v1 - v0)
+            d.uv = (1 - vn, un) if _wide else (un, vn)                    # 画框横放（转了 90°）：画也跟着转回正
+        print(f'[art] 画布换成莫奈：{ob.name}')
+# ---------- 左手边那面墙（墙角画架和窗户之间）：海报和几张论文插图 ----------
+# 公开版：这里只放几块占位的旧纸，网页里藏起来（墙和现在一样）；个人模式：网页把做旧过的真实海报、插图（assets/posters/，不进 Git）换上来。
+# 它们和墙一起烘焙光照（窗外的城市、台灯、房间灯开关都跟着变），但对阴影、反弹的光线是透明的（见下面烘焙前的 poster* 材质）：
+# 墙上不会烘出它们的影子，公开版藏起来以后墙是干净的。
+# 每张：key（材质名、热点名，也是 assets/posters/posters.json 里的键）、宽、高（米）、中心 x、离地 y、在墙面里转几度。
+# 大海报右边离窗洞 8 厘米；下面一小片墙（画架的画框右边、窗台左头上面）错落着贴几张打印的插图和一张杂志封面
+_A5 = 1.414
+POSTERS = [
+    dict(key='poster', w=0.48, h=0.48 / 0.761, x=WIN['x'] - WIN['w'] / 2 - 0.08 - 0.24, y=1.56, rot=0.0),   # 杂志封面的比例
+    dict(key='poster_2', w=0.165, h=0.165 / 0.761, x=-1.425, y=1.110, rot=1.0),     # 杂志封面
+    dict(key='poster_3', w=0.17, h=0.17 / _A5, x=-1.215, y=1.158, rot=1.2),         # 打印的插图（A5 横放的比例）
+    dict(key='poster_6', w=0.17, h=0.17 / _A5, x=-1.190, y=1.024, rot=-1.3),
+    dict(key='poster_4', w=0.17, h=0.17 / _A5, x=-1.235, y=0.892, rot=0.8),
+    dict(key='poster_5', w=0.155, h=0.155 / _A5, x=-1.430, y=0.890, rot=-1.6),
+]
+_pimg = bpy.data.images.new('poster_blank', 32, 32, alpha=False)                     # 占位：一张空白的旧纸
+_pimg.pixels.foreach_set(np.tile(np.array([*srgb('#d9cdb0'), 1.0], np.float32), 32 * 32))
+_pimg.pack()
+_tr = random.Random(5)
+_tv, _tf = [], []
+for _i, _P in enumerate(POSTERS):
+    _pz = BACK + 0.004 + _i * 0.0012                                                  # 后贴的压在前面的上面
+    _ca, _sa = math.cos(math.radians(_P['rot'])), math.sin(math.radians(_P['rot']))
+
+    def _at(lx, ly, z, _P=_P, _ca=_ca, _sa=_sa):                                      # 纸面局部坐标 → three 坐标（墙面上转 rot 度）
+        return (_P['x'] + lx * _ca - ly * _sa, _P['y'] + lx * _sa + ly * _ca, z)
+
+    _hw, _hh = _P['w'] / 2, _P['h'] / 2
+    _corners = [_at(sx * _hw, sy * _hh, _pz) for sx, sy in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
+    with hot(_P['key']):
+        _pm = bpy.data.meshes.new(_P['key'])
+        _pm.from_pydata([tuple(tb(c)) for c in _corners], [], [(0, 1, 2, 3)])
+        _pm.uv_layers.new(name='UVMap').data.foreach_set('uv', [0, 0, 1, 0, 1, 1, 0, 1])
+        _pmat = plain_material(_P['key'], '#ffffff')
+        _pt = _pmat.node_tree.nodes.new('ShaderNodeTexImage')
+        _pt.image = _pimg
+        _pmat.node_tree.links.new(_pt.outputs['Color'], next(n for n in _pmat.node_tree.nodes if n.type == 'BSDF_PRINCIPLED').inputs['Base Color'])
+        _pm.materials.append(_pmat)
+        _pob = bpy.data.objects.new(_P['key'], _pm)
+        scene.collection.objects.link(_pob)
+        PLACED.append((_pob, 25))
+        HOT_PTS.setdefault(HOT_ID, []).extend(_corners + [(x, y, _pz - 0.01) for x, y, _ in _corners])
+    xs, ys = [c[0] for c in _corners], [c[1] for c in _corners]
+    print(f"[poster] {_P['key']:9s} x {min(xs):+.3f}..{max(xs):+.3f}  y {min(ys):.3f}..{max(ys):.3f}")
+    # 四个角各一段白胶带：斜着压过角（一半在纸上、一半在墙上），两头是撕开的锯齿；长短跟着纸的大小
+    _size = max(_P['w'], _P['h'])
+    for _sx, _sy in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
+        _ang = math.atan2(_sx, -_sy) + math.radians(_P['rot'] + _tr.uniform(-9, 9))       # 长边垂直于角的对角线
+        _ux, _uy = math.cos(_ang), math.sin(_ang)
+        _L = _tr.uniform(0.14, 0.17) * _size / 2                                    # 大海报上约 9.5 厘米，小图上约 3.5 厘米
+        _Wt = max(0.0055, _tr.uniform(0.038, 0.046) * _size / 2)
+        _in = 0.006 if _size > 0.4 else 0.003
+        _ccx, _ccy, _ = _at(_sx * (_hw - _in), _sy * (_hh - _in), 0)                      # 中线稍微往纸里偏一点
+        _pts = []
+        for _end in (1, -1):                                                          # 一头：上沿 → 三个锯齿 → 下沿
+            _e = [(_end * _L, _end * _Wt)]
+            for _k in (1, 2, 3):
+                _j = 0.004 if _size > 0.4 else 0.0018                                      # 锯齿的深浅
+                _e.append((_end * (_L + (_j if _k % 2 else -_j / 2) + _tr.uniform(-_j / 2, _j / 2)), _end * _Wt * (1 - _k / 2)))
+            _e.append((_end * _L, -_end * _Wt))
+            _pts += _e
+        for _mi, (_k, _dx, _dy, _dz) in enumerate(((1.0, 0.0, 0.0, 0.0030), (1.06, 0.0012, -0.0018, 0.0018))):   # 胶带、它底下一圈淡淡的影子
+            _o = len(_tv)
+            for _a, _b in _pts:
+                _tv.append(tuple(tb((_ccx + _dx + _ux * _a * _k - _uy * _b * _k, _ccy + _dy + _uy * _a * _k + _ux * _b * _k, _pz + _dz))))
+            _tf.append((tuple(range(_o, _o + len(_pts))[::-1]), _mi))
+_tm = bpy.data.meshes.new('poster_tape')
+_tm.from_pydata(_tv, [], [f for f, _ in _tf])
+_tm.materials.append(plain_material('poster_tape', '#fdfcf7'))
+_tm.materials.append(plain_material('poster_tape_shadow', '#000000'))             # 半透明（manifest.glass）
+_tm.polygons.foreach_set('material_index', [mi for _, mi in _tf])
+_tob = bpy.data.objects.new('poster_tape', _tm)
+scene.collection.objects.link(_tob)
+PLACED.append((_tob, 25))
+
+if CORNER == 'globe':
+    # 落地地球仪（Sketchfab「Floor Globe」，ctorre，CC BY）：素材 1.38 米高，缩到 0.95 米；摆在墙角里开场镜头看不到、往左转又不被书柜挡住的那一小块
+    GLOBE = Asset('sketchfab/floor-globe', 'globe', texsize=1024)
+    with hot('art', 0.0):
+        put(GLOBE, G((-1.5, 0, -1.7), (0, 1.0, 0)), uvk=15, height=0.95)
+if CORNER == 'easel':
+    # 左后墙角：一个橡木展示画架，架着一幅金色雕花画框（Poly Haven「Fancy Picture Frame 02」，CC0）里的莫奈《撑阳伞的女人》
+    # （1875，公有领域，原作在美国国家美术馆；图从 Wikimedia Commons 取，放在 vendor-src/commons/）。
+    # 画架：两条前腿往后仰 0.2 弧度、顶上并到一起，一根后腿撑地，前腿前面一块托板托住画框，画框靠在前腿上。
+    # 斜着（约 47°）横在墙角里：画框两头分别贴近左墙和后墙，和墙角围成一个三角形，正面朝屋里；几乎立直（后仰 0.05），顶上不戳进墙。
+    # 开场镜头看得到墙角靠里的一部分、往左转的镜头从右前方看过来时靠书柜那一段又被书柜挡住，这样摆两头都顾得到；
+    # 往左转到头时镜头站在书桌左前方看过来（room.js 的 TURN.shelf）
+    K = 12
+    EASEL_AT = G((-1.585, 0, -1.77), (0, 0.83, 0))
+    EASEL_TILT, EASEL_H, LEDGE_Y = 0.05, 1.7, 0.85
+    ewood = mat('easel_wood', '#9a7044')
+    _top = Vector((0, EASEL_H * math.cos(EASEL_TILT), -EASEL_H * math.sin(EASEL_TILT)))
+    for sx in (-1, 1):
+        rod(world(EASEL_AT, (sx * 0.2, 0, 0)), world(EASEL_AT, (sx * 0.035, _top.y, _top.z)), 0.016, ewood, 8)   # 前腿
+    rod(world(EASEL_AT, (0, _top.y + 0.04, _top.z)), world(EASEL_AT, (0, 0, -0.3)), 0.015, ewood, 8)            # 后腿，脚落在墙角里
+    _lz = -LEDGE_Y * math.tan(EASEL_TILT)
+    box(EASEL_AT, 0.4, 0.025, 0.13, ewood, 0, LEDGE_Y, _lz + 0.075, (-EASEL_TILT, 0, 0))                        # 托板
+    box(EASEL_AT, 0.4, 0.035, 0.01, ewood, 0, LEDGE_Y + 0.02, _lz + 0.145, (-EASEL_TILT, 0, 0))                # 托板前沿的挡条
+    box(EASEL_AT, 0.32, 0.03, 0.03, ewood, 0, LEDGE_Y * 0.45, -LEDGE_Y * 0.45 * math.tan(EASEL_TILT), (-EASEL_TILT, 0, 0))  # 下面一根横撑
+    ART = Asset('polyhaven/fancy_picture_frame_02', 'artframe', texsize=1024)
+    ART_S = 0.8                                                                   # 画框 0.53 × 0.62 米，画心 0.31 × 0.4 米：墙角的三角形里放得下
+    _flo, _fhi = ART.bounds()
+    _fh = float(_fhi[1] - _flo[1]) * ART_S
+    _up = Vector((0, math.cos(EASEL_TILT), -math.sin(EASEL_TILT)))               # 画框顺着前腿往后仰
+    _fc = Vector((0, LEDGE_Y + 0.03, _lz + 0.08)) + _up * (_fh / 2)            # 画框背面贴着前腿的前面
+    with hot('art', 0.83):
+        art_obs, _ = put(ART, EASEL_AT @ M(tuple(_fc), (-EASEL_TILT, 0, 0)), uvk=15, scale=ART_S, anchor=(0.5, 0.5, 0.5))
+    monet = bpy.data.images.load(os.path.join(ROOT, 'vendor-src', 'commons', 'monet-woman-with-a-parasol', 'monet-woman-with-a-parasol.jpg'))
+    monet.scale(820, 1024)
+    art_mat = plain_material('art_monet', '#ffffff')
+    _an = art_mat.node_tree
+    _at = _an.nodes.new('ShaderNodeTexImage')
+    _at.image = monet
+    _an.links.new(_at.outputs['Color'], next(n for n in _an.nodes if n.type == 'BSDF_PRINCIPLED').inputs['Base Color'])
+    for ob in art_obs:                                                            # 画布：换成莫奈，UV 拉满整张画
+        if not any('canvas' in (m.name if m else '') for m in ob.data.materials) and 'canvas' not in ob.name:
+            continue
+        ob.data.materials.clear()
+        ob.data.materials.append(art_mat)
+        uvl = ob.data.uv_layers[0].data
+        us, vs = [d.uv.x for d in uvl], [d.uv.y for d in uvl]
+        u0, u1, v0, v1 = min(us), max(us), min(vs), max(vs)
+        for d in uvl:
+            d.uv = ((d.uv.x - u0) / (u1 - u0), (d.uv.y - v0) / (v1 - v0))
+        print(f'[art] 画布换成莫奈：{ob.name}')
+
 
 # ---------- 右墙：矮柜 + 唱机 + 唱片 + 台灯，墙上一幅画、靠里一块软木板；右前角一盏落地灯 ----------
 K = 10
@@ -1283,24 +1526,11 @@ cyl(gk, 0.006, 0.006, 0.004, 12, wire, (0, 0, 0.045), UPR)
 # （软木板和画之间原来贴着三张拍立得，照片墙只放自己的照片，去掉了）
 K = 10
 
-# ---------- 窗上的串灯：挂在窗洞上沿两角和中间，垂成两段弧线（弧底落进开场镜头里），12 个小灯泡 ----------
-BULBS = []
-N_B = 12
-for i in range(N_B):
-    s = i / (N_B - 1)
-    x = wx0 + 0.08 + (WIN['w'] - 0.16) * s
-    seg = (s * 2) % 1 if s < 1 else 1
-    y = wy1 - 0.05 - 0.28 * math.sin(math.pi * seg)
-    BULBS.append((x, y, BACK + 0.03))
-wire = mat('wire', '#1c1a18')
-for a, b in zip(BULBS, BULBS[1:]):
-    rod(a, b, 0.0025, wire, 4, False)
+# （窗上原来挂着一串 12 个小灯泡，正对着开场镜头太晃眼，去掉了：灯泡、电线和它们的光都没有了）
 
 # ---------- Glow：灯泡、灯罩。不参与烘焙（光由下面的灯光对象负责），浏览器里画成自发光 ----------
 # （台灯灯泡、落地灯和柜上台灯的灯罩已经在上面跟着各自的灯建好了）
 T, K = GLOWM, 10
-for p in BULBS:
-    ball(p, 0.017, emit('emit.room.bulbs', 'room', '#ffc98a', 5.0), 1)
 # 书架隔板下面原来有一条条灯带，看着刺眼，去掉了；书架改由前面一块看不见的面光照亮（见下面 'room' 层的 shelf_fill）。
 # 书架上换成浅色封面的真书以后，这块光从 9 W 降到 4 W，不然白书脊会亮到泛光
 
@@ -1340,6 +1570,58 @@ def join(target, others):
     bpy.ops.object.join()
 
 
+# 墙纸、窗帘：Poly Haven 的布料照片（CC0）只取底色贴图，去色后按目标颜色重新上色、压低对比；按真实大小平铺（UV 单位：米 / 一格多大）
+WALLPAPER = dict(src='polyhaven/hessian_380', color='#ddd6c8', contrast=0.3, tile=0.27)   # 暖白色麻布墙纸（细细的编织纹）
+CURTAIN = dict(src='polyhaven/rough_linen', color='#cdbfa5', contrast=0.6, tile=0.27)     # 燕麦色亚麻窗帘
+
+
+def tile_uv(mesh_wrap, name, tile, axis=None):
+    """材质 name 的面：按面朝向投影成平铺的 UV（UVMap），一格 = tile 米。axis=0：一律从正面投影（窗帘的褶子朝向各不相同）。"""
+    if name not in mesh_wrap.mats:
+        return
+    mi = mesh_wrap.mats[name][0]
+    bm = mesh_wrap.bm
+    uvl = bm.loops.layers.uv.get('UVMap') or bm.loops.layers.uv.new('UVMap')
+    for f in bm.faces:
+        if f.material_index != mi:
+            continue
+        f.normal_update()
+        n = f.normal                                   # Blender 坐标（z 向上）
+        ax = axis if axis is not None else 1 if abs(n.x) > max(abs(n.y), abs(n.z)) else 0 if abs(n.y) >= abs(n.z) else -1
+        for l in f.loops:
+            c = l.vert.co
+            if ax == 1:                                 # 朝 ±x 的墙：沿墙是 y
+                l[uvl].uv = (c.y / tile, c.z / tile)
+            elif ax == 0:                               # 朝 ±y（后墙、前墙、窗帘）
+                l[uvl].uv = (c.x / tile, c.z / tile)
+            else:                                       # 朝上 / 朝下
+                l[uvl].uv = (c.x / tile, c.y / tile)
+
+
+def recolor_image(spec, name, size=512):
+    """底色贴图 → 亮度（除以平均值）→ 压对比 → 乘目标颜色。"""
+    folder = os.path.join(ROOT, 'vendor-src', spec['src'])
+    if spec['src'] not in USED:
+        USED.append(spec['src'])                   # 记进 manifest.vendor（网站的素材致谢按它生成）
+    path = next(os.path.join(folder, f) for f in sorted(os.listdir(folder)) if '_diff_' in f)
+    src = bpy.data.images.load(path)
+    src.scale(size, size)
+    px = np.empty(size * size * 4, dtype=np.float32)
+    src.pixels.foreach_get(px)
+    px = px.reshape(-1, 4)
+    lum = px[:, :3] @ np.array([0.2126, 0.7152, 0.0722], dtype=np.float32)
+    k = 1 + (lum / max(float(lum.mean()), 1e-4) - 1) * spec['contrast']
+    c = np.array([int(spec['color'][i:i + 2], 16) / 255 for i in (1, 3, 5)], dtype=np.float32)  # 8 位图的像素存的就是 sRGB 值
+    out = np.clip(np.outer(np.clip(k, 0, 2), c), 0, 1)
+    img = bpy.data.images.new(name, size, size)
+    img.pixels.foreach_set(np.concatenate([out, np.ones((len(out), 1), dtype=np.float32)], axis=1).ravel())
+    img.pack()
+    bpy.data.images.remove(src)
+    return img
+
+
+tile_uv(ROOMM, 'wall', WALLPAPER['tile'])
+tile_uv(ROOMM, 'curtain', CURTAIN['tile'], axis=0)
 room = build(ROOMM)
 glow = build(GLOWM)
 glow.hide_render = True
@@ -1355,6 +1637,15 @@ tex, uvn = nt.nodes.new('ShaderNodeTexImage'), nt.nodes.new('ShaderNodeUVMap')
 tex.image, uvn.uv_map = wood_image('desk_wood'), 'UVMap'
 nt.links.new(uvn.outputs[0], tex.inputs['Vector'])
 nt.links.new(tex.outputs['Color'], bsdf.inputs['Base Color'])
+for name, spec in (('wall', WALLPAPER), ('curtain', CURTAIN)):
+    mt = me.materials[name]
+    nt = mt.node_tree
+    bsdf = next(n for n in nt.nodes if n.type == 'BSDF_PRINCIPLED')
+    tex, uvn = nt.nodes.new('ShaderNodeTexImage'), nt.nodes.new('ShaderNodeUVMap')
+    tex.image, uvn.uv_map = recolor_image(spec, f'{name}_tex'), 'UVMap'
+    nt.links.new(uvn.outputs[0], tex.inputs['Vector'])
+    nt.links.new(tex.outputs['Color'], bsdf.inputs['Base Color'])
+    mt.diffuse_color = (*srgb(spec['color']), 1)
 for ob, uvk in PLACED:
     a = ob.data.attributes.new('uvk', 'INT', 'FACE')
     a.data.foreach_set('value', [uvk] * len(ob.data.polygons))
@@ -1517,9 +1808,10 @@ LAYERS = {
     'room': [
         light('floor_lamp', 'POINT', 30, '#ffcf99', FLOOR_LAMP, shadow_soft_size=0.12),
         light('table_lamp', 'POINT', 18, '#ffcf99', (LAMP2[0], 1.1, LAMP2[2]), shadow_soft_size=0.06),
-        *[light(f'bulb{i}', 'POINT', 0.7, '#ffc98a', (p[0], p[1] - 0.01, p[2] + 0.01), shadow_soft_size=0.015) for i, p in enumerate(BULBS)],
+        # 窗上沿一条看不见的暖色长条面光，斜着往下照进屋里：顶替原来那串小灯泡照在墙上、桌上的光，但画面里没有发亮的灯泡
+        light('window_fill', 'AREA', 14, '#ffc98a', (WIN['x'], wy1 - 0.08, BACK + 0.12), (0, -0.55, 1), shape='RECTANGLE', size=WIN['w'] - 0.2, size_y=0.12),
         # 书架前 75 厘米、稍高处一块看不见的暖色面光，朝着书架：书脊看得清，又没有一条条发亮的灯带
-        light('shelf_fill', 'AREA', 4, '#ffd6a8', (SH_X, 1.35, BACK + SH_D + 0.6), (0, -0.2, -1), shape='RECTANGLE', size=0.9, size_y=1.6),
+        light('shelf_fill', 'AREA', 4, '#ffd6a8', world(SHG, (0, 1.35, 0.6)), tuple(BC_R @ Vector((0, -0.2, -1))), shape='RECTANGLE', size=0.9, size_y=1.6),
     ],
     'lamp': [
         light('lamp_spot', 'SPOT', 9, '#ffd2a0', tuple(LAMP_HEAD), tuple(LAMP_DIR), spot_size=math.radians(105), spot_blend=0.45, shadow_soft_size=0.025),
@@ -1586,6 +1878,17 @@ def save_encoded(img, path):
     return scale, stats
 
 
+_poster_restore = []
+for _pmn in [m.name for m in me.materials if m.name.startswith('poster')]:           # 海报、胶带不挡光、不反光：墙上不留影子（公开版网页里把它们藏起来，墙还是干净的）
+    _nt = me.materials[_pmn].node_tree
+    _out = next(n for n in _nt.nodes if n.type == 'OUTPUT_MATERIAL')
+    _bsdf = next(n for n in _nt.nodes if n.type == 'BSDF_PRINCIPLED')
+    _lp, _trn, _mx = _nt.nodes.new('ShaderNodeLightPath'), _nt.nodes.new('ShaderNodeBsdfTransparent'), _nt.nodes.new('ShaderNodeMixShader')
+    _nt.links.new(_lp.outputs['Is Camera Ray'], _mx.inputs['Fac'])
+    _nt.links.new(_trn.outputs[0], _mx.inputs[1])
+    _nt.links.new(_bsdf.outputs[0], _mx.inputs[2])
+    _nt.links.new(_mx.outputs[0], _out.inputs['Surface'])
+    _poster_restore.append((_nt, _out, _bsdf, (_lp, _trn, _mx)))
 bpy.ops.object.select_all(action='DESELECT')
 room.select_set(True)
 bpy.context.view_layer.objects.active = room
@@ -1612,6 +1915,10 @@ for layer, obs in ([] if A.skip_bake else LAYERS.items()):
 # ---------- 导出 ----------
 for mt, n in img_nodes:
     mt.node_tree.nodes.remove(n)
+for _nt, _out, _bsdf, _extra in _poster_restore:  # 海报、胶带的材质恢复成普通的纸（导出器认得出贴图）
+    _nt.links.new(_bsdf.outputs[0], _out.inputs['Surface'])
+    for _n in _extra:
+        _nt.nodes.remove(_n)
 glow.hide_render = False
 bpy.ops.object.select_all(action='DESELECT')
 room.select_set(True)
@@ -1640,8 +1947,9 @@ manifest.update({
                 for k, s in (('pc', PC_SCREEN), ('tv', TV_SCREEN))},
     'emitters': EMIT,
     'cutout': CUTOUT,
-    'calendar': CALENDAR,
-    'glass': {},
+    'deskcal': DESKCAL,
+    'art': {'title': ART_TITLE},  # 墙角那幅画的名字（鼠标停在画上时的提示）
+    'glass': {'window_glass': 0.16, 'poster_tape_shadow': 0.22},  # 窗玻璃：淡淡一层，窗外隔着玻璃；海报胶带底下的影子
     'vendor': USED,
     'tapes': {'count': len(TAPE_COLORS), 'colors': TAPE_COLORS, 'slot': r3(VCR_SLOT), 'yaw': CART_ROT,  # yaw = 录像机绕 Y 轴转了多少
               'sleeve': {'cols': r3(SLEEVE_COLS), 'len': round(SLEEVE[0], 4)}},  # 纸盒包装的版面：各栏宽、高（米）
@@ -1649,7 +1957,7 @@ manifest.update({
     # pos = 书的中心，size = 宽 × 高 × 厚（米）。书都立着、书脊朝 +z、封面朝 +x
     # 照片墙（软木板）：center = 板面中心（板面朝 -x，看的人的右手边是 +z），size = 宽 × 高
     'photos': {'center': r3(CORK_FRAME['center']), 'size': r3(CORK_FRAME['size']), 'normal': [-1, 0, 0], 'right': [0, 0, 1]},
-    'books': {'items': [dict(b, pos=r3(b['pos']), size=r3(b['size'])) for b in REAL_BOOKS]},
+    'books': {'items': [dict(b, pos=r3(b['pos']), size=r3(b['size'])) for b in REAL_BOOKS], 'yaw': round(BC_ROT, 4)},  # yaw：书柜朝向（书往哪抽）
     'hotspots': HOT,
     'views': {k: {'target': r3(v['target']), 'size': list(v['size']), 'dir': r3(Vector(v['dir']).normalized())} for k, v in VIEWS.items()},
 })

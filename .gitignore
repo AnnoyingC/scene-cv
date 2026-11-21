@@ -50,6 +50,7 @@ assets/audio/
 assets/books/covers/
 photos-src/
 assets/photos/
+assets/posters/
 assets/resume/
 
 # 发布检查用的本地词表（scripts/audit_public.py 读，一行一个不该出现在公开文件里的词）

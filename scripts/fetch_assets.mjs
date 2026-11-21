@@ -48,6 +48,7 @@ const manual = [];
 for (const a of assets) {
   if (only.length && !only.some((o) => a.id.includes(o))) continue;
   const dir = join(OUT, a.id);
+  if (!a.fetch) continue;          // 地图数据、3D 城市模型、照片：node scripts/fetch_city.mjs
   if (a.fetch?.manual) {
     const have = await stat(dir).then(() => true, () => false);
     manual.push(`${have ? '✓' : '·'} ${a.title}（${a.authors.join(', ')}）\n    ${a.url}\n    解压到 vendor-src/${a.id}/`);

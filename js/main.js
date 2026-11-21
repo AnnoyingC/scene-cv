@@ -39,13 +39,17 @@ function plain(reason) {
   if (id) document.getElementById(id)?.scrollIntoView();
 }
 
-// 只在本地的个人内容（这几个文件夹不进 Git，公开仓库里 index.html 是样例）：有就换进内容层，没有就照样用样例。
+// 只在本地的个人内容（这几个文件夹不进 Git，公开仓库里 index.html 是样例）：打开个人模式时有就换进内容层，没有就照样用样例。
 //   assets/resume/resume.html         真实简历的几页纸 → #resume（3D 版每次拿起纸都从内容层复制，纯文字版直接显示）
 //   assets/resume/contact.html        真实联系方式的几个 <li> → #online 的列表（记事本、联系面板、纯文字版）
 //   assets/books/covers/covers.json   书名 → 真实封面的文件名 → #shelf 那本书的 data-cover
+//   assets/photos/photos.json         做旧过的真实照片 → 照片墙（js/room.js 读）
+// 个人模式默认关着：本地预览和公开的 GitHub 版一模一样（全是样例），不会一半真一半假。
+// 网址加 ?personal，或者 <html data-personal>（个人网站的构建脚本会加上）才打开。
 // 3D 场景等这几样换好了再读内容层
-const local = (path, as) => fetch(new URL(path, import.meta.url), { cache: 'no-cache' })
-  .then((r) => (r.ok ? r[as]() : null)).catch(() => null);
+const PERSONAL = new URLSearchParams(location.search).has('personal') || document.documentElement.hasAttribute('data-personal');
+const local = (path, as) => (PERSONAL ? fetch(new URL(path, import.meta.url), { cache: 'no-cache' })
+  .then((r) => (r.ok ? r[as]() : null)).catch(() => null) : Promise.resolve(null));
 const personal = Promise.all([
   local('../assets/resume/resume.html', 'text').then((html) => {
     const deck = document.querySelector('#resume .cv-deck');
@@ -85,6 +89,6 @@ if (mode !== 'room') {
   // 没配曲目（js/music-tracks.js 是空的）就不放播放器，唱机上的唱片空着
   const music = MUSIC_TRACKS.length ? createMusicPlayer({ vinyl: true, collapsed: true, lang: 'en' }) : null; // 唱片卡片收着，点唱机才打开；界面英文
   import('./room.js')
-    .then((m) => personal.then(() => m.start(readContent(), { nav, music, achievements })))
+    .then((m) => personal.then(() => m.start(readContent(), { nav, music, achievements, personal: PERSONAL })))
     .catch((err) => { music?.destroy(); console.error('3D 房间加载失败，改用静态版', err); plain(); });
 }

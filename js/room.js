@@ -11,7 +11,7 @@
 //   - 成就（js/achievements.js）：第一次拿起简历、走到书架、凑近软木板，右下角弹成就卡片、导航栏打开那一项
 //   - 点台灯 / 落地灯开关灯（切的是烘焙好的光照层的系数，不重新算光）
 //   - 悬停高亮：热点盒子来自 manifest，着色器把盒子里的像素提亮
-//   - 墙上的撕页日历显示今天的日期（js/calendar.js 画纸页）
+//   - 书桌上的木头万年历拨到今天的日期，点它会拨乱再拨回来（js/deskcal.js）
 //   - Bloom 辉光 + 整体滤镜（js/grade.js：默认"电影感"：暖色的晕、横向光丝、跟着镜头对焦的景深；?look=名字 选预设，?looks 显示切换按钮）；
 //     帧率太低先降分辨率，再不行就关掉辉光和景深
 import * as THREE from 'three';
@@ -21,7 +21,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { TV } from './tv.js';
 import { PCScreen } from './pc.js';
 import { paintNote } from './paint.js';
-import { paintCalendar } from './calendar.js';
+import { createDeskCalendar } from './deskcal.js';
 import { BakedRoom, loadBaked, tvLight } from './baked.js';
 import { CameraPass, GradePass, StreakPass, lookPicker } from './grade.js';
 import { createTurntable } from './turntable.js';
@@ -30,6 +30,7 @@ import { createPhotos } from './photos.js';
 import { dressSleeves, joinSleeves } from './sleeves.js';
 import { createWindowView } from './window-view.js';
 import { createResumeViewer } from './resume.js';
+import { sfx } from './sfx.js';
 
 const BASE = new URL('../assets/baked/', import.meta.url).href;
 const $ = (id) => document.getElementById(id);
@@ -43,7 +44,7 @@ const ROUTES = ['about', 'resume', 'work', 'shelf', 'photos', 'online'];
 // 界面文字用英文（书架上的书是中文内容，书名、作者照旧）
 const HINTS = { about: 'Computer · About me', resume: 'Printed pages · Résumé', work: 'TV · Work', shelf: 'Bookshelf · Reading list', photos: 'Cork board · Photos', online: 'Notepad · Contact' };
 
-export async function start(content, { nav = null, music = null, achievements = null } = {}) {
+export async function start(content, { nav = null, music = null, achievements = null, personal = false } = {}) {
   const { tapes, books = [], links } = content;
   const N = tapes.length;
   $('room').hidden = false;
@@ -86,6 +87,39 @@ export async function start(content, { nav = null, music = null, achievements = 
   const data = await loadBaked(BASE, { onProgress: (k) => progress(k * 0.95) });
   const room = new BakedRoom(data, { renderer, scene });
   const M = data.manifest;
+  // 左手边那面墙（画架和窗户之间）的海报和它下面几张打印的插图：烘焙时和墙一起打了光，贴图是空白的占位纸。
+  // 材质名 poster、poster_2… 就是 assets/posters/posters.json 里的键（blender/bake_room.py 的 POSTERS）。
+  // 公开版全部藏起来（墙和没贴东西时一样，热点也去掉）；个人模式下本地有 posters.json（不进 Git：封面、插图有版权）
+  // 就把做旧过的图（blender/age_poster.py）一张张换上去，鼠标停在上面显示它的名字
+  const posterKeys = [...room.byMat.keys()].filter((k) => /^poster(_\d+)?$/.test(k));
+  const tapeMeshes = [...(room.byMat.get('poster_tape') || []), ...(room.byMat.get('poster_tape_shadow') || [])]; // 四角的白胶带和它的影子
+  const posterHot = {}, posterTitles = {};
+  for (const k of posterKeys) {
+    for (const m of room.byMat.get(k)) m.visible = false;
+    posterHot[k] = room.hotspots[k];
+    delete room.hotspots[k];
+  }
+  for (const m of tapeMeshes) m.visible = false;
+  if (personal && posterKeys.length) {
+    fetch(new URL('../assets/posters/posters.json', import.meta.url), { cache: 'no-cache' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        for (const k of posterKeys) {
+          const p = j?.[k];
+          if (!p?.file) continue;
+          new THREE.TextureLoader().load(new URL('../assets/posters/' + p.file, import.meta.url).href, (tex) => {
+            tex.flipY = false; // 和 glTF 的贴图一样（UV 的 v 是倒过来的）
+            tex.colorSpace = THREE.SRGBColorSpace;
+            tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+            for (const m of room.byMat.get(k)) { m.material.uniforms.albedoMap.value = tex; m.visible = true; }
+            for (const m of tapeMeshes) m.visible = true;
+            posterTitles[k] = p.title || '';
+            if (posterHot[k]) room.hotspots[k] = posterHot[k];
+          });
+        }
+      })
+      .catch(() => {});
+  }
   // 窗外：动态的雨夜（城市全景 + 天空 + 雨，js/window-view.js）；下载占进度条的 95% → 99%
   const windowView = await createWindowView({ base: BASE, view: data.view, win: M.window, scene, camera, renderer, onProgress: (k) => progress(0.95 + k * 0.04) })
     .catch((err) => { console.warn('窗外的动态夜景加载失败', err); return null; });
@@ -115,20 +149,8 @@ export async function start(content, { nav = null, music = null, achievements = 
   noteTex.colorSpace = THREE.SRGBColorSpace;
   noteTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
   const contactNote = room.decal('notepad', noteTex);
-  // 墙上的撕页日历：纸页换成今天的日期（页面一直开着的话，过了零点自己翻一页）
-  if (M.calendar) {
-    const calTex = new THREE.CanvasTexture(paintCalendar());
-    calTex.colorSpace = THREE.SRGBColorSpace;
-    calTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
-    for (const m of room.byMat.get(M.calendar.page) || []) m.material.uniforms.albedoMap.value = calTex;
-    let today = new Date().toDateString();
-    setInterval(() => {
-      if (new Date().toDateString() === today) return;
-      today = new Date().toDateString();
-      paintCalendar(new Date(), calTex.image);
-      calTex.needsUpdate = true;
-    }, 60_000);
-  }
+  // 书桌上的木头万年历：数字方块、星期滚筒、月份条拆出来，拨到今天（过了零点自己翻）
+  const deskCal = createDeskCalendar(room);
 
   // ---------- 录像带：从房间里拆出来，可以单独移动 ----------
   // 录像机跟着电视推车绕 Y 轴转了 yaw：它的正前方是 vcrFwd，带子平躺以后也跟着转同样的角度
@@ -199,14 +221,14 @@ export async function start(content, { nav = null, music = null, achievements = 
     loaded = i;
     tv.stop();
     phys.forEach((t, k) => { if (t && k !== prev && k !== i && t.state !== 'rack') settle(k); }); // 连点好几盘时，半路的都先归位
-    const play = () => { if (loaded === i) { tv.play(tapes[i]); renderPanel(); } };
+    const play = () => { if (loaded === i) { sfx.play('tv-static', { gain: 0.35, dur: 0.4 }); tv.play(tapes[i]); renderPanel(); } }; // 开机一下雪花
     const load = () => {
       const t = phys[i];
       if (!t || t.state === 'in') return play(); // 架子上放不下的作品：没有实物，直接播
       if (!animate) { inside(i); return play(); }
       settle(i);
       t.state = 'flying';
-      tween(t, 1.25, (k) => placeTape(t, k), () => { inside(i); play(); });
+      tween(t, 1.25, (k) => placeTape(t, k), () => { inside(i); sfx.play('tape-latch'); play(); }); // 塞进录像机：咔
     };
     const p = prev != null && prev !== i ? phys[prev] : null;
     if (p && p.state === 'in' && animate) {
@@ -272,10 +294,10 @@ export async function start(content, { nav = null, music = null, achievements = 
   }
 
   // ---------- 照片墙（js/photos.js）----------
-  // 照片墙：本地有做旧过的真实照片（assets/photos/photos.json，不进 Git）就用它们，没有就用 index.html 里的占位照片
+  // 照片墙：个人模式（见 main.js）下本地有做旧过的真实照片（assets/photos/photos.json，不进 Git）就用它们，没有就用 index.html 里的占位照片
   let photoWall = null;
-  fetch(new URL('../assets/photos/photos.json', import.meta.url), { cache: 'no-cache' })
-    .then((r) => (r.ok ? r.json() : null)).catch(() => null)
+  (personal ? fetch(new URL('../assets/photos/photos.json', import.meta.url), { cache: 'no-cache' })
+    .then((r) => (r.ok ? r.json() : null)).catch(() => null) : Promise.resolve(null))
     .then((local) => {
       photoWall = createPhotos({ room, scene, photos: local?.photos?.length ? local.photos : content.photos || [] });
       if (view === 'photos') renderPanel();
@@ -393,7 +415,10 @@ export async function start(content, { nav = null, music = null, achievements = 
   const look = { yaw: C.yaw, pitch: C.pitch, dist: C.dist, yawT: C.yaw, pitchT: C.pitch, distT: C.dist };
   // 往右转向唱机时镜头怎么跟着挪（见 homePose）：中心往右 33 厘米、往前 28 厘米、低 8 厘米，拉远 22 厘米，多低一点头
   // （在浏览器里比过几组，这组唱机整个露出来、挂钟和照片墙也还在画面里）；__room.turn 可以现场调
-  const TURN = { record: { dx: 0.33, dz: 0.28, dy: -0.08, back: 0.22, tilt: -0.12 } };
+  // 往左转：中心往左挪 1.35 米、往后 9 厘米、低 20 厘米，拉近 25 厘米，多低一点头——镜头像是走到书桌左前方，
+  // 转的途中先经过左墙的书柜，转到头时正对左后墙角画架上的画（书柜在左墙上，只绕着电脑转的话书柜和墙角都在画面外）
+  const TURN = { record: { dx: 0.33, dz: 0.28, dy: -0.08, back: 0.22, tilt: -0.12 },
+    shelf: { dx: -1.35, dz: -0.09, dy: -0.2, back: -0.25, tilt: -0.07 } };
   const par = new THREE.Vector2(), parT = new THREE.Vector2(); // 鼠标视差
   const pose = () => ({ pos: new THREE.Vector3(), yaw: 0, pitch: 0, fov: C.fov });
   const cur = pose(), goal = pose();
@@ -425,17 +450,16 @@ export async function start(content, { nav = null, music = null, achievements = 
     out.fov = THREE.MathUtils.radToDeg(2 * Math.atan(tanV));
     center.copy(center0);
     center.x += (pcPos.x - center.x) * narrow;
-    // 往左转向书柜（yaw > 0）：转的中心跟着往左挪 15 厘米、镜头往后拉一点，书柜整个转进画面、书大一点好点；
-    // 往右转向矮柜上的唱机（yaw < 0）：中心往右前方挪、镜头往后拉一点、稍微低头，唱机整个转进画面。
+    // 往左转向左墙的书柜（yaw > 0）、往右转向矮柜上的唱机（yaw < 0）：转的中心、距离、低头按 TURN 跟着挪，转到头时整个转进画面。
     // 正对电脑的开场构图不变（正前方 ±3° 以内不动），转回来就复原。竖屏手机有自己的构图，不加
-    const shelfTurn = smooth(0.05, 0.6, look.yaw) * (1 - narrow);
+    const shelfTurn = smooth(0.05, C.yawRange[1], look.yaw) * (1 - narrow);
     const recordTurn = smooth(-0.05, -0.75, look.yaw) * (1 - narrow);
-    const T = TURN.record;
-    center.x += -0.15 * shelfTurn + T.dx * recordTurn;
-    center.z += T.dz * recordTurn;
-    center.y += T.dy * recordTurn;
-    return orbitPose(out, center, look.yaw, look.pitch + T.tilt * recordTurn,
-      look.dist * (1 - 0.32 * narrow) + 0.18 * shelfTurn + T.back * recordTurn);
+    const R = TURN.record, S = TURN.shelf;
+    center.x += S.dx * shelfTurn + R.dx * recordTurn;
+    center.z += S.dz * shelfTurn + R.dz * recordTurn;
+    center.y += S.dy * shelfTurn + R.dy * recordTurn;
+    return orbitPose(out, center, look.yaw, look.pitch + S.tilt * shelfTurn + R.tilt * recordTurn,
+      look.dist * (1 - 0.32 * narrow) + S.back * shelfTurn + R.back * recordTurn);
   }
   function covered() { // 面板挡住了多少像素：宽屏在右边，窄屏在下面；top 是顶部导航栏
     const top = nav?.height() ?? 0;
@@ -589,11 +613,19 @@ export async function start(content, { nav = null, music = null, achievements = 
   creditLink.textContent = 'Credits';
   creditLink.addEventListener('click', (e) => { e.preventDefault(); go('credits'); });
   help.append(' · ', creditLink);
+  // 声音开关：记在 localStorage（js/sfx.js）
+  const soundLink = document.createElement('a');
+  soundLink.href = '#';
+  const soundText = (on) => { soundLink.textContent = on ? 'Sound on' : 'Sound off'; soundLink.setAttribute('aria-pressed', String(on)); };
+  soundText(sfx.on);
+  soundLink.addEventListener('click', (e) => { e.preventDefault(); soundText(sfx.toggle()); });
+  help.append(' · ', soundLink);
 
   // ---------- 拾取：射线打到的第一个面 → 是录像带，还是在哪个热点盒子里 ----------
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
   const pickables = [room.root, ...screens, ...phys.filter(Boolean).map((t) => t.group), ...(shelfBooks?.groups || [])];
   if (turntable) pickables.push(turntable.group);
+  if (deskCal) pickables.push(...deskCal.groups);
   if (contactNote) pickables.push(contactNote);
   const shown = (o) => { for (; o; o = o.parent) if (!o.visible) return false; return true; };
   function pick(x, y) {
@@ -611,6 +643,7 @@ export async function start(content, { nav = null, music = null, achievements = 
           : { kind: 'online', key: 'online' };
       }
       if (music && hit.object.userData.recordPlayer) return { kind: 'music', key: 'music' };
+      if (hit.object.userData.deskCal) return { kind: 'calendar', key: 'calendar' };
       const ti = hit.object.userData.tape;
       if (ti != null) return { kind: 'tape', key: 'tape' + ti, i: ti };
       if (shelfBooks?.isRig(hit.object)) {
@@ -646,6 +679,9 @@ export async function start(content, { nav = null, music = null, achievements = 
       const L = resume?.langs()[paperLang(h.paper)];
       return L && resume.langs().length > 1 ? `Printed pages · Résumé (${L.label})` : HINTS.resume;
     }
+    if (h.kind === 'calendar') return deskCal ? `Calendar · ${deskCal.label()}` : '';
+    if (h.kind === 'art') return M.art?.title || ''; // 墙角画架上的画：只有提示（画名在 manifest.art），点了不跳转
+    if (/^poster/.test(h.kind)) return posterTitles[h.kind] || ''; // 墙上的海报、插图（个人模式）：只有提示
     if (h.kind === 'lamp') return light.lampT ? 'Desk lamp · Turn off' : 'Desk lamp · Turn on';
     if (h.kind === 'room') return light.roomT ? 'Room light · Turn off' : 'Room light · Turn on';
     if (h.kind === 'about' && view === 'about') return pc.hintAt(h.uv);
@@ -695,11 +731,13 @@ export async function start(content, { nav = null, music = null, achievements = 
     else if (h.kind === 'book') openBook(h.i);
     else if (h.kind === 'tape') { insertTape(h.i); go('work'); }
     else if (h.kind === 'music') { if (music?.toggleCard) music.toggleCard(); else music?.toggle(); } // 点唱机：打开 / 收起唱片卡片
-    else if (h.kind === 'lamp') light.lampT = light.lampT ? 0 : 1;
-    else if (h.kind === 'room') light.roomT = light.roomT ? 0 : 1;
+    else if (h.kind === 'calendar') deskCal?.shuffle();
+    else if (h.kind === 'art' || /^poster/.test(h.kind)) return;
+    else if (h.kind === 'lamp') { light.lampT = light.lampT ? 0 : 1; sfx.play('switch'); }
+    else if (h.kind === 'room') { light.roomT = light.roomT ? 0 : 1; sfx.play('switch', { rate: 0.85 }); }
     else if (h.kind === 'about' && view === 'about') pc.click(h.uv);
     else if (h.kind === 'resume') openResume(h.paper ?? paperBoxes.length - 1);
-    else if (h.tvScreen) tv.run?.seek?.(1);
+    else if (h.tvScreen) { tv.run?.seek?.(1); sfx.play('tv-glitch'); sfx.play('tv-static', { gain: 0.25, dur: 0.25 }); }
     else if (h.kind !== view) go(h.kind);
     if (mouse) setHover(pick(x, y), x, y);
   }
@@ -797,7 +835,7 @@ export async function start(content, { nav = null, music = null, achievements = 
     if (view === 'shelf' && shelfBooks?.current() != null && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) cmd(e.key === 'ArrowRight' ? 'read-next' : 'read-prev');
     else if (view === 'work' && e.key === 'ArrowRight') cmd('next');
     else if (view === 'work' && e.key === 'ArrowLeft') cmd('prev');
-    else if (view === 'work' && (e.key === 'ArrowDown' || e.key === 'ArrowUp') && tv.run?.seek) { e.preventDefault(); tv.run.seek(e.key === 'ArrowDown' ? 1 : -1); } // 节目带：换章
+    else if (view === 'work' && (e.key === 'ArrowDown' || e.key === 'ArrowUp') && tv.run?.seek) { e.preventDefault(); tv.run.seek(e.key === 'ArrowDown' ? 1 : -1); sfx.play('tv-glitch'); } // 节目带：换章
     else if (view === 'work' && e.key === ' ') { e.preventDefault(); cmd('stop'); }
   });
 
@@ -841,6 +879,8 @@ export async function start(content, { nav = null, music = null, achievements = 
     else if (tv.run && tv.run.passes > autoplay.passes && N > 1) { autoplay.passes = tv.run.passes; insertTape((loaded ?? 0) + 1); }
     pc.update(t, dt);
     turntable?.update(dt, music?.playing, music?.track);
+    sfx.mix({ tv: !tv.run ? 0 : view === 'work' ? 1 : 0.35, record: !!music?.playing }); // 电视放节目：低低的背景音乐（点进电视时大一点）；唱机放歌时让开
+    deskCal?.update(dt);
     if (hover?.kind === 'music' && hintEl.classList.contains('show')) {
       const text = hintText(hover);
       if (hintEl.textContent !== text) hintEl.textContent = text;

@@ -104,12 +104,12 @@ function cityMaterial(map, data, pano, near) {
             vec4 q = texture2D(dataMap, vUv + vec2(float(i), float(j)) * texel);
             if (q.b > 0.1 || q.r < 0.5) continue;
             float id = q.g;
-            float per = 22.0 + id * 47.0;
+            float per = 40.0 + id * 80.0;
             float k = floor(time / per + id * 13.7);
-            off = max(off, step(hash1(k * 17.31 + id * 911.7), 0.07));    // 每隔几十秒，约 7% 的窗关灯（下一轮又亮）
-            if (id < 0.035) { tv = 1.0; tvId = id; }                       // 个别窗里是电视：蓝光一闪一闪
+            off = max(off, step(hash1(k * 17.31 + id * 911.7), 0.02));    // 每隔一两分钟，约 2% 的窗关灯（下一轮又亮）：偶尔有一盏灭了
+            if (id < 0.008) { tv = 1.0; tvId = id; }                       // 极个别的窗里是电视：蓝光微微晃
           }
-          vec3 tvc = vec3(0.55, 0.78, 1.3) * (0.75 + 0.25 * sin(time * 9.0 + tvId * 300.0) * sin(time * 2.3 + tvId * 50.0));
+          vec3 tvc = vec3(0.6, 0.78, 1.2) * (0.85 + 0.15 * sin(time * 5.0 + tvId * 300.0) * sin(time * 1.3 + tvId * 50.0));
           col = mix(col, col * tvc, tv);
           col *= mix(1.0, 0.08, off);
         }
@@ -224,16 +224,22 @@ function carsMesh(pano, nearMap, nearData, farData) {
 }
 
 // ---------- 天空 ----------
-function skyMaterial(moonDir) {
+// skyOpt（view.json 的 sky）：cover = 云量（0…1）；urban = 1 时是大城市下雨的夜空：没有银河、星星只剩零星几颗，
+// 低云被城市的灯映成暖灰色（真实的东京夜里看到的就是这样）；不写就是原来的星空 + 一半薄云
+function skyMaterial(moonDir, skyOpt = {}) {
   return new THREE.ShaderMaterial({
     side: THREE.BackSide, depthWrite: false,
-    uniforms: { time: { value: 0 }, moonDir: { value: moonDir }, skyRot: { value: new THREE.Matrix3() }, cover: { value: 0.55 } },
+    uniforms: {
+      time: { value: 0 }, moonDir: { value: moonDir }, skyRot: { value: new THREE.Matrix3() },
+      cover: { value: skyOpt.cover ?? 0.55 }, urban: { value: skyOpt.urban ?? 0 },
+      horizon: { value: new THREE.Vector3(...(skyOpt.horizon || [0.04, 0.023, 0.051])) }, // 线性 RGB：和渲染里远处的雾同一个颜色
+    },
     vertexShader: /* glsl */ `
       varying vec3 vDir;
       void main() { vDir = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
     fragmentShader: /* glsl */ `
-      uniform float time, cover;
-      uniform vec3 moonDir;
+      uniform float time, cover, urban;
+      uniform vec3 moonDir, horizon;
       uniform mat3 skyRot;
       varying vec3 vDir;
       ${NOISE}
@@ -257,8 +263,11 @@ function skyMaterial(moonDir) {
         // 底色：和 Blender 里原来的天空同一条渐变（地平线的城市光雾 → 深蓝 → 几乎黑）
         float t = clamp((alt + 0.02) / 0.62, 0.0, 1.0);
         vec3 c0 = lin(vec3(0.227, 0.165, 0.251)), c1 = lin(vec3(0.173, 0.137, 0.314)), c2 = lin(vec3(0.063, 0.086, 0.227)), c3 = lin(vec3(0.016, 0.024, 0.059));
+        if (urban > 0.5) {                                              // 城市的雨夜：青灰，地平线最亮（和远处的雾接上）
+          c0 = horizon; c1 = horizon * 0.72; c2 = horizon * 0.42; c3 = horizon * 0.25;
+        }
         vec3 sky = t < 0.05 ? mix(c0, c1, t / 0.05) : t < 0.25 ? mix(c1, c2, (t - 0.05) / 0.2) : mix(c2, c3, (t - 0.25) / 0.75);
-        sky += lin(vec3(1.0, 0.55, 0.3)) * 0.05 * exp(-max(alt, 0.0) / 0.06);   // 地平线上城市的光污染
+        sky += lin(vec3(1.0, 0.55, 0.3)) * 0.05 * exp(-max(alt, 0.0) / 0.06) * (1.0 - urban);   // 地平线上城市的光污染
         // 星空、银河：在转动的坐标里算（skyRot 每帧绕天极转一点 = 星河流转）
         vec3 sd = skyRot * d;
         vec3 nmw = normalize(vec3(0.82, 0.55, 0.12));                    // 银河所在大圆的法线
@@ -272,13 +281,15 @@ function skyMaterial(moonDir) {
           milky = mix(vec3(0.5, 0.58, 0.85), vec3(1.0, 0.86, 0.68), smoothstep(0.4, 0.75, st)) * mw * 0.055;
         }
         vec3 starry = stars(sd, 170.0, 0.22 + 0.35 * band, 2.2) + stars(sd, 85.0, 0.1, 3.5) + stars(sd, 340.0, 0.3 * band, 1.2);
+        milky *= 1.0 - urban;                                            // 城市的光污染：银河看不见
+        starry *= mix(1.0, 0.12, urban);                                 // 星星只剩最亮的几颗
         float ext = smoothstep(0.0, 0.22, alt);                          // 地平线附近被雾吃掉
         vec3 night = sky + (milky + starry) * ext;
         // 月亮：一直隔着一层薄云——不是一个刺眼的亮点，而是云后面一团柔和的光（亮度在辉光阈值以下，不会被放大成一大片）
         float md = dot(d, moonDir);
         float ang = acos(clamp(md, -1.0, 1.0));                         // 离月亮多少弧度
         float disc = smoothstep(0.0135, 0.0085, ang);                    // 月面：半径约 0.6°，边缘是虚的
-        night += vec3(1.0, 0.95, 0.85) * disc * 0.45 + vec3(0.5, 0.56, 0.78) * (exp(-ang / 0.05) * 0.05 + exp(-ang / 0.22) * 0.012);
+        night += (vec3(1.0, 0.95, 0.85) * disc * 0.45 + vec3(0.5, 0.56, 0.78) * (exp(-ang / 0.05) * 0.05 + exp(-ang / 0.22) * 0.012)) * (1.0 - 0.85 * urban); // 城市的雨夜：月亮藏在厚云后面
         // 云：两层薄云往一个方向飘，底部被城市映成暖色；覆盖一半左右，缝里露出星星和月亮
         if (alt > 0.0) {
           vec2 p = d.xz / (alt + 0.12);
@@ -288,10 +299,13 @@ function skyMaterial(moonDir) {
           cov = max(cov, 0.5 * exp(-ang / 0.18));                          // 月亮前面总有一层薄云
           cov = clamp(cov, 0.0, 0.96) * smoothstep(0.0, 0.05, alt);
           vec3 cc = mix(lin(vec3(0.16, 0.1, 0.09)), lin(vec3(0.38, 0.2, 0.13)), exp(-alt / 0.2)) * 0.6;
+          // 城市上空的低云：被街灯、楼的灯从下面映成暖灰（越靠近地平线越亮），云底有深浅的起伏
+          vec3 cu = mix(horizon * 0.5, horizon * 1.05 + lin(vec3(0.06, 0.045, 0.035)), exp(-alt / 0.3)) * (0.72 + 0.56 * c2);
+          cc = mix(cc, cu, urban);
           cc += vec3(0.07, 0.075, 0.095) * exp(-ang / 0.16);               // 月亮旁边的云被照亮：一圈柔和的光
           night = mix(night, cc, cov);
         } else {
-          night = c0 * 0.6;
+          night = c0 * mix(0.6, 1.0, urban);
         }
         gl_FragColor = vec4(night, 1.0);
       }`,
@@ -393,7 +407,7 @@ export async function createWindowView({ base, view, win, scene, camera, rendere
 
   // 天空：以镜头为中心（无穷远，镜头平移它不动），画在房间之后、城市之前
   const moonDir = new THREE.Vector3(...moon).normalize();
-  const skyMat = skyMaterial(moonDir);
+  const skyMat = skyMaterial(moonDir, view.sky || {});
   const sky = new THREE.Mesh(new THREE.SphereGeometry(90, 48, 24), skyMat);
   sky.renderOrder = 1;
   sky.frustumCulled = false;

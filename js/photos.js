@@ -5,6 +5,7 @@
 //     下次来还是这样；面板里"摆回原样"清掉
 //   - 板面的中心、大小、朝向来自 manifest.photos（烘焙脚本量的）。这些是后加的面片，没有烘焙光照：亮度跟着屋里的灯走
 import * as THREE from 'three';
+import { sfx } from './sfx.js';
 
 const rnd = (seed) => () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
 const hash = (s) => { let h = 2166136261; for (const ch of s) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return (h >>> 0) % 2147483646 + 1; };
@@ -211,6 +212,7 @@ export function createPhotos({ room, scene, photos = [] }) {
       const it = pickOne(ray), p = it && local(ray);
       if (!p) return false;
       held = { it, dx: it.x - p.x, dy: it.y - p.y };
+      sfx.play('paper', { gain: 0.4, rate: 1.2, dur: 0.35 });
       it.order = items.length;
       it.liftT = 1;
       restack();
@@ -226,6 +228,7 @@ export function createPhotos({ room, scene, photos = [] }) {
     },
     drop() {
       if (!held) return;
+      sfx.play('photo-pin');
       held.it.liftT = 0;
       held = null;
       save();

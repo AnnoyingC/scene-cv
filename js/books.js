@@ -8,6 +8,7 @@
 //     左页（封面的里侧）= 读书状态 + 这本书的代表句，右页起是划线（第一页撑满，划线少的书下面印一张阅读卡），一页放不下就翻页
 //   - 合上：倒着放一遍，飞回书架
 import * as THREE from 'three';
+import { sfx } from './sfx.js';
 
 const COVERS = new URL('../assets/books/covers/', import.meta.url).href;
 const FONT = {
@@ -590,6 +591,10 @@ export function createBooks({ room, scene, camera, books, frame = () => ({ w: 0,
   const M = room.manifest.books;
   if (!M) return null;
   const entries = [];
+  // 书柜朝向（绕 Y 轴）：书往 OUT 方向抽出来；书自己的朝向是 SHELF_ROT（旧的 manifest 没有 yaw = 正面朝 +z）
+  const yaw = M.yaw ?? 0;
+  const OUT = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
+  const SHELF_ROT = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
   const loadImg = (src) => new Promise((ok) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = src; });
 
   // 书架上的每本书：拆出来、换上画好的书皮
@@ -626,7 +631,7 @@ export function createBooks({ room, scene, camera, books, frame = () => ({ w: 0,
     }
   }
   for (const e of entries) {
-    e.homeRot ||= new THREE.Quaternion();
+    e.homeRot ||= SHELF_ROT.clone();
     e.pull = 0; e.pullT = 0;
     e.state = 'shelf';
     for (const m of e.parts) m.userData.book = e.i;
@@ -665,6 +670,7 @@ export function createBooks({ room, scene, camera, books, frame = () => ({ w: 0,
   }
 
   function startOpen(e) {
+    sfx.play('book-place', { gain: 0.45, rate: 1.1 }); // 从书架上抽出来
     cur = e;
     e.state = 'out';
     e.t = 0;
@@ -702,6 +708,7 @@ export function createBooks({ room, scene, camera, books, frame = () => ({ w: 0,
   // 往前翻：倒过来，翻页纸从左边翻回右边。翻完把左页 / 右页的贴图换好，收起翻页纸
   const FLIP = 0.8;
   function startFlip(e, d) {
+    sfx.play('book-flip', { gain: 0.8 });
     const s = e.spread, to = s + d;
     if (d > 0) {
       rig.leafF.map = pageTex(2 * s + 1);
@@ -765,7 +772,7 @@ export function createBooks({ room, scene, camera, books, frame = () => ({ w: 0,
       if (e.state === 'shelf') {
         e.pull += (e.pullT - e.pull) * (1 - Math.exp(-dt * 12));
         e.group.position.copy(e.home);
-        e.group.position.z += e.pull * 0.022;
+        e.group.position.addScaledVector(OUT, e.pull * 0.022);
         for (const m of e.parts) m.material.uniforms.hi.value = e.pull * 0.5;
       }
     }
@@ -773,7 +780,7 @@ export function createBooks({ room, scene, camera, books, frame = () => ({ w: 0,
     const e = cur;
     e.t += dt;
     const outPos = tmp2.copy(e.home);
-    outPos.z += e.dims[0] * 0.8;
+    outPos.addScaledVector(OUT, e.dims[0] * 0.8);
     // 拆出来的组在书架上没有旋转，书自己的朝向是 homeRot：组要转到 qTarget · homeRot⁻¹，书才是 qTarget
     const qFly = (k) => { qGoal.copy(e.homeRot).invert().premultiply(qTarget); e.group.quaternion.slerpQuaternions(qId, qGoal, k); };
     switch (e.state) {
@@ -792,7 +799,7 @@ export function createBooks({ room, scene, camera, books, frame = () => ({ w: 0,
         follow(e);
         placeLight();
         fade(e, smooth(0.12, 0.45, k));
-        if (k >= 1) { e.state = 'open'; e.t = 0; }
+        if (k >= 1) { e.state = 'open'; e.t = 0; sfx.play('book-open'); }
         break;
       }
       case 'open':
@@ -830,6 +837,7 @@ export function createBooks({ room, scene, camera, books, frame = () => ({ w: 0,
         e.group.quaternion.identity();
         if (k >= 1) {
           e.state = 'shelf'; e.pull = 0; e.pullT = 0;
+          sfx.play('book-place', { gain: 0.8 });
           cur = null;
           const q = queued;
           queued = null;
@@ -876,6 +884,7 @@ export function createBooks({ room, scene, camera, books, frame = () => ({ w: 0,
         if (e.flip) finishFlip(e);
         e.flipQueue = 0;
         e.closeFrom = e.openK || 0; e.state = 'close'; e.t = 0;
+        sfx.play('book-close', { delay: 0.35 });
       }
     },
     step(d) {

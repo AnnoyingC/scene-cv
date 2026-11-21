@@ -91,7 +91,12 @@ const LensShader = {
     uniform vec3 wb;
     varying vec2 vUv;
     float depthAt(vec2 uv) { return -perspectiveDepthToViewZ(texture2D(tDepth, uv).x, near, far); }
-    float cocAt(float z) { return min(maxR, cocK * abs(1.0 / focus - 1.0 / z)); }
+    // 窗外（5 米以外：城市全景、天空）只留一点点虚：照着真实光圈它会糊成一片，窗景的细节就看不清了。
+    // 近景层（10 米的球面）最多 0.9 个 CSS 像素、远景层和天空（40 米以外）最多 1.8 个：近处清楚、远处柔，更有远近感
+    float cocAt(float z) {
+      float cap = min(maxR, 0.9 + 0.9 * smoothstep(12.0, 35.0, z));
+      return min(mix(maxR, cap, smoothstep(5.0, 8.0, z)), cocK * abs(1.0 / focus - 1.0 / z));
+    }
     void main() {
       vec3 c = textureLod(tColor, vUv, 0.0).rgb;
       if (maxR > 0.5) {

@@ -1,4 +1,5 @@
-// 生成 index.html 里 #credits 的素材列表：书桌房间用到的第三方素材（assets/baked/manifest.json 的 vendor），
+// 生成 index.html 里 #credits 的素材列表：书桌房间用到的第三方素材（assets/baked/manifest.json 的 vendor）、
+// 窗外夜景用到的数据和素材（assets/baked/view.json 的 vendor：地图数据、3D 城市模型、照片、字体），
 // 作者、原作链接、许可和改动说明都来自 assets/vendor/credits.json。CC BY 要求署名并注明改动，所以每一项都写上。
 // 用法：node scripts/credits_html.mjs          改写 index.html 里 <!-- credits:begin --> 和 <!-- credits:end --> 之间的部分
 //       node scripts/credits_html.mjs --check  只检查是不是最新的，不是就以退出码 1 结束（tests/credits.test.mjs 也会查）
@@ -11,13 +12,24 @@ const INDEX = new URL('index.html', ROOT);
 export const BEGIN = '<!-- credits:begin -->';
 export const END = '<!-- credits:end -->';
 // 允许的许可：只收能再分发、能改的；NC（禁止商用）、ND（禁止改编）都不收
-export const LICENSES = { 'CC-BY-4.0': 'CC BY 4.0', 'CC0-1.0': 'CC0 1.0' };
+//   ODbL：OpenStreetMap 的数据（渲染出的图是 Produced Work，注明出处即可）；PLATEAU-TOU：日本政府标准利用规约 2.0（和 CC BY 4.0 兼容）；
+//   OFL：字体（只用来画招牌，字体文件不分发）
+export const LICENSES = {
+  'CC-BY-4.0': 'CC BY 4.0', 'CC0-1.0': 'CC0 1.0', 'ODbL-1.0': 'ODbL 1.0', 'PLATEAU-TOU': 'Gov. of Japan Standard Terms of Use 2.0', 'OFL-1.1': 'SIL OFL 1.1',
+};
+// 每种许可的条款页应该在哪个网站（tests/credits.test.mjs 查）
+export const LICENSE_HOSTS = {
+  'CC-BY-4.0': 'creativecommons.org', 'CC0-1.0': 'creativecommons.org', 'ODbL-1.0': 'opendatacommons.org', 'PLATEAU-TOU': 'www.mlit.go.jp', 'OFL-1.1': 'openfontlicense.org',
+};
+// 需要署名、注明改动的许可排在前面
+const ATTRIBUTION = new Set(['CC-BY-4.0', 'ODbL-1.0', 'PLATEAU-TOU']);
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const readJson = (p) => JSON.parse(readFileSync(new URL(p, ROOT), 'utf8'));
 
 export function roomInputs() {
-  return { credits: readJson('assets/vendor/credits.json'), vendor: readJson('assets/baked/manifest.json').vendor || [] };
+  const room = readJson('assets/baked/manifest.json').vendor || [], view = readJson('assets/baked/view.json').vendor || [];
+  return { credits: readJson('assets/vendor/credits.json'), vendor: [...room, ...view.filter((id) => !room.includes(id))] };
 }
 
 // changes 开头的"怀旧房间书桌上的电脑："是摆在哪儿，列表里已经有名字了，只留后面的改动
@@ -32,14 +44,14 @@ export function render({ credits, vendor }) {
     return a;
   });
   // 需要署名的（CC BY）排前面，同一种许可里按房间清单的顺序
-  used.sort((a, b) => Number(a.license !== 'CC-BY-4.0') - Number(b.license !== 'CC-BY-4.0'));
+  used.sort((a, b) => Number(!ATTRIBUTION.has(a.license)) - Number(!ATTRIBUTION.has(b.license)));
   const items = used.map((a) => {
     const by = [(a.authors || []).join(', '), a.source].filter(Boolean).join(' · ');
     const lic = a.licenseUrl ? `<a class="lic" href="${esc(a.licenseUrl)}">${LICENSES[a.license]}</a>` : `<span class="lic">${LICENSES[a.license]}</span>`;
     // 界面是英文：列表里写原作的英文名；CC BY 要注明改了什么，具体的改动（中文）在 credits.json 的 changes 里
     const changes = changeText(a);
     return `      <li><a href="${esc(a.url)}">${esc(a.title || a.zh)}</a> <span class="by">${esc(by)}</span> ${lic}`
-      + (changes ? '\n        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p>' : '') + '</li>';
+      + (a.note ? `\n        <p>${esc(a.note)}</p>` : changes ? '\n        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p>' : '') + '</li>';
   });
   return `${BEGIN}\n    <ul class="credit-list">\n${items.join('\n')}\n    </ul>\n    ${END}`;
 }

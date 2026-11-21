@@ -6,6 +6,7 @@
 //   - 纸在屏幕上太小就点一下凑近读（整页可以滚动），再点一下或 Esc 拿远；点纸外面 = 放回桌上
 // 纸的内容是 index.html #resume 里的 .cv-page（js/main.js 可能已经换成本地的真实简历），打开时复制一份，
 // 排成固定的 794 × 1123（A4 @ 96 dpi）；一栏的字放不下就把 --fit 往小调一点（最多缩到 0.8）。
+import { sfx } from './sfx.js';
 const A4W = 794, A4H = 1123;
 const ROT = [-1.7, 2.3, -2.8, 1.5, -1.1]; // 第 i 张纸压在底下时歪的角度（度）
 const EASE = { out: 'cubic-bezier(.45,0,.9,.55)', in: 'cubic-bezier(.12,.75,.25,1)', soft: 'cubic-bezier(.2,.75,.25,1)' };
@@ -240,6 +241,7 @@ export function createResumeViewer({ pages, top = () => 0, onClose, onTurn }) {
   function open(i = 0, from = null) {
     build();
     if (!sheets.length) return false;
+    sfx.play('paper');
     stopAll();
     closing = null;
     shown = true;
@@ -268,6 +270,7 @@ export function createResumeViewer({ pages, top = () => 0, onClose, onTurn }) {
   function close(to = null) {
     if (!shown) return closing || Promise.resolve();
     shown = false;
+    sfx.play('paper', { gain: 0.6, rate: 1.1 });
     stopAll();
     el.classList.remove('is-open');
     el.classList.add('is-closing');

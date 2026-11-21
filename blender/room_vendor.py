@@ -341,6 +341,37 @@ def soften_dirt(img, amount=0.8, radius=0.006):
     print(f'[vendor] {img.name}: 减淡污渍 {amount}（半径 {r} px），改动了 {(k > 0.05).mean() * 100:.0f}% 的像素')
 
 
+def clean_plastic(img, brighten=1.05, keep=0.08):
+    """把旧塑料外壳洗干净：暖米色的像素（包括被弄脏、发暗的米色和画上去的大片阴影）都换成同一种干净的米色，
+    只留 keep 这么多原来的明暗；不是暖米色的（黑色、灰色金属、白标签）不动；又细又很暗的（散热孔、缝线）也不动。
+    干净的米色 = 米色像素里最亮的那一截的中位数，再提亮 brighten 倍。"""
+    w, h = img.size
+    a = np.empty(w * h * 4, dtype=np.float32)
+    img.pixels.foreach_get(a)
+    a = a.reshape(h, w, 4)
+    rgb = a[..., :3]
+    lum = np.array([0.2126, 0.7152, 0.0722], np.float32)
+    L = rgb @ lum
+    warm = (rgb[..., 0] - rgb[..., 2]) / np.maximum(rgb[..., 0], 1e-3)
+
+    def ss(x, e0, e1):
+        t = np.clip((x - e0) / (e1 - e0), 0, 1)
+        return t * t * (3 - 2 * t)
+    B, r = L, max(1, round(w * 0.004))
+    for _ in range(3):
+        B = _blur(B, r)
+    crisp = ss(B - L, 0.03, 0.08) * (1 - ss(L, 0.18, 0.3))   # 比周围明显暗、本身又很暗：散热孔、缝线
+    m = ss(warm, 0.07, 0.13) * ss(L, 0.06, 0.14) * (1 - crisp)
+    cand = m > 0.9
+    ref = np.median(rgb[cand][L[cand] > np.percentile(L[cand], 85)], axis=0) * brighten
+    clean = np.clip(ref, 0, 1) * (1 - keep + keep * np.clip(L / float(ref @ lum), 0, 1.3))[..., None]
+    rgb[:] = rgb * (1 - m[..., None]) + clean * m[..., None]
+    np.clip(rgb, 0, 1, out=rgb)
+    img.pixels.foreach_set(a.ravel())
+    img.update()
+    print(f'[vendor] {img.name}: 洗干净塑料，米色 {np.round(ref, 3)}，改动了 {(m > 0.5).mean() * 100:.0f}% 的像素')
+
+
 def world_points(obs):
     """物件的顶点（世界坐标，three）。"""
     return np.concatenate([_co3(o.data) for o in obs])

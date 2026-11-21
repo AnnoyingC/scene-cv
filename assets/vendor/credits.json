@@ -20,7 +20,7 @@
         "manual": true
       },
       "changes": [
-        "怀旧房间书桌上的电脑：放大到 1.1 倍摆在书桌正中；去掉从机身里长出来的草叶；鼠标拆出来缩小、挪到键盘右边，原来的鼠标线删掉、重新拉了一根；贴图缩到 2048 px、只保留底色贴图，污渍减淡；屏幕玻璃改成深色，上面叠网页画的实时画面；前面加了自己搭的键盘和键盘线；烘焙进房间光照"
+        "怀旧房间书桌上的电脑：放大到 1.1 倍摆在书桌正中；去掉从机身里长出来的草叶；鼠标拆出来缩小、挪到键盘右边，原来的鼠标线删掉、重新拉了一根；贴图缩到 2048 px、只保留底色贴图，米色外壳上的污渍和画上去的脏阴影洗成干净的米色；屏幕玻璃改成深色，上面叠网页画的实时画面；前面加了自己搭的键盘和键盘线；烘焙进房间光照"
       ]
     },
     {
@@ -244,6 +244,28 @@
       ]
     },
     {
+      "id": "sketchfab/wooden-perpetual-desk-calendar",
+      "source": "Sketchfab",
+      "title": "Wooden Perpetual Desk Calendar",
+      "zh": "木头万年历",
+      "authors": [
+        "3DLover89"
+      ],
+      "authorUrl": "https://sketchfab.com/3DLover89",
+      "url": "https://sketchfab.com/3d-models/wooden-perpetual-desk-calendar-8950bc735feb4e7e9a1260de2621ccd0",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "8950bc735feb4e7e9a1260de2621ccd0",
+        "format": "glb",
+        "textureMaxResolution": 1024,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间书桌上台灯前的万年历：放大到 1.25 倍、斜着朝镜头摆放；贴图缩到 1024 px；数字方块、星期滚筒、月份条各用一份材质，在网页里拆出来转到当天的日期（点它会拨乱再拨回）；转过的面改用烘焙时同方向那个面的光照；烘焙进房间光照"
+      ]
+    },
+    {
       "id": "sketchfab/cork-board",
       "source": "Sketchfab",
       "title": "Cork Board",
@@ -346,7 +368,7 @@
         "manual": true
       },
       "changes": [
-        "怀旧房间书桌左边的书柜：缩放到 0.85 倍（2.32 米高）靠后墙摆放；贴图缩到 2048 px、只保留底色贴图；格子里摆上旧书、自己搭的真书和摆件；烘焙进房间光照"
+        "怀旧房间左墙的书柜：缩放到 0.85 倍（2.32 米高）背靠左墙、和书桌错开摆放；贴图缩到 2048 px、只保留底色贴图；格子里摆上旧书、自己搭的真书和摆件；烘焙进房间光照"
       ]
     },
     {
@@ -369,6 +391,215 @@
       },
       "changes": [
         "怀旧房间书柜里的书：挑了其中几排和几本单本，缩到 0.82 倍，有的立着、有的横着摞；贴图缩到 512 px、只保留底色贴图；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "polyhaven/hessian_380",
+      "source": "Poly Haven",
+      "title": "Hessian 380",
+      "zh": "麻布（墙纸）",
+      "authors": [
+        "colormass",
+        "Rico Cilliers"
+      ],
+      "url": "https://polyhaven.com/a/hessian_380",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "fetch": {
+        "polyhaven": "hessian_380",
+        "res": "1k",
+        "format": "jpg",
+        "maps": [
+          "Diffuse"
+        ]
+      },
+      "changes": [
+        "怀旧房间四面墙的墙纸：只用底色贴图，调成暖白色、压低纹理对比，按真实大小（约 27 厘米一格）平铺；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "polyhaven/rough_linen",
+      "source": "Poly Haven",
+      "title": "Rough Linen",
+      "zh": "粗亚麻（窗帘）",
+      "authors": [
+        "colormass",
+        "Rico Cilliers"
+      ],
+      "url": "https://polyhaven.com/a/rough_linen",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "fetch": {
+        "polyhaven": "rough_linen",
+        "res": "1k",
+        "format": "jpg",
+        "maps": [
+          "Diffuse"
+        ]
+      },
+      "changes": [
+        "怀旧房间窗边的窗帘：只用底色贴图，去色后重新染成燕麦色，按真实大小平铺；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "sketchfab/classic-window",
+      "source": "Sketchfab",
+      "title": "Window",
+      "zh": "白色格子窗",
+      "authors": [
+        "JeanLescano"
+      ],
+      "authorUrl": "https://sketchfab.com/JeanLescano",
+      "url": "https://sketchfab.com/3d-models/window-7c34cb1c99544017a03119b566718399",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "7c34cb1c99544017a03119b566718399",
+        "format": "glb",
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间书桌后面的窗：转正、换成米制单位，横向拉长约 1.84 倍、竖向约 1.48 倍填满窗洞；玻璃换成淡灰蓝色的半透明玻璃（烘焙时透光）；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "polyhaven/fancy_picture_frame_02",
+      "source": "Poly Haven",
+      "title": "Fancy Picture Frame 02",
+      "zh": "金色雕花画框",
+      "authors": [
+        "Rob Tuytel",
+        "Rico Cilliers"
+      ],
+      "url": "https://polyhaven.com/a/fancy_picture_frame_02",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "fetch": {
+        "polyhaven": "fancy_picture_frame_02",
+        "res": "1k",
+        "format": "gltf"
+      },
+      "changes": [
+        "怀旧房间左后墙角画架上的画框：横放、缩到 0.72 倍，放在画室画架的托板上；画框里的画换成莫奈《印象·日出》（1872，公有领域；图片来自 Wikimedia Commons）；贴图缩到 1024 px、只保留底色贴图；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "sketchfab/easel-with-painting",
+      "source": "Sketchfab",
+      "title": "Easel | Мольберт | Easel with painting",
+      "zh": "画室画架",
+      "authors": [
+        "Every_3D"
+      ],
+      "authorUrl": "https://sketchfab.com/Every_3D",
+      "url": "https://sketchfab.com/3d-models/easel-easel-with-painting-449501e5ac704151b2f913649617dc7c",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "449501e5ac704151b2f913649617dc7c",
+        "format": "glb",
+        "textureMaxResolution": 4096,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间左后墙角的画架：只用三个画架里中间那个空画架；横向压到 0.72 倍、前后压到 0.6 倍；托板上放金色画框里的莫奈；贴图缩到 1024 px、只保留底色贴图；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "data/openstreetmap",
+      "source": "",
+      "title": "OpenStreetMap",
+      "zh": "OpenStreetMap 地图数据（窗外的楼、路、店、树）",
+      "authors": [
+        "OpenStreetMap contributors"
+      ],
+      "url": "https://www.openstreetmap.org/copyright",
+      "license": "ODbL-1.0",
+      "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
+      "note": "Map data © OpenStreetMap contributors. Used to place the buildings outside the window (beyond Minato City), the roads, street lights, trees, cafés and izakaya, and rendered into the night view.",
+      "changes": [
+        "窗外夜景：Overpass 下载东京塔一带的楼（轮廓、高度、层数）、道路（车道数、高架、隧道）、店铺、树木和公园；港区以外的楼、所有道路和街道细节按这些数据搭成 3D，渲染成窗外的全景图（渲染出的图属于 ODbL 的 Produced Work，注明出处即可）"
+      ]
+    },
+    {
+      "id": "data/plateau-minato-2023",
+      "source": "Project PLATEAU",
+      "title": "3D City Model (Project PLATEAU), Minato City, FY2023",
+      "zh": "3D都市モデル（Project PLATEAU）港区（2023年度）",
+      "authors": [
+        "Ministry of Land, Infrastructure, Transport and Tourism (MLIT), Japan"
+      ],
+      "url": "https://www.geospatial.jp/ckan/dataset/plateau-13103-minato-ku-2023",
+      "license": "PLATEAU-TOU",
+      "licenseUrl": "https://www.mlit.go.jp/plateau/site-policy/",
+      "note": "Source: MLIT 3D City Model (Project PLATEAU), Minato City (FY2023). Modified: buildings (LOD2 roof shapes, heights, uses, storeys) and terrain converted, relit as a rainy night and rendered into the view outside the window.",
+      "changes": [
+        "窗外夜景：CityGML 的建筑（LOD2 优先、没有就 LOD1）和地形转成网格（blender/plateau_prep.py），按用途和层数画窗、贴照片楼面，夜景灯光渲染成全景图；东京塔本身不用（程序搭的）"
+      ]
+    },
+    {
+      "id": "commons/roppongi-from-shibuya-stream",
+      "source": "Wikimedia Commons",
+      "title": "Roppongi at night seen from Shibuya Stream",
+      "zh": "东京夜景照片（窗外楼面的素材）",
+      "authors": [
+        "Syced"
+      ],
+      "url": "https://commons.wikimedia.org/wiki/File:Roppongi_at_night_seen_from_Shibuya_Stream.jpg",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "note": "Cut into facade swatches (blender/window_atlas.py) and used as window textures on distant buildings.",
+      "changes": [
+        "裁出正对着的楼面、涂掉红色航空灯、按一层 24 像素缩放拼成图集，贴在远处的楼上"
+      ]
+    },
+    {
+      "id": "commons/roppongi-from-shibuya-stream-2024",
+      "source": "Wikimedia Commons",
+      "title": "September 2024 Roppongi at night from Shibuya Stream",
+      "zh": "东京夜景照片（窗外楼面的素材）",
+      "authors": [
+        "Syced"
+      ],
+      "url": "https://commons.wikimedia.org/wiki/File:September_2024_Roppongi_at_night_from_Shibuya_Stream.jpg",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "note": "Cut into facade swatches (blender/window_atlas.py) and used as window textures on distant buildings.",
+      "changes": [
+        "裁出正对着的楼面、涂掉红色航空灯、按一层 24 像素缩放拼成图集，贴在远处的楼上"
+      ]
+    },
+    {
+      "id": "commons/azabudai-from-roppongi-4",
+      "source": "Wikimedia Commons",
+      "title": "January 2024, Azabudai Hills seen from Roppongi Hills 4",
+      "zh": "东京夜景照片（窗外楼面的素材）",
+      "authors": [
+        "Syced"
+      ],
+      "url": "https://commons.wikimedia.org/wiki/File:January_2024,_Azabudai_Hills_seen_from_Roppongi_Hills_4.jpg",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "note": "Cut into facade swatches (blender/window_atlas.py) and used as window textures on distant buildings.",
+      "changes": [
+        "裁出正对着的楼面、涂掉红色航空灯、按一层 24 像素缩放拼成图集，贴在远处的楼上"
+      ]
+    },
+    {
+      "id": "font/noto-sans-cjk",
+      "source": "Google Fonts / Adobe",
+      "title": "Noto Sans CJK",
+      "zh": "Noto Sans CJK 字体（招牌上的字）",
+      "authors": [
+        "Google",
+        "Adobe"
+      ],
+      "url": "https://github.com/notofonts/noto-cjk",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://openfontlicense.org/open-font-license-official-text/",
+      "note": "The copy bundled with Blender, used to letter the shop signs outside the window (blender/sign_atlas.py); the font itself is not redistributed.",
+      "changes": [
+        "用 Blender 自带的这份字体把招牌上的字（居酒屋、歯科、駐車場……）画成图集；字体文件本身不分发"
       ]
     }
   ],

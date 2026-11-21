@@ -7,6 +7,7 @@
 // 没有菜单（index.html 里没写 .pc-menu）时就像以前一样：把 #about 的几段字打出来。
 import * as THREE from 'three';
 import { wrap, makeCanvas, scanlines, MONO } from './tapes/util.js';
+import { sfx } from './sfx.js';
 
 const GREEN = '#5dff93', DIM = 'rgba(93,255,147,0.5)', BG = '#03130a';
 const UI = {
@@ -96,6 +97,7 @@ export class PCScreen {
   }
   back() {
     if (this.stack.length < 2) return false;
+    sfx.play('key', { gain: 0.7, rate: 0.9 });
     this.stack.pop();
     return true;
   }
@@ -120,6 +122,7 @@ export class PCScreen {
     return it.entries.map((e, j) => ({ num: e.when || (ask ? String(j + 1) : ''), key: '', label: e.title }));
   }
   enter() {
+    sfx.play('key');
     const s = this.top;
     if (s.type === 'menu') return this.open(s.sel);
     if (s.type === 'list') return this.openEntry(s, s.sel);
@@ -131,6 +134,7 @@ export class PCScreen {
     if (s.type === 'doc') return this.scrollBy(d);
     const n = this.items(s).length;
     s.sel = (s.sel + d + n) % n;
+    sfx.play('tick', { gain: 0.5 });
     this.keep(s);
   }
   keep(s) { // 选中的那行留在可见范围里（菜单上面空一行）
