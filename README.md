@@ -1,6 +1,8 @@
 <h1 align="center">SceneCV · Step into your résumé</h1>
 
 <p align="center">
+  <a href="https://trendoday.com/github/repo/annoyingc/scene-cv"><img alt="Trendoday Rising — #22, Top 25 Rising Repo of the Day" src="https://trendoday.com/badge/github/repo/annoyingc/scene-cv.svg?v=platform-colors-2" width="343" height="54"></a>
+  <br>
   <a href="https://trendoday.com/github/repo/annoyingc/scene-cv"><img alt="Trendoday Rising: Peak #22" src="https://img.shields.io/badge/Trendoday%20Rising-Peak%20%2322-2ea44f"></a>
 </p>
 
