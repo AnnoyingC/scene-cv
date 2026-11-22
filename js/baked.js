@@ -151,8 +151,13 @@ function shaders(layers) {
     #ifdef USE_DECAL
       base *= texture2D(decal, vDecal).rgb;
     #endif
-    // 高亮 = 亮一点 + 叠一层暖色。叠加的部分不乘反照率，黑色的电视、录像带也看得出来
-    gl_FragColor = vec4(base * light * (1.0 + 0.45 * h) + h * vec3(0.03, 0.022, 0.012) + emissive, opacity);
+    // 高亮 = 亮一点 + 叠一层暖色。叠加的部分不乘反照率，黑色的电视、录像带也看得出来。
+    // 本来就亮的东西（台灯下的白纸、米色电脑）提得少：照原样乘 1.45 会直接冲白、冒辉光
+    vec3 lit = base * light;
+    float lum = dot(lit, vec3(0.2126, 0.7152, 0.0722));
+    float lift = 0.45 / (1.0 + 5.0 * lum);
+    vec3 warm = vec3(0.03, 0.022, 0.012) * (1.0 - smoothstep(0.2, 0.8, lum));
+    gl_FragColor = vec4(lit * (1.0 + lift * h) + h * warm + emissive, opacity);
     #include <tonemapping_fragment>
     #include <colorspace_fragment>
   }`;

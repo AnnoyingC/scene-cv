@@ -1,6 +1,10 @@
 <h1 align="center">SceneCV · Step into your résumé</h1>
 
 <p align="center">
+  <a href="https://trendoday.com/github/repo/annoyingc/scene-cv"><img alt="Trendoday Rising: Peak #22" src="https://img.shields.io/badge/Trendoday%20Rising-Peak%20%2322-2ea44f"></a>
+</p>
+
+<p align="center">
   A 3D résumé template you can walk into.<br>
   The old computer tells visitors about you, the printed pages on the desk are your résumé, the TV plays your work, the bookshelf holds what you have read and the notepad has your contact details. Look around, click things, and get to know someone.
 </p>

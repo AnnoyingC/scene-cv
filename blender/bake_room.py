@@ -716,7 +716,8 @@ LAMP_AIM_AT = (DESK_X - 0.40, TOP, -1.40)                     # 灯罩口对着�
 NOTE_X, NOTE_Z, NOTE_ROT = DESK_X + 0.44, -1.32, -0.06        # 记事本在键盘右边
 MUG_AT = (DESK_X + 0.31, -1.58)
 CAL_X, CAL_Z, DCAL_YAW = DESK_X - 0.84, -1.84, 0.30           # 万年历在台灯右边，字朝开场镜头
-SHEETS = ((DESK_X - 0.45, -1.37, 0.06), (DESK_X - 0.43, -1.39, -0.03))  # 两张简历，落在灯下面
+# 两张简历叠成一摞，落在灯下面：底下那张只比上面的偏几毫米、歪 3°，边上露出一线（第二张放在最上面）
+SHEETS = ((DESK_X - 0.436, -1.384, 0.02), (DESK_X - 0.43, -1.39, -0.03))
 
 # 摇臂灯。发布的 glTF 是大约 88 厘米的静止姿势，没有骨骼；绑定在同一份素材的 blend 里。
 # 灯夹夹在桌子左后角的后沿，灯头和灯罩口按上面的坐标去够。姿势改的是控制骨，取网格时把骨骼应用到顶点上。
@@ -1192,20 +1193,25 @@ for k_, pc_ in DESKCAL['pieces'].items():
 # 两张打印纸，斜着叠在台灯和记事本之间（一张一半压在记事本、电脑底下），纸上一行行灰色的字。
 # 两张纸 = 简历（热点 resume，每张一个盒子，后一张压在上面）：点纸，网页里叠出 A4 简历（js/resume.js）
 paper, ink = mat('mug', '#e8e2d4'), mat('rbtn', '#8a8580')
+# 简历纸、纸上的字单独两个材质：
+#   - 纸压暗一档：它正好在台灯底下，用 #e8e2d4 的话不悬停也是桌上最亮的一块、冒辉光
+#   - 网页里拿起简历时把这摞纸藏起来（js/room.js 按材质名找）；烘焙时它们不挡光（见下面的 NO_SHADOW），
+#     桌面上不留纸的黑影，下面那张也不会被上面那张压成黑边
+sheet_paper, sheet_ink = mat('paper', '#ccc6b8'), mat('paperink', '#8a8580')
 FLAT = (-math.pi / 2, 0, 0)  # quad 平放、朝上；本地 y（纸的上沿方向）→ 世界 -z
 rnd_p = random.Random(3)
 for k, (px, pz, a) in enumerate(SHEETS):
     g = G((px, TOP + 0.0006 + k * 0.0008, pz), (0, a, 0))
     flat_aabb(f'paper{k}', px, pz, 0.21, 0.297, a, TOP, TOP + 0.004)
-    lines = [(-0.07, 0.02, 0.119, 0.125, ink)]  # 标题；纸面本地 y 朝纸的上沿
+    lines = [(-0.07, 0.02, 0.119, 0.125, sheet_ink)]  # 标题；纸面本地 y 朝纸的上沿
     for i in range(16):
         if i % 6 == 5:
             continue  # 段落之间空一行
         lw = 0.16 if i % 6 != 4 else rnd_p.uniform(0.05, 0.12)
         y = 0.1 - i * 0.0125
-        lines.append((-0.08, -0.08 + lw, y - 0.0011, y + 0.0011, ink))
+        lines.append((-0.08, -0.08 + lw, y - 0.0011, y + 0.0011, sheet_ink))
     with hot('resume', a):
-        sheet(g, 0.21, 0.297, paper, lines, (0, 0, 0), FLAT)
+        sheet(g, 0.21, 0.297, sheet_paper, lines, (0, 0, 0), FLAT)
 # 简历没有 VIEWS：镜头不凑过去，网页把纸从桌上"拿起来"举到眼前
 
 # ---------- 书桌右边：电视推车（黑铁架子、两层木板，带小轮子），斜着朝向开场镜头 ----------
@@ -2140,7 +2146,8 @@ def save_encoded(img, path):
 
 
 _poster_restore = []
-for _pmn in [m.name for m in me.materials if m.name.startswith('poster')]:           # 海报、胶带不挡光、不反光：墙上不留影子（公开版网页里把它们藏起来，墙还是干净的）
+NO_SHADOW = ('paper', 'paperink')  # 简历那摞纸：网页里拿起来时藏起来，桌面上不能留它的影子
+for _pmn in [m.name for m in me.materials if m.name.startswith('poster') or m.name in NO_SHADOW]:  # 海报、胶带不挡光、不反光：墙上不留影子（公开版网页里把它们藏起来，墙还是干净的）
     _nt = me.materials[_pmn].node_tree
     _out = next(n for n in _nt.nodes if n.type == 'OUTPUT_MATERIAL')
     _bsdf = next(n for n in _nt.nodes if n.type == 'BSDF_PRINCIPLED')

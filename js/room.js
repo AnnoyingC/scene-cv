@@ -354,6 +354,9 @@ export async function start(content, { nav = null, music = null, achievements = 
     subHint.textContent = zhUI() ? '↑↓ 换章 · ← → 换带' : '↑↓ chapters · ← → tapes';
   }
   const resumeReq = { open: false, paper: null }; // 要拿起来了（等镜头回到开场的位置）；从哪张纸拿起来
+  // 桌上那摞纸（烘焙里单独的材质 paper、paperink，烘焙时不挡光，所以藏起来桌面上没有影子）：拿起来时离开桌面，放回去时再出现
+  const deskPaper = ['paper', 'paperink'].flatMap((n) => room.byMat.get(n) || []);
+  const showDeskPaper = (v) => { for (const m of deskPaper) m.visible = v; };
   const inBox = (b, p, pad = 0.01) => {
     const qx = p.x - b.c[0], qz = p.z - b.c[2], c = Math.cos(b.r), s = Math.sin(b.r);
     return Math.abs(c * qx - s * qz) <= b.h[0] + pad && Math.abs(p.y - b.c[1]) <= b.h[1] + pad && Math.abs(s * qx + c * qz) <= b.h[2] + pad;
@@ -558,7 +561,11 @@ export async function start(content, { nav = null, music = null, achievements = 
     view = name;
     music?.closeCard?.(); // 换了视角就不再是在摆弄唱机：唱片卡片收起来
     if (name !== 'shelf') shelfBooks?.close();
-    if (prev === 'resume' && resume) resume.close(paperRect(langPaper(resume.langIndex()))); // 放回桌上（从现在的镜头看过去的位置）
+    if (prev === 'resume' && resume) { // 放回桌上（从现在的镜头看过去的位置）：手里的纸开始淡出、快落到桌面时，桌上那摞纸接上
+      const back = resume.close(paperRect(langPaper(resume.langIndex())));
+      setTimeout(() => { if (!resume.shown) showDeskPaper(true); }, 400);
+      back.then(() => { if (!resume.shown) showDeskPaper(true); });
+    }
     resumeReq.open = name === 'resume';
     resumeReq.paper = null;
     pc.setActive(name === 'about');
@@ -898,7 +905,7 @@ export async function start(content, { nav = null, music = null, achievements = 
     if (resumeReq.open && view === 'resume' && (!fly || fly.t > 0.75)) {
       resumeReq.open = false;
       const at = resume.indexForSlug(hashParts()[1]);
-      resume.open(at, paperRect(resumeReq.paper ?? langPaper(resume.langAt(at)), goal));
+      if (resume.open(at, paperRect(resumeReq.paper ?? langPaper(resume.langAt(at)), goal))) showDeskPaper(false);
     }
     shelfBooks?.update(dt);
     const pk = view === 'shelf' ? JSON.stringify(shelfBooks?.pageInfo() ?? null) : ''; // 书翻开了 / 翻到别的页：面板上的页码跟着变
