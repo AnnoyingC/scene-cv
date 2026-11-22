@@ -197,16 +197,58 @@ h2 { font-size: 14px; letter-spacing: 0.12em; color: var(--muted); font-weight: 
 .panel .list a { padding: 6px 12px; border-radius: 8px; background: rgba(255, 255, 255, 0.06); }
 .panel .list span { color: #a39a8b; }
 
-.loading {
-  position: fixed; inset: 0; z-index: 5; display: grid; place-content: center; justify-items: center; gap: 14px;
-  background: #06070b; color: rgba(240, 230, 210, 0.7); font-size: 13px; letter-spacing: 0.08em;
-  transition: opacity 0.7s;
+/* ---------- 开场画面（js/boot.js）：开场镜头的静帧 + 旧电脑样式的下载进度（和桌上那台电脑一个颜色） ---------- */
+.boot { display: none; }
+.is-room .boot {
+  --g: #5dff93; --g-dim: rgba(93, 255, 147, 0.5); --g-faint: rgba(93, 255, 147, 0.16);
+  position: fixed; inset: 0; z-index: 5; display: grid; place-items: center; padding: 16px;
+  background: #06070b; transition: opacity 0.9s ease 0.1s;
 }
-.loading p { margin: 0; }
-.loading b { font-weight: 500; font-variant-numeric: tabular-nums; }
-.loading .bar { width: 180px; height: 2px; border-radius: 2px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
-.loading .bar i { display: block; height: 100%; background: #e8b04a; transform: scaleX(0); transform-origin: left; }
-.loading.done { opacity: 0; pointer-events: none; }
+.boot-still {
+  position: absolute; inset: 0; background: url("../assets/baked/first.webp") center / cover no-repeat;
+  filter: brightness(0.42) saturate(0.85) blur(5px); transform: scale(1.04);
+  transition: filter 0.9s ease, transform 0.9s ease;
+}
+.boot-term {
+  position: relative; width: min(500px, 100%); padding: 16px 18px 14px; border-radius: 6px;
+  background: rgba(3, 19, 10, 0.84); border: 1px solid rgba(93, 255, 147, 0.26);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55), inset 0 0 40px rgba(93, 255, 147, 0.05);
+  color: var(--g); font: 13px/1.55 "SF Mono", Menlo, Consolas, monospace; letter-spacing: 0.02em;
+  text-shadow: 0 0 6px rgba(60, 255, 130, 0.45); overflow: hidden;
+}
+.boot-term::after { /* 扫描线 */
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(transparent 0 2px, rgba(0, 0, 0, 0.16) 2px 3px);
+}
+.boot-term p { margin: 0; }
+.boot-term .boot-head { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 12px; color: var(--g-dim); font-size: 11px; letter-spacing: 0.12em; }
+.boot-head a { color: inherit; text-decoration: none; letter-spacing: 0.04em; }
+.boot-head a:hover, .boot-head a:focus-visible { color: var(--g); text-decoration: underline; }
+.boot-rows p { display: grid; grid-template-columns: 12ch 1fr 11.5ch; align-items: center; gap: 12px; padding: 2px 0; }
+.boot-rows p[hidden] { display: none; }
+.boot-rows b { font-weight: 400; white-space: nowrap; }
+.boot-rows em { font-style: normal; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.boot-rows span { height: 11px; padding: 1px; border: 1px solid var(--g-dim); }
+.boot-rows i { /* 一格一格的进度条 */
+  display: block; width: 0; height: 100%;
+  background: repeating-linear-gradient(90deg, var(--g) 0 5px, transparent 5px 7px);
+  filter: drop-shadow(0 0 3px rgba(60, 255, 130, 0.6));
+}
+.boot-rows [data-row="total"] { margin-top: 8px; padding-top: 10px; border-top: 1px dashed var(--g-faint); }
+.boot-term .boot-log { margin-top: 12px; color: var(--g-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.boot-log i { display: inline-block; width: 0.6em; height: 1.05em; margin-left: 3px; vertical-align: -0.18em; background: var(--g); animation: boot-blink 1s steps(1) infinite; }
+@keyframes boot-blink { 50% { opacity: 0; } }
+.boot.done { opacity: 0; pointer-events: none; }
+.boot.done .boot-still { filter: none; transform: none; }
+.is-plain .boot { display: none; }
+@media (max-width: 420px) {
+  .boot-term { padding: 14px 14px 12px; font-size: 12px; }
+  .boot-rows p { grid-template-columns: 12ch 1fr 11ch; gap: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .boot-log i { animation: none; }
+  .boot-still { transition: none; }
+}
 
 .panel .tip { color: #8f8778; font-size: 12px; margin: 10px 0 0; }
 .panel .list .row { display: flex; justify-content: space-between; gap: 12px; padding: 6px 12px; border-radius: 8px; background: rgba(255, 255, 255, 0.06); }
@@ -394,7 +436,6 @@ main h1, main h2 { font-family: var(--display); letter-spacing: 0.04em; }
 :root.js .hint { font-size: 15px; letter-spacing: 0.01em; }
 :root.js .back { font: 500 15px var(--serif); letter-spacing: 0.02em; }
 :root.js .help { font-size: 15px; letter-spacing: 0.02em; }
-:root.js .loading { font: 15px var(--serif); letter-spacing: 0.1em; }
 :root.js .panel { font-size: 15.5px; }
 :root.js .panel h2 { font: 600 22px/1.3 var(--display); letter-spacing: 0.03em; }
 :root.js .panel .kicker { font: 600 12px var(--display); letter-spacing: 0.14em; }

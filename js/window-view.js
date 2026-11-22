@@ -370,12 +370,21 @@ function rainMesh(count) {
 }
 
 // base：assets/baked/ 的地址；view：view.json；win：manifest.window（窗户中心）；moon：月亮方向（three 坐标）
-export async function createWindowView({ base, view, win, scene, camera, renderer = null, moon = [-0.33, 0.28, -1.0], onProgress }) {
+// blob：js/boot.js 已经在下的文件（文件名 → Promise<Blob>，没有就返回 null），有就不再自己下
+export async function createWindowView({ base, view, win, scene, camera, renderer = null, moon = [-0.33, 0.28, -1.0], onProgress, blob = null }) {
   const pano = view?.pano;
   if (!pano) return null;
   const loader = new THREE.TextureLoader();
   const v = encodeURIComponent(view.built || '');
-  const load = (f, color) => loader.loadAsync(`${base}${f}?v=${v}`).then((t) => {
+  const fetchTex = (f) => {
+    const got = blob?.(f);
+    if (!got) return loader.loadAsync(`${base}${f}?v=${v}`);
+    return got.then(async (b) => {
+      const url = URL.createObjectURL(b);
+      try { return await loader.loadAsync(url); } finally { URL.revokeObjectURL(url); }
+    });
+  };
+  const load = (f, color) => fetchTex(f).then((t) => {
     if (color) { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; } else {
       t.colorSpace = THREE.NoColorSpace;
       t.minFilter = t.magFilter = THREE.NearestFilter; // 数据图：类别不能插值

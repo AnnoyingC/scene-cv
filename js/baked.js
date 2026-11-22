@@ -56,19 +56,23 @@ async function blobTexture(blob) {
   try { return await textureLoader.loadAsync(url); } finally { URL.revokeObjectURL(url); }
 }
 
-export async function loadBaked(base, { onProgress, glb = 'room.glb' } = {}) {
+// prefetched：js/boot.js 一进网页就开始下的文件（{ manifest, view, blob(文件名) }）；有就直接用，没在里面的照旧自己下
+export async function loadBaked(base, { onProgress, glb = 'room.glb', prefetched = null } = {}) {
   const json = (f) => fetch(base + f, { cache: 'no-cache' }).then((r) => {
     if (!r.ok) throw new Error(`${r.status} ${base + f}（先运行 blender/ 里的窗外渲染和烘焙脚本）`);
     return r.json();
   });
-  const [manifest, view] = await Promise.all([json('manifest.json'), json('view.json')]);
+  const [manifest, view] = prefetched ? [prefetched.manifest, prefetched.view] : await Promise.all([json('manifest.json'), json('view.json')]);
   const layers = manifest.layerOrder || LAYERS;
   const files = [
     [glb, manifest.built],
     ...layers.map((k) => [manifest.layers[k].file, manifest.built]),
     ...view.cards.map((c) => [c.file, view.built]),
   ];
-  const blobs = await fetchAll(files.map(([f, v]) => `${base}${f}?v=${encodeURIComponent(v || '')}`), onProgress);
+  const urls = files.map(([f, v]) => `${base}${f}?v=${encodeURIComponent(v || '')}`);
+  const blobs = prefetched
+    ? await Promise.all(files.map(([f], i) => prefetched.blob(f) || fetchAll([urls[i]]).then(([b]) => b)))
+    : await fetchAll(urls, onProgress);
   const loader = new GLTFLoader().setDRACOLoader(new DRACOLoader().setDecoderPath(DRACO));
   const gltf = await loader.parseAsync(await blobs[0].arrayBuffer(), base);
   const tex = await Promise.all(blobs.slice(1).map(blobTexture));

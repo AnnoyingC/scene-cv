@@ -31,6 +31,7 @@ import { dressSleeves, joinSleeves } from './sleeves.js';
 import { createWindowView } from './window-view.js';
 import { createResumeViewer } from './resume.js';
 import { sfx } from './sfx.js';
+import { roomFiles, bootStage, bootDone } from './boot.js';
 
 const BASE = new URL('../assets/baked/', import.meta.url).href;
 const $ = (id) => document.getElementById(id);
@@ -48,7 +49,7 @@ export async function start(content, { nav = null, music = null, achievements = 
   const { tapes, books = [], links } = content;
   const N = tapes.length;
   $('room').hidden = false;
-  const canvas = $('gl'), hintEl = $('hint'), backBtn = $('back'), panel = $('panel'), help = $('help'), loading = $('loading');
+  const canvas = $('gl'), hintEl = $('hint'), backBtn = $('back'), panel = $('panel'), help = $('help');
   const baseTitle = content.name || document.title;
   const TITLES = { home: baseTitle, about: `About · ${baseTitle}`, resume: `Résumé · ${baseTitle}`, work: `Work · ${baseTitle}`, shelf: `Books · ${baseTitle}`, photos: `Photos · ${baseTitle}`, online: `Contact · ${baseTitle}`, credits: `Credits · ${baseTitle}` };
 
@@ -77,14 +78,10 @@ export async function start(content, { nav = null, music = null, achievements = 
   grade.set(qs.get('look') || 'cinema');
   if (qs.has('looks')) lookPicker(grade, (k) => grade.set(k));
 
-  // ---------- 下载（约 6 MB，显示进度） ----------
-  // 下载占进度条的 95%，剩下 5% 是解析模型、编译着色器（这一步会卡住主线程一小会儿），第一帧画出来才算 100%
-  const bar = loading?.querySelector('i'), pct = loading?.querySelector('b');
-  const progress = (k) => {
-    if (bar) bar.style.transform = `scaleX(${k})`;
-    if (pct) pct.textContent = `${Math.floor(k * 100)}%`;
-  };
-  const data = await loadBaked(BASE, { onProgress: (k) => progress(k * 0.95) });
+  // ---------- 下载 ----------
+  // 网页一到 js/boot.js 就开始并行下载（模型、光照贴图、窗外夜景），进度也是它画；这里拿下好的文件
+  const files = roomFiles ? await roomFiles : null;
+  const data = await loadBaked(BASE, { prefetched: files });
   const room = new BakedRoom(data, { renderer, scene });
   const M = data.manifest;
   // 左手边那面墙（画架和窗户之间）的海报和它下面几张打印的插图：烘焙时和墙一起打了光，贴图是空白的占位纸。
@@ -120,8 +117,8 @@ export async function start(content, { nav = null, music = null, achievements = 
       })
       .catch(() => {});
   }
-  // 窗外：动态的雨夜（城市全景 + 天空 + 雨，js/window-view.js）；下载占进度条的 95% → 99%
-  const windowView = await createWindowView({ base: BASE, view: data.view, win: M.window, scene, camera, renderer, onProgress: (k) => progress(0.95 + k * 0.04) })
+  // 窗外：动态的雨夜（城市全景 + 天空 + 雨，js/window-view.js）
+  const windowView = await createWindowView({ base: BASE, view: data.view, win: M.window, scene, camera, renderer, blob: files?.blob })
     .catch((err) => { console.warn('窗外的动态夜景加载失败', err); return null; });
   const turntable = createTurntable(room, music?.track);
 
@@ -921,7 +918,7 @@ export async function start(content, { nav = null, music = null, achievements = 
   function frame() {
     const dt = Math.min(clock.getDelta(), 0.1);
     tick(dt);
-    if (frames === 0) { progress(1); loading?.classList.add('done'); setTimeout(() => loading?.remove(), 800); }
+    if (frames === 0) bootDone();
     if (frames < 150 && ++frames > 30) {
       slow += dt;
       if (frames === 150 && slow / 120 > 1 / 28) {
@@ -930,6 +927,9 @@ export async function start(content, { nav = null, music = null, achievements = 
       }
     }
   }
+  // 第一帧要编译所有着色器（主线程会卡一下）：先让进度上的这行字画出来
+  bootStage('compiling shaders');
+  await new Promise((r) => requestAnimationFrame(() => setTimeout(r)));
   renderer.setAnimationLoop(frame);
 
   // 调试入口（控制台里用）：__room.tick(dt) 手动推进一帧（后台标签页里动画会被浏览器降速）

@@ -1,31 +1,12 @@
-// 入口：判断这台设备能不能跑 3D 房间，能就加载房间，不能就显示静态版。
-// 和 felixrieseberg.com 的思路一样：没有 WebGL2、或者 GPU 是软件渲染（SwiftShader 等）时，3D 会卡死机器，直接给静态版。
-// ?room=1 强制 3D，?plain=1 强制静态版。
+// 入口：用 3D 房间还是静态版，index.html 头部的小脚本已经判断过了（<html data-mode="room | soft | plain">），这里照着走。
+// 3D 的话 js/boot.js 那时已经开始下载房间的大文件，这里加载 room.js 把房间搭起来；搭不起来就改用静态版。
 import { readContent, bookTitle } from './content.js';
 import { createNav } from './nav.js';
 import { createMusicPlayer } from './music.js';
 import { MUSIC_TRACKS } from './music-tracks.js';
 import { createAchievements } from './achievements.js';
 
-const params = new URLSearchParams(location.search);
-const forceRoom = params.has('room');
-const forcePlain = params.has('plain') && !forceRoom;
 const html = document.documentElement;
-
-function detect() {
-  let gl = null;
-  try { gl = document.createElement('canvas').getContext('webgl2'); } catch { /* 没有 WebGL */ }
-  if (!gl) return { ok: false, soft: false };
-  let soft = false;
-  try {
-    const ext = gl.getExtension('WEBGL_debug_renderer_info');
-    const name = String(gl.getParameter(ext ? ext.UNMASKED_RENDERER_WEBGL : gl.RENDERER) || '');
-    soft = /swiftshader|llvmpipe|softpipe|lavapipe|software|basic render/i.test(name)
-      || !document.createElement('canvas').getContext('webgl2', { failIfMajorPerformanceCaveat: true });
-  } catch { /* 拿不到显卡信息就当作正常 */ }
-  gl.getExtension('WEBGL_lose_context')?.loseContext();
-  return { ok: true, soft };
-}
 
 function plain(reason) {
   nav.unlockAll(); // 纯文字版没有可找的东西：导航栏全部打开
@@ -76,8 +57,7 @@ const personal = Promise.all([
   }),
 ]);
 
-const env = detect();
-const mode = forcePlain || !env.ok ? 'plain' : env.soft && !forceRoom ? 'soft' : 'room';
+const mode = html.dataset.mode || 'plain';
 // 成就（js/achievements.js）：导航栏里还没找到的几项先上锁，在房间里找到了才打开
 const achievements = mode === 'room' ? createAchievements({ label: (route) => nav.label(route) }) : null;
 const nav = createNav(document, { locked: achievements?.lockedRoutes() ?? [] }); // 和下面加的 is-room / is-plain 在同一帧里生效，不会闪

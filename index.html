@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>SceneCV · Step into my résumé</title>
 <meta name="description" content="SceneCV：可探索的 3D 场景化简历模板，在一间书桌房间里呈现介绍、简历、作品、书单、照片与联系方式。">
-<script>document.documentElement.classList.add('js')</script>
 <link rel="stylesheet" href="css/style.css">
 <script type="importmap">
 {
@@ -15,6 +14,83 @@
   }
 }
 </script>
+<!-- 3D 房间要用到的全部 JS 模块（node scripts/room-modules.mjs 生成，别手改） -->
+<script type="application/json" id="room-modules">[
+  "js/content.js",
+  "js/nav.js",
+  "js/music.js",
+  "js/music-tracks.js",
+  "js/achievements.js",
+  "js/room.js",
+  "js/vinyl-audio.js",
+  "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+  "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/postprocessing/EffectComposer.js",
+  "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/postprocessing/UnrealBloomPass.js",
+  "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/postprocessing/OutputPass.js",
+  "js/tv.js",
+  "js/pc.js",
+  "js/paint.js",
+  "js/deskcal.js",
+  "js/baked.js",
+  "js/grade.js",
+  "js/turntable.js",
+  "js/books.js",
+  "js/photos.js",
+  "js/sleeves.js",
+  "js/window-view.js",
+  "js/resume.js",
+  "js/sfx.js",
+  "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/shaders/CopyShader.js",
+  "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/postprocessing/ShaderPass.js",
+  "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/postprocessing/MaskPass.js",
+  "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/postprocessing/Pass.js",
+  "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/shaders/LuminosityHighPassShader.js",
+  "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/shaders/OutputShader.js",
+  "js/tapes/index.js",
+  "js/tapes/util.js",
+  "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/loaders/GLTFLoader.js",
+  "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/loaders/DRACOLoader.js",
+  "js/tapes/bars.js",
+  "js/tapes/synth.js",
+  "js/tapes/bounce.js",
+  "js/tapes/rain.js",
+  "js/tapes/show.js",
+  "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/utils/BufferGeometryUtils.js",
+  "js/tapes/anims.js"
+]</script>
+<script>
+// 先决定用 3D 房间还是静态版（js/main.js 照着走），越早越好：3D 的话进度画面第一时间出来，大文件也马上开始下（js/boot.js）。
+// 和 felixrieseberg.com 的思路一样：没有 WebGL2、或者 GPU 是软件渲染（SwiftShader 等）时，3D 会卡死机器，给静态版。
+// ?room=1 强制 3D，?plain=1 强制静态版。
+(() => {
+  const html = document.documentElement, q = new URLSearchParams(location.search);
+  html.classList.add('js');
+  let gl = null, soft = false;
+  try { gl = document.createElement('canvas').getContext('webgl2'); } catch { /* 没有 WebGL */ }
+  if (gl) {
+    try {
+      const ext = gl.getExtension('WEBGL_debug_renderer_info');
+      const name = String(gl.getParameter(ext ? ext.UNMASKED_RENDERER_WEBGL : gl.RENDERER) || '');
+      soft = /swiftshader|llvmpipe|softpipe|lavapipe|software|basic render/i.test(name)
+        || !document.createElement('canvas').getContext('webgl2', { failIfMajorPerformanceCaveat: true });
+    } catch { /* 拿不到显卡信息就当作正常 */ }
+    gl.getExtension('WEBGL_lose_context')?.loseContext();
+  }
+  const room = q.has('room');
+  const mode = (q.has('plain') && !room) || !gl ? 'plain' : soft && !room ? 'soft' : 'room';
+  html.dataset.mode = mode;
+  if (mode !== 'room') return;
+  html.classList.add('is-room');
+  // 房间的 JS 一次性全告诉浏览器，一起下
+  for (const href of JSON.parse(document.getElementById('room-modules').textContent)) {
+    const link = document.createElement('link');
+    link.rel = 'modulepreload';
+    link.href = href;
+    document.head.append(link);
+  }
+})();
+</script>
+<script type="module" src="js/boot.js"></script>
 </head>
 <body>
 
@@ -556,9 +632,23 @@
   </section>
 </main>
 
+<!-- 开场画面（js/boot.js）：开场镜头的静帧（压暗、虚化）+ 旧电脑样式的下载进度，第一帧画好以后淡出 -->
+<div id="boot" class="boot" role="status">
+  <div class="boot-still"></div>
+  <div class="boot-term">
+    <p class="boot-head"><span>SCENECV · LOADING THE ROOM</span><a href="?plain=1">text version</a></p>
+    <div class="boot-rows" aria-hidden="true">
+      <p data-row="model"><b>room.glb</b><span><i></i></span><em>…</em></p>
+      <p data-row="light"><b>lightmaps</b><span><i></i></span><em>…</em></p>
+      <p data-row="view"><b>city view</b><span><i></i></span><em>…</em></p>
+      <p data-row="total"><b>total</b><span><i></i></span><em>0%</em></p>
+    </div>
+    <p class="boot-log">&gt; <span>connecting</span><i aria-hidden="true"></i></p>
+  </div>
+</div>
+
 <div id="room" hidden>
   <canvas id="gl" aria-hidden="true"></canvas>
-  <div id="loading" class="loading" role="status"><div class="bar"><i></i></div><p>Setting up the room… <b>0%</b></p></div>
   <div id="hint" class="hint" aria-hidden="true"></div>
   <button id="back" class="back" type="button" hidden>← Back</button>
   <aside id="panel" class="panel" hidden></aside>
