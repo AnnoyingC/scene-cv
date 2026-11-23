@@ -23,6 +23,7 @@ function plain(reason) {
 // 只在本地的个人内容（这几个文件夹不进 Git，公开仓库里 index.html 是样例）：打开个人模式时有就换进内容层，没有就照样用样例。
 //   assets/resume/resume.html         真实简历的几页纸 → #resume（3D 版每次拿起纸都从内容层复制，纯文字版直接显示）
 //   assets/resume/contact.html        真实联系方式的几个 <li> → #online 的列表（记事本、联系面板、纯文字版）
+//   assets/books/books.html           真实书单的 <li>（和样例一样多、一样的顺序和尺寸：房间是按样例的尺寸烘焙的）→ #shelf 的列表
 //   assets/books/covers/covers.json   书名 → 真实封面的文件名 → #shelf 那本书的 data-cover
 //   assets/photos/photos.json         做旧过的真实照片 → 照片墙（js/room.js 读）
 // 个人模式默认关着：本地预览和公开的 GitHub 版一模一样（全是样例），不会一半真一半假。
@@ -48,7 +49,15 @@ const personal = Promise.all([
     const items = t.content.querySelectorAll('li');
     if (items.length) list.replaceChildren(...items);
   }),
-  local('../assets/books/covers/covers.json', 'json').then((map) => {
+  // 封面按书名对：先换好书单再对封面
+  Promise.all([local('../assets/books/books.html', 'text').then((html) => {
+    const list = document.querySelector('#shelf .books');
+    if (!html || !list) return;
+    const t = document.createElement('template');
+    t.innerHTML = html;
+    const items = t.content.querySelectorAll('li');
+    if (items.length) list.replaceChildren(...items);
+  }), local('../assets/books/covers/covers.json', 'json')]).then(([, map]) => {
     if (!map || typeof map !== 'object') return;
     for (const li of document.querySelectorAll('#shelf li')) {
       const file = map[bookTitle(li)];

@@ -61,7 +61,8 @@
 <script>
 // 先决定用 3D 房间还是静态版（js/main.js 照着走），越早越好：3D 的话进度画面第一时间出来，大文件也马上开始下（js/boot.js）。
 // 和 felixrieseberg.com 的思路一样：没有 WebGL2、或者 GPU 是软件渲染（SwiftShader 等）时，3D 会卡死机器，给静态版。
-// ?room=1 强制 3D，?plain=1 强制静态版。
+// 手机也先给静态版：房间是给大屏幕、鼠标做的，手机上还要先走流量下十几 MB。静态版上方有"仍然打开 3D"的链接。
+// ?room=1 强制 3D（记住，下次直接进 3D），?plain=1 强制静态版（忘掉）。
 (() => {
   const html = document.documentElement, q = new URLSearchParams(location.search);
   html.classList.add('js');
@@ -76,9 +77,19 @@
     } catch { /* 拿不到显卡信息就当作正常 */ }
     gl.getExtension('WEBGL_lose_context')?.loseContext();
   }
-  const room = q.has('room');
-  const mode = (q.has('plain') && !room) || !gl ? 'plain' : soft && !room ? 'soft' : 'room';
+  // 手机 = 手指操作、屏幕短边不到 600px（iPad 这种大屏照样进 3D）
+  const phone = matchMedia('(hover: none) and (pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
+  let chose = false;
+  try {
+    if (q.has('room')) localStorage.setItem('scene-cv:room', '1');
+    else if (q.has('plain')) localStorage.removeItem('scene-cv:room');
+    chose = localStorage.getItem('scene-cv:room') === '1';
+  } catch { /* 隐私模式之类：不记 */ }
+  const room = q.has('room') || (chose && !q.has('plain'));
+  const why = soft ? 'gpu' : phone ? 'phone' : ''; // 为什么先给静态版（静态版上方那句话按这个换）
+  const mode = (q.has('plain') && !room) || !gl ? 'plain' : why && !room ? 'soft' : 'room';
   html.dataset.mode = mode;
+  if (mode === 'soft') html.dataset.why = why;
   if (mode !== 'room') return;
   html.classList.add('is-room');
   // 房间的 JS 一次性全告诉浏览器，一起下
@@ -103,7 +114,7 @@
   <header class="hero">
     <h1 data-name>Your Name</h1>
     <p class="tagline">One line about you: what you do, where, and what you care about.</p>
-    <p class="notice" id="try-room" hidden>Your device may struggle with the 3D room, so this text version is shown first. <a href="?room=1">Try the 3D room anyway →</a></p>
+    <p class="notice" id="try-room" hidden><span data-why="gpu">Your device may struggle with the 3D room, so this text version is shown first.</span><span data-why="phone">The 3D room is made for bigger screens, so phones get this text version first.</span> <a href="?room=1">Try the 3D room anyway →</a></p>
   </header>
 
   <section id="about" data-nav="About">
@@ -367,8 +378,8 @@
     </ol>
   </section>
 
-  <section id="shelf" data-nav="Books" lang="zh-CN">
-    <h2 lang="en">Books</h2>
+  <section id="shelf" data-nav="Books">
+    <h2>Books</h2>
     <!--
       读过的书（下面是样例，按划线多少排）。3D 版里每个 li 是书架上的一本真书：点它会抽出来、翻开，左页是这本书的标志句，右页是划线。
         data-size     书的宽 × 高 × 厚（毫米），烘焙脚本按这个尺寸建模（改了要重新烘焙房间）；套装按一本合订本的厚度算
@@ -377,154 +388,154 @@
         data-style    没有真实封面时自动画的封面样式：literary（素净文学）/ modern（粗体现代）/ sea（插画海岛）
         真实封面    不写在这里：图片和 covers.json（书名 → 文件名）放在 assets/books/covers/，这个文件夹不进 Git，
                       只在本地和你自己的网站上用（js/main.js 加载时按书名补上 data-cover）；没有就用 data-style 自动画的封面
-        data-read     读完的时间；还没读完的写 data-progress（读到百分之几）
+        data-read     读完的月份（英文写，"Feb 2026"；只记得读完了没记时间就写 "done"）；还没读完的写 data-progress（读到百分之几）
         data-publisher / data-marks  出版社、划线一共多少条：划线少的书，翻开后右页下面印一张阅读卡（可以不写）
       blockquote.key 是左页单独印的那一句（这本书最有名、最能代表它的话），其余的 blockquote 是划线：翻开后从右页往后排，一页放不下就翻页（每本最多放 24 条）。
     -->
     <ul class="books">
-      <li data-size="150x220x55" data-kind="soft" data-color="#b09b5d" data-style="modern" data-publisher="某某出版社" data-marks="6" data-read="2026 年 2 月">
-        <a href="https://example.com/book-01">书名 01</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote>
-        <blockquote>右页从这里开始排划线，每一条单独一段。</blockquote>
-        <blockquote>一页放不下就排到下一页：点右页往后翻，点左页往回翻，← → 也能翻。</blockquote>
-        <blockquote>每本最多放 24 条划线。</blockquote>
-        <blockquote>data-read 写读完的时间；还没读完的写 data-progress，读到百分之几。</blockquote>
-        <blockquote>划线少的书，右页下面会印一张阅读卡：出版社、划线一共多少条、读书状态。</blockquote>
-        <blockquote>真实封面放在 assets/books/covers/（这个文件夹不进 Git），没有就按 data-style 自动画一个封面。</blockquote></li>
-      <li data-size="148x210x24" data-kind="hard" data-color="#f4f4f3" data-style="modern" data-publisher="某某出版社" data-marks="2" data-read="2026 年 3 月">
-        <a href="https://example.com/book-02">书名 02</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote>
-        <blockquote>这里放一条划线。</blockquote>
-        <blockquote>再放一条。</blockquote></li>
-      <li data-size="165x235x34" data-kind="soft" data-color="#302a23" data-style="literary" data-publisher="某某出版社" data-marks="0" data-progress="56">
-        <a href="https://example.com/book-03">书名 03</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
-      <li data-size="145x210x32" data-kind="hard" data-color="#5f656d" data-style="literary" data-publisher="某某出版社" data-marks="0" data-read="2026 年 5 月">
-        <a href="https://example.com/book-04">书名 04</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
-      <li data-size="150x220x22" data-kind="hard" data-color="#656060" data-style="modern" data-publisher="某某出版社" data-marks="0" data-read="2026 年 6 月">
-        <a href="https://example.com/book-05">书名 05</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
-      <li data-size="130x184x12" data-kind="soft" data-color="#d2cdcc" data-style="literary" data-publisher="某某出版社" data-marks="2" data-progress="17">
-        <a href="https://example.com/book-06">书名 06</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote>
-        <blockquote>这里放一条划线。</blockquote>
-        <blockquote>再放一条。</blockquote></li>
-      <li data-size="170x240x42" data-kind="hard" data-color="#aeaeb0" data-style="modern" data-publisher="某某出版社" data-marks="0" data-read="2026 年 8 月">
-        <a href="https://example.com/book-07">书名 07</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
-      <li data-size="155x230x50" data-kind="soft" data-color="#5a1f1b" data-ink="#e8d9b0" data-style="literary" data-publisher="某某出版社" data-marks="0" data-read="2026 年 9 月">
-        <a href="https://example.com/book-08">书名 08</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
-      <li data-size="150x220x18" data-kind="soft" data-color="#d1c4b9" data-style="literary" data-publisher="某某出版社" data-marks="0" data-progress="68">
-        <a href="https://example.com/book-09">书名 09</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
-      <li data-size="130x190x16" data-kind="soft" data-color="#8d2521" data-style="literary" data-publisher="某某出版社" data-marks="2" data-read="2026 年 11 月">
-        <a href="https://example.com/book-10">书名 10</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote>
-        <blockquote>这里放一条划线。</blockquote>
-        <blockquote>再放一条。</blockquote></li>
-      <li data-size="170x230x16" data-kind="soft" data-color="#e8eaf1" data-style="sea" data-publisher="某某出版社" data-marks="0" data-read="2026 年 12 月">
-        <a href="https://example.com/book-11">书名 11</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
-      <li data-size="130x190x18" data-kind="soft" data-color="#9c5869" data-style="literary" data-publisher="某某出版社" data-marks="0" data-progress="29">
-        <a href="https://example.com/book-12">书名 12</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
-      <li data-size="148x210x18" data-kind="hard" data-color="#f6f4f0" data-style="modern" data-publisher="某某出版社" data-marks="0" data-read="2026 年 2 月">
-        <a href="https://example.com/book-13">书名 13</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
-      <li data-size="130x184x8" data-kind="soft" data-color="#e23a32" data-style="modern" data-publisher="某某出版社" data-marks="2" data-read="2026 年 3 月">
-        <a href="https://example.com/book-14">书名 14</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote>
-        <blockquote>这里放一条划线。</blockquote>
-        <blockquote>再放一条。</blockquote></li>
-      <li data-size="145x210x18" data-kind="soft" data-color="#6a7174" data-style="literary" data-publisher="某某出版社" data-marks="0" data-progress="80">
-        <a href="https://example.com/book-15">书名 15</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
-      <li data-size="150x210x13" data-kind="soft" data-color="#d8cac3" data-style="modern" data-publisher="某某出版社" data-marks="0" data-read="2026 年 5 月">
-        <a href="https://example.com/book-16">书名 16</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
-      <li data-size="155x230x32" data-kind="soft" data-color="#85afca" data-style="literary" data-publisher="某某出版社" data-marks="0" data-read="2026 年 6 月">
-        <a href="https://example.com/book-17">书名 17</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
-      <li data-size="130x190x14" data-kind="hard" data-color="#b08545" data-style="literary" data-publisher="某某出版社" data-marks="2" data-progress="41">
-        <a href="https://example.com/book-18">书名 18</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote>
-        <blockquote>这里放一条划线。</blockquote>
-        <blockquote>再放一条。</blockquote></li>
-      <li data-size="150x220x26" data-kind="soft" data-color="#b11924" data-style="modern" data-publisher="某某出版社" data-marks="0" data-read="2026 年 8 月">
-        <a href="https://example.com/book-19">书名 19</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
-      <li data-size="165x235x26" data-kind="soft" data-color="#9dc4c9" data-style="modern" data-publisher="某某出版社" data-marks="0" data-read="2026 年 9 月">
-        <a href="https://example.com/book-20">书名 20</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
-      <li data-size="128x182x16" data-kind="soft" data-color="#8bc2e1" data-style="literary" data-publisher="某某出版社" data-marks="0" data-progress="92">
-        <a href="https://example.com/book-21">书名 21</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
-      <li data-size="150x220x26" data-kind="soft" data-color="#dfc8ca" data-style="modern" data-publisher="某某出版社" data-marks="2" data-read="2026 年 11 月">
-        <a href="https://example.com/book-22">书名 22</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote>
-        <blockquote>这里放一条划线。</blockquote>
-        <blockquote>再放一条。</blockquote></li>
-      <li data-size="150x220x16" data-kind="soft" data-color="#664f45" data-style="modern" data-publisher="某某出版社" data-marks="0" data-read="2026 年 12 月">
-        <a href="https://example.com/book-23">书名 23</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
-      <li data-size="148x210x20" data-kind="soft" data-color="#f6f4f0" data-style="modern" data-publisher="某某出版社" data-marks="0" data-progress="53">
-        <a href="https://example.com/book-24">书名 24</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
-      <li data-size="160x230x48" data-kind="hard" data-color="#d56105" data-style="literary" data-publisher="某某出版社" data-marks="0" data-read="2026 年 2 月">
-        <a href="https://example.com/book-25">书名 25</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
-      <li data-size="130x184x11" data-kind="hard" data-color="#ddddd8" data-style="literary" data-publisher="某某出版社" data-marks="2" data-read="2026 年 3 月">
-        <a href="https://example.com/book-26">书名 26</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote>
-        <blockquote>这里放一条划线。</blockquote>
-        <blockquote>再放一条。</blockquote></li>
-      <li data-size="140x203x24" data-kind="soft" data-color="#f6f4f3" data-style="literary" data-publisher="某某出版社" data-marks="0" data-progress="14">
-        <a href="https://example.com/book-27">书名 27</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
-      <li data-size="170x240x34" data-kind="hard" data-color="#afa59a" data-style="modern" data-publisher="某某出版社" data-marks="0" data-read="2026 年 5 月">
-        <a href="https://example.com/book-28">书名 28</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
-      <li data-size="130x184x10" data-kind="soft" data-color="#ad8f2e" data-style="literary" data-publisher="某某出版社" data-marks="0" data-read="2026 年 6 月">
-        <a href="https://example.com/book-29">书名 29</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
-      <li data-size="155x230x48" data-kind="hard" data-color="#5c5d68" data-style="literary" data-publisher="某某出版社" data-marks="2" data-progress="65">
-        <a href="https://example.com/book-30">书名 30</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote>
-        <blockquote>这里放一条划线。</blockquote>
-        <blockquote>再放一条。</blockquote></li>
-      <li data-size="150x220x20" data-kind="hard" data-color="#cfd7ba" data-style="modern" data-publisher="某某出版社" data-marks="0" data-read="2026 年 8 月">
-        <a href="https://example.com/book-31">书名 31</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
-      <li data-size="155x230x34" data-kind="soft" data-color="#38436d" data-style="literary" data-publisher="某某出版社" data-marks="0" data-read="2026 年 9 月">
-        <a href="https://example.com/book-32">书名 32</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
-      <li data-size="140x210x22" data-kind="soft" data-color="#274264" data-style="literary" data-publisher="某某出版社" data-marks="0" data-progress="26">
-        <a href="https://example.com/book-33">书名 33</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
-      <li data-size="150x220x48" data-kind="hard" data-color="#efe0a4" data-style="literary" data-publisher="某某出版社" data-marks="2" data-read="2026 年 11 月">
-        <a href="https://example.com/book-34">书名 34</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote>
-        <blockquote>这里放一条划线。</blockquote>
-        <blockquote>再放一条。</blockquote></li>
-      <li data-size="145x210x36" data-kind="soft" data-color="#506e73" data-style="literary" data-publisher="某某出版社" data-marks="0" data-read="2026 年 12 月">
-        <a href="https://example.com/book-35">书名 35</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
-      <li data-size="150x220x40" data-kind="hard" data-color="#d6c15f" data-style="literary" data-publisher="某某出版社" data-marks="0" data-progress="77">
-        <a href="https://example.com/book-36">书名 36</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
-      <li data-size="145x210x45" data-kind="soft" data-color="#262930" data-style="modern" data-publisher="某某出版社" data-marks="0" data-read="2026 年 2 月">
-        <a href="https://example.com/book-37">书名 37</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
-      <li data-size="145x210x20" data-kind="soft" data-color="#e4d8ba" data-style="literary" data-publisher="某某出版社" data-marks="2" data-read="2026 年 3 月">
-        <a href="https://example.com/book-38">书名 38</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote>
-        <blockquote>这里放一条划线。</blockquote>
-        <blockquote>再放一条。</blockquote></li>
-      <li data-size="128x182x45" data-kind="soft" data-color="#d4cfd1" data-style="modern" data-publisher="某某出版社" data-marks="0" data-progress="38">
-        <a href="https://example.com/book-39">书名 39</a> <span class="by">作者</span>
-        <blockquote class="key">左页单独印这本书最有代表性的一句话。</blockquote></li>
+      <li data-size="150x220x55" data-kind="soft" data-color="#b09b5d" data-style="modern" data-publisher="Sample Press" data-marks="6" data-read="Feb 2026">
+        <a href="https://example.com/book-01">Book Title 01</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote>
+        <blockquote>Highlights start on the right page, one paragraph each.</blockquote>
+        <blockquote>When a page is full they run on to the next: click the right page to turn forward, the left page to go back, or use ← →.</blockquote>
+        <blockquote>Each book holds up to 24 highlights.</blockquote>
+        <blockquote>data-read is when you finished it; for a book you are still reading, data-progress says how far in you are.</blockquote>
+        <blockquote>A book with few highlights gets a reading card under them: publisher, number of highlights, reading status.</blockquote>
+        <blockquote>Real covers go in assets/books/covers/ (kept out of Git); without one, a cover is drawn in the data-style.</blockquote></li>
+      <li data-size="148x210x24" data-kind="hard" data-color="#f4f4f3" data-style="modern" data-publisher="Sample Press" data-marks="2" data-read="Mar 2026">
+        <a href="https://example.com/book-02">Book Title 02</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote>
+        <blockquote>A highlight goes here.</blockquote>
+        <blockquote>And another one.</blockquote></li>
+      <li data-size="165x235x34" data-kind="soft" data-color="#302a23" data-style="literary" data-publisher="Sample Press" data-marks="0" data-progress="56">
+        <a href="https://example.com/book-03">Book Title 03</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote></li>
+      <li data-size="145x210x32" data-kind="hard" data-color="#5f656d" data-style="literary" data-publisher="Sample Press" data-marks="0" data-read="May 2026">
+        <a href="https://example.com/book-04">Book Title 04</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote></li>
+      <li data-size="150x220x22" data-kind="hard" data-color="#656060" data-style="modern" data-publisher="Sample Press" data-marks="0" data-read="Jun 2026">
+        <a href="https://example.com/book-05">Book Title 05</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote></li>
+      <li data-size="130x184x12" data-kind="soft" data-color="#d2cdcc" data-style="literary" data-publisher="Sample Press" data-marks="2" data-progress="17">
+        <a href="https://example.com/book-06">Book Title 06</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote>
+        <blockquote>A highlight goes here.</blockquote>
+        <blockquote>And another one.</blockquote></li>
+      <li data-size="170x240x42" data-kind="hard" data-color="#aeaeb0" data-style="modern" data-publisher="Sample Press" data-marks="0" data-read="Aug 2026">
+        <a href="https://example.com/book-07">Book Title 07</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote></li>
+      <li data-size="155x230x50" data-kind="soft" data-color="#5a1f1b" data-ink="#e8d9b0" data-style="literary" data-publisher="Sample Press" data-marks="0" data-read="Sep 2026">
+        <a href="https://example.com/book-08">Book Title 08</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote></li>
+      <li data-size="150x220x18" data-kind="soft" data-color="#d1c4b9" data-style="literary" data-publisher="Sample Press" data-marks="0" data-progress="68">
+        <a href="https://example.com/book-09">Book Title 09</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote></li>
+      <li data-size="130x190x16" data-kind="soft" data-color="#8d2521" data-style="literary" data-publisher="Sample Press" data-marks="2" data-read="Nov 2026">
+        <a href="https://example.com/book-10">Book Title 10</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote>
+        <blockquote>A highlight goes here.</blockquote>
+        <blockquote>And another one.</blockquote></li>
+      <li data-size="170x230x16" data-kind="soft" data-color="#e8eaf1" data-style="sea" data-publisher="Sample Press" data-marks="0" data-read="Dec 2026">
+        <a href="https://example.com/book-11">Book Title 11</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote></li>
+      <li data-size="130x190x18" data-kind="soft" data-color="#9c5869" data-style="literary" data-publisher="Sample Press" data-marks="0" data-progress="29">
+        <a href="https://example.com/book-12">Book Title 12</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote></li>
+      <li data-size="148x210x18" data-kind="hard" data-color="#f6f4f0" data-style="modern" data-publisher="Sample Press" data-marks="0" data-read="Feb 2026">
+        <a href="https://example.com/book-13">Book Title 13</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote></li>
+      <li data-size="130x184x8" data-kind="soft" data-color="#e23a32" data-style="modern" data-publisher="Sample Press" data-marks="2" data-read="Mar 2026">
+        <a href="https://example.com/book-14">Book Title 14</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote>
+        <blockquote>A highlight goes here.</blockquote>
+        <blockquote>And another one.</blockquote></li>
+      <li data-size="145x210x18" data-kind="soft" data-color="#6a7174" data-style="literary" data-publisher="Sample Press" data-marks="0" data-progress="80">
+        <a href="https://example.com/book-15">Book Title 15</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote></li>
+      <li data-size="150x210x13" data-kind="soft" data-color="#d8cac3" data-style="modern" data-publisher="Sample Press" data-marks="0" data-read="May 2026">
+        <a href="https://example.com/book-16">Book Title 16</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote></li>
+      <li data-size="155x230x32" data-kind="soft" data-color="#85afca" data-style="literary" data-publisher="Sample Press" data-marks="0" data-read="Jun 2026">
+        <a href="https://example.com/book-17">Book Title 17</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote></li>
+      <li data-size="130x190x14" data-kind="hard" data-color="#b08545" data-style="literary" data-publisher="Sample Press" data-marks="2" data-progress="41">
+        <a href="https://example.com/book-18">Book Title 18</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote>
+        <blockquote>A highlight goes here.</blockquote>
+        <blockquote>And another one.</blockquote></li>
+      <li data-size="150x220x26" data-kind="soft" data-color="#b11924" data-style="modern" data-publisher="Sample Press" data-marks="0" data-read="Aug 2026">
+        <a href="https://example.com/book-19">Book Title 19</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote></li>
+      <li data-size="165x235x26" data-kind="soft" data-color="#9dc4c9" data-style="modern" data-publisher="Sample Press" data-marks="0" data-read="Sep 2026">
+        <a href="https://example.com/book-20">Book Title 20</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote></li>
+      <li data-size="128x182x16" data-kind="soft" data-color="#8bc2e1" data-style="literary" data-publisher="Sample Press" data-marks="0" data-progress="92">
+        <a href="https://example.com/book-21">Book Title 21</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote></li>
+      <li data-size="150x220x26" data-kind="soft" data-color="#dfc8ca" data-style="modern" data-publisher="Sample Press" data-marks="2" data-read="Nov 2026">
+        <a href="https://example.com/book-22">Book Title 22</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote>
+        <blockquote>A highlight goes here.</blockquote>
+        <blockquote>And another one.</blockquote></li>
+      <li data-size="150x220x16" data-kind="soft" data-color="#664f45" data-style="modern" data-publisher="Sample Press" data-marks="0" data-read="Dec 2026">
+        <a href="https://example.com/book-23">Book Title 23</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote></li>
+      <li data-size="148x210x20" data-kind="soft" data-color="#f6f4f0" data-style="modern" data-publisher="Sample Press" data-marks="0" data-progress="53">
+        <a href="https://example.com/book-24">Book Title 24</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote></li>
+      <li data-size="160x230x48" data-kind="hard" data-color="#d56105" data-style="literary" data-publisher="Sample Press" data-marks="0" data-read="Feb 2026">
+        <a href="https://example.com/book-25">Book Title 25</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote></li>
+      <li data-size="130x184x11" data-kind="hard" data-color="#ddddd8" data-style="literary" data-publisher="Sample Press" data-marks="2" data-read="Mar 2026">
+        <a href="https://example.com/book-26">Book Title 26</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote>
+        <blockquote>A highlight goes here.</blockquote>
+        <blockquote>And another one.</blockquote></li>
+      <li data-size="140x203x24" data-kind="soft" data-color="#f6f4f3" data-style="literary" data-publisher="Sample Press" data-marks="0" data-progress="14">
+        <a href="https://example.com/book-27">Book Title 27</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote></li>
+      <li data-size="170x240x34" data-kind="hard" data-color="#afa59a" data-style="modern" data-publisher="Sample Press" data-marks="0" data-read="May 2026">
+        <a href="https://example.com/book-28">Book Title 28</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote></li>
+      <li data-size="130x184x10" data-kind="soft" data-color="#ad8f2e" data-style="literary" data-publisher="Sample Press" data-marks="0" data-read="Jun 2026">
+        <a href="https://example.com/book-29">Book Title 29</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote></li>
+      <li data-size="155x230x48" data-kind="hard" data-color="#5c5d68" data-style="literary" data-publisher="Sample Press" data-marks="2" data-progress="65">
+        <a href="https://example.com/book-30">Book Title 30</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote>
+        <blockquote>A highlight goes here.</blockquote>
+        <blockquote>And another one.</blockquote></li>
+      <li data-size="150x220x20" data-kind="hard" data-color="#cfd7ba" data-style="modern" data-publisher="Sample Press" data-marks="0" data-read="Aug 2026">
+        <a href="https://example.com/book-31">Book Title 31</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote></li>
+      <li data-size="155x230x34" data-kind="soft" data-color="#38436d" data-style="literary" data-publisher="Sample Press" data-marks="0" data-read="Sep 2026">
+        <a href="https://example.com/book-32">Book Title 32</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote></li>
+      <li data-size="140x210x22" data-kind="soft" data-color="#274264" data-style="literary" data-publisher="Sample Press" data-marks="0" data-progress="26">
+        <a href="https://example.com/book-33">Book Title 33</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote></li>
+      <li data-size="150x220x48" data-kind="hard" data-color="#efe0a4" data-style="literary" data-publisher="Sample Press" data-marks="2" data-read="Nov 2026">
+        <a href="https://example.com/book-34">Book Title 34</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote>
+        <blockquote>A highlight goes here.</blockquote>
+        <blockquote>And another one.</blockquote></li>
+      <li data-size="145x210x36" data-kind="soft" data-color="#506e73" data-style="literary" data-publisher="Sample Press" data-marks="0" data-read="Dec 2026">
+        <a href="https://example.com/book-35">Book Title 35</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote></li>
+      <li data-size="150x220x40" data-kind="hard" data-color="#d6c15f" data-style="literary" data-publisher="Sample Press" data-marks="0" data-progress="77">
+        <a href="https://example.com/book-36">Book Title 36</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote></li>
+      <li data-size="145x210x45" data-kind="soft" data-color="#262930" data-style="modern" data-publisher="Sample Press" data-marks="0" data-read="Feb 2026">
+        <a href="https://example.com/book-37">Book Title 37</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote></li>
+      <li data-size="145x210x20" data-kind="soft" data-color="#e4d8ba" data-style="literary" data-publisher="Sample Press" data-marks="2" data-read="Mar 2026">
+        <a href="https://example.com/book-38">Book Title 38</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote>
+        <blockquote>A highlight goes here.</blockquote>
+        <blockquote>And another one.</blockquote></li>
+      <li data-size="128x182x45" data-kind="soft" data-color="#d4cfd1" data-style="modern" data-publisher="Sample Press" data-marks="0" data-progress="38">
+        <a href="https://example.com/book-39">Book Title 39</a> <span class="by">Author Name</span>
+        <blockquote class="key">The one line that stands for this book, printed alone on the left page.</blockquote></li>
     </ul>
   </section>
 
@@ -535,14 +546,15 @@
       照片先用 blender/age_photos.py 做旧：原图放 photos-src/，跑完得到 assets/photos/名字.webp 和 名字.board.webp，
       还有一份 assets/photos/photos.json（照片列表）；有这份列表，3D 版就钉这些照片。这两个文件夹都不进 Git。
       下面是样例：几张空白的做旧照片（assets/photos-sample/，--demo 1 生成的），本地没有真实照片时用。p 是一行说明，可以不写。
+      img 的 width / height 写图片的像素尺寸：图还没下完时先按这个比例占好位置，点导航跳到后面几节才不会跳偏。
     -->
     <ul class="photos">
-      <li><img src="assets/photos-sample/blank-1.webp" alt="一张空白的旧照片" loading="lazy"> <p>一行说明，可以不写。</p></li>
-      <li><img src="assets/photos-sample/blank-2.webp" alt="一张空白的旧照片" loading="lazy"> <p>照片换成自己的：原图放 photos-src/，用 blender/age_photos.py 做旧。</p></li>
-      <li><img src="assets/photos-sample/blank-3.webp" alt="一张空白的旧照片" loading="lazy"></li>
-      <li><img src="assets/photos-sample/blank-4.webp" alt="一张空白的旧照片" loading="lazy"></li>
-      <li><img src="assets/photos-sample/blank-5.webp" alt="一张空白的旧照片" loading="lazy"></li>
-      <li><img src="assets/photos-sample/blank-6.webp" alt="一张空白的旧照片" loading="lazy"></li>
+      <li><img src="assets/photos-sample/blank-1.webp" alt="一张空白的旧照片" width="1600" height="1181" loading="lazy"> <p>一行说明，可以不写。</p></li>
+      <li><img src="assets/photos-sample/blank-2.webp" alt="一张空白的旧照片" width="1181" height="1600" loading="lazy"> <p>照片换成自己的：原图放 photos-src/，用 blender/age_photos.py 做旧。</p></li>
+      <li><img src="assets/photos-sample/blank-3.webp" alt="一张空白的旧照片" width="1600" height="1181" loading="lazy"></li>
+      <li><img src="assets/photos-sample/blank-4.webp" alt="一张空白的旧照片" width="1529" height="1600" loading="lazy"></li>
+      <li><img src="assets/photos-sample/blank-5.webp" alt="一张空白的旧照片" width="1181" height="1600" loading="lazy"></li>
+      <li><img src="assets/photos-sample/blank-6.webp" alt="一张空白的旧照片" width="1600" height="1181" loading="lazy"></li>
     </ul>
   </section>
 
@@ -652,7 +664,7 @@
   <div id="hint" class="hint" aria-hidden="true"></div>
   <button id="back" class="back" type="button" hidden>← Back</button>
   <aside id="panel" class="panel" hidden></aside>
-  <div id="help" class="help">Click things to explore · Drag to look around · <a href="?plain=1">Text version</a></div>
+  <div id="help" class="help"><span class="if-mouse">Click</span><span class="if-touch">Tap</span> things to explore · Drag to look around · <a href="?plain=1">Text version</a></div>
 </div>
 
 <script type="module" src="js/main.js"></script>

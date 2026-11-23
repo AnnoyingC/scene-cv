@@ -2,26 +2,26 @@
   "size": 2048,
   "samples": 1024,
   "blender": "5.2.3 LTS",
-  "built": "20261121-235247",
+  "built": "20261123-122242",
   "layers": {
     "ambient": {
       "file": "lm_ambient.jpg",
-      "scale": 0.6161820888519287
+      "scale": 0.616298258304596
     },
     "room": {
       "file": "lm_room.jpg",
-      "scale": 2.7184770107269287
+      "scale": 2.6738197803497314
     },
     "lamp": {
       "file": "lm_lamp.jpg",
-      "scale": 3.790290355682373
+      "scale": 3.244302272796631
     },
     "tv": {
       "file": "lm_tv.jpg",
-      "scale": 1.3527741432189941
+      "scale": 1.2748806476593018
     }
   },
-  "seconds": 43,
+  "seconds": 35,
   "camera": {
     "target": [
       0.0706,
@@ -34,7 +34,7 @@
     "fov": 34,
     "yawRange": [
       -1.0,
-      1.2
+      1.3
     ],
     "pitchRange": [
       -0.6,

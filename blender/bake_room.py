@@ -505,11 +505,12 @@ ball((wx0 - 0.085, CUR_Y, CUR_Z), 0.02, brass, 1)
 for bx in (wx0 - 0.02, x1 - 0.11):
     box(I, 0.014, 0.03, CUR_Z - BACK, brass, bx, CUR_Y, (BACK + CUR_Z) / 2)
 cm = mat('curtain', '#a8823f')
-NX, NY, PLEATS = 36, 12, 6
+NX, NY, PLEATS = 72, 12, 6  # 一个褶子 12 个面：褶子是圆的，不是一块块平板
+CURTAIN_UVK = 20             # 窗帘正面的 lightmap 精度：一格 1.5 厘米左右，褶子的明暗烘得出来（正面按网格整块展开，见下面 Lightmap 那段）
 # t（0 = 顶，1 = 底）→ 左沿、右沿。靠窗那条边往下稍微往窗里收，靠墙那条边稍微往外散
 SIDES = [lambda t: (wx1 - 0.03 - 0.025 * t, x1 - 0.035 + 0.01 * t)]
 for side, back in [(sd, bk) for sd in SIDES for bk in (False, True)]:  # 正面带褶子；后面一层平的衬布（侧面看过去褶子的缝里不会露出墙）
-    K = 4 if back else 10
+    K = 4 if back else CURTAIN_UVK
     grid = []
     for j in range(NY + 1):
         t = j / NY
@@ -703,7 +704,7 @@ AABB.append(('wing', np.array((DESK_LX, 0.0, DESK_BACK)), np.array((DESK_RX - 1.
 # box：镜头不能出这个范围（x 左右、z 最靠前、y 最低 / 最高），转到边上时自动拉近，免得钻进墙里；
 # 左边界留出左墙书柜的深度（0.63 米）再多 12 厘米，往右转看唱机时镜头不会退进书柜里
 CAM = dict(target=tuple(Vector(PC_SCREEN['pos']) + Vector((0, 0.08, -0.1))), dist=2.25, yaw=0.0, pitch=-0.12, fov=34,
-           yawRange=(-1.0, 1.2), pitchRange=(-0.6, 0.06), distRange=(1.1, 2.4),
+           yawRange=(-1.0, 1.3), pitchRange=(-0.6, 0.06), distRange=(1.1, 2.4),
            box=dict(x=(x0 + 0.75, x1 - 0.25), z=z1 - 0.25, y=(0.45, RH - 0.3)))
 
 # 按人的习惯只留这一套：台灯夹在左后角；靠窗那一排是看的东西，正面朝开场镜头；
@@ -1321,8 +1322,14 @@ def book_uv(faces, gb, w, h, t):
             l[uvl].uv = (u, v)
 
 
+# 书脊的 lightmap 精度：薄书的书脊只有 8～20 毫米宽，按书的精度（15）一格贴图 2 厘米多，常常一个像素中心都落不进去、书脊烘焙成全黑
+# （2026-11-23 量过：39 本里 9 本书脊是 0）。书脊这一条面积很小，给到 60 也只多占一点贴图
+SPINE_UVK = 60
+
+
 def real_book(g, dims, kind, mi_cover, mi_pages, pos, rot=(0, 0, 0)):
     """一本真书，pos = 书的中心。精装：封板 2.5 毫米厚、比书芯大一圈（上下、切口各 3 毫米）；平装：封面 0.7 毫米、几乎齐平。"""
+    global K
     w, h, t = dims
     gb = g @ M(pos, rot)
     hard = kind == 'hard'
@@ -1330,7 +1337,9 @@ def real_book(g, dims, kind, mi_cover, mi_pages, pos, rot=(0, 0, 0)):
     shell = set()
     shell |= box(gb, bt, h, w, mi_cover, t / 2 - bt / 2, 0, 0)         # 封面那块板（+x）
     shell |= box(gb, bt, h, w, mi_cover, -t / 2 + bt / 2, 0, 0)        # 封底那块板
+    k0, K = K, SPINE_UVK                                                 # 书脊单独给高精度（见 SPINE_UVK）
     shell |= box(gb, t - 2 * bt, h, bt, mi_cover, 0, 0, w / 2 - bt / 2)  # 书脊
+    K = k0
     box(gb, t - 2 * bt, h - 2 * o, w - o - bt, mi_pages, 0, 0, (o - bt) / 2)  # 书芯（切口和上下比书皮缩进 o）
     book_uv(shell, gb, w, h, t)
     return gb
@@ -1354,6 +1363,9 @@ BOOKCASE = Asset('sketchfab/wooden-bookcase', 'bookcase', texsize=2048)
 BOOK_COLORS = ['#6b2a26', '#2c4a3e', '#b59a5e', '#253650', '#8a5a2b', '#d6ccb4', '#4b2f46', '#3c3b38']
 BOOKS = [mat(f'book{i}', c) for i, c in enumerate(BOOK_COLORS)]  # 自己搭的书（窗台上、地上那一摞）用的颜色
 OLD = Asset('sketchfab/elegan-old-book-pack', 'oldbook', texsize=512)
+# 旧书的 lightmap 精度：一本薄书的书脊只有 1～2 厘米宽。按普通精度（12）一格贴图有 2.7 厘米，书脊里一个像素中心都没有，
+# 烘焙不到、整本是黑的（2026-11-21 桌上加了东西、整张贴图变挤以后，最上层左头那几本就这样黑了）。给到 40，书脊至少占一两格
+OLD_UVK = 40
 _blo, _bhi = BOOKCASE.bounds()
 SH_W = float(_bhi[0] - _blo[0]) * BC_S         # 连冠头的总宽（摆龟背竹、日历要用）
 SH_D = float(_bhi[2] - _blo[2]) * BC_S
@@ -1396,12 +1408,12 @@ def old_books(piece, level, x0, flat=False, y0=0.0, nudge=0.0, rot_y=0.0):
         s = 0.82
         length, depth = size[1] * s, size[0] * s
         at = g @ M((x0 + length / 2, f + y0, -depth / 2 + nudge), (0, rot_y, 0)) @ FLAT
-        put(OLD, at, pieces=names, scale=s, uvk=12, anchor=(0.5, 0.5, 0.0))
+        put(OLD, at, pieces=names, scale=s, uvk=OLD_UVK, anchor=(0.5, 0.5, 0.0))
         return length, size[2] * s
     s = min(0.82, (c - f - 0.014) / size[1])
     length, depth = size[2] * s, size[0] * s
     at = g @ M((x0 + length / 2, f, -min(depth, SH_DEPTH) / 2 + nudge), (0, rot_y, 0)) @ UPRIGHT
-    put(OLD, at, pieces=names, scale=s, uvk=12)
+    put(OLD, at, pieces=names, scale=s, uvk=OLD_UVK)
     return length, size[1] * s
 
 
@@ -1982,6 +1994,32 @@ bpy.ops.object.mode_set(mode='EDIT')
 bpy.ops.mesh.select_all(action='SELECT')
 bpy.ops.uv.smart_project(angle_limit=math.radians(60), island_margin=0.002, area_weight=0.0, correct_aspect=True, scale_to_bounds=False)
 bpy.ops.object.mode_set(mode='OBJECT')
+# 窗帘正面：smart_project 按法线把褶子切成一条条竖的小岛，一条只有几毫米宽，里面落不进一个像素中心，烘出来是一道道黑条。
+# 改成按网格整块展开：u = 沿着褶子量的弧长，v = 往下量的高度，米 → UV 的比例和别的岛一样（之后照常乘 uvk、一起 pack）。
+# 正面 / 衬布按 uvk 分（衬布是 4）
+_bm = bmesh.new()
+_bm.from_mesh(me)
+_uvl, _kl = _bm.loops.layers.uv['Lightmap'], _bm.faces.layers.int['uvk']
+_ci = next(i for i, m in enumerate(me.materials) if m and m.name == 'curtain')
+_uva = lambda f: abs(sum(a[_uvl].uv.x * b[_uvl].uv.y - b[_uvl].uv.x * a[_uvl].uv.y for a, b in zip(f.loops, list(f.loops)[1:] + [f.loops[0]]))) / 2
+_d = math.sqrt(sum(_uva(f) for f in _bm.faces) / sum(f.calc_area() for f in _bm.faces))  # 平均每米多少 UV
+_front = [f for f in _bm.faces if f.material_index == _ci and f[_kl] != 4]
+_rows = {}
+for v in {v for f in _front for v in f.verts}:
+    _rows.setdefault(round(v.co.z, 4), []).append(v)
+_top, _s = max(_rows), {}
+for z, vs in _rows.items():
+    vs.sort(key=lambda v: v.co.x)
+    acc = 0.0
+    for k, v in enumerate(vs):
+        acc += (v.co - vs[k - 1].co).length if k else 0.0
+        _s[v] = acc
+for f in _front:
+    for l in f.loops:
+        l[_uvl].uv = (_s[l.vert] * _d, (_top - l.vert.co.z) * _d)
+_bm.to_mesh(me)
+_bm.free()
+print(f'[curtain] 正面 {len(_front)} 个面按网格展开，{len(_rows)} 行')
 lm = me.uv_layers['Lightmap']  # 进出编辑模式以后网格数据重建过，之前拿到的 UV 层引用会失效，按名字重新取
 npoly = len(me.polygons)
 k = np.empty(npoly, dtype=np.int32)

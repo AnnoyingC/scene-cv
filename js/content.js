@@ -1,6 +1,33 @@
 // 从 HTML 内容层读出网站数据，交给 3D 房间。内容和画面分开：改内容只改 HTML，不碰 3D 代码。
 const text = (el) => (el?.textContent || '').replace(/\s+/g, ' ').trim();
 
+// The personal list can replace the sample after the initial document has loaded.
+// Observe only direct replacements in the list, not changes inside an individual book.
+const shelfList = globalThis.document?.querySelector('#shelf .books');
+if (shelfList) {
+  const narrow = window.matchMedia('(max-width: 600px)');
+  const arrangeHighlights = () => {
+    for (const book of shelfList.children) {
+      const details = book.querySelector(':scope > details.highlights');
+      if (details && !narrow.matches) {
+        details.replaceWith(...details.querySelectorAll('blockquote'));
+      } else if (narrow.matches && !details) {
+        const quotes = book.querySelectorAll(':scope > blockquote:not(.key)');
+        if (!quotes.length) continue;
+        const group = document.createElement('details');
+        group.className = 'highlights';
+        const summary = document.createElement('summary');
+        summary.textContent = `${quotes.length} highlight${quotes.length === 1 ? '' : 's'}`;
+        quotes[0].before(group);
+        group.append(summary, ...quotes);
+      }
+    }
+  };
+  arrangeHighlights();
+  narrow.addEventListener('change', arrangeHighlights);
+  new MutationObserver(arrangeHighlights).observe(shelfList, { childList: true });
+}
+
 // 书架上一本书的书名：有链接就是链接的字，没有就是 li 开头的文字（去掉作者和简介）。js/main.js 按书名补真实封面也用它
 export function bookTitle(li) {
   const own = [...li.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join(' ');
@@ -45,6 +72,7 @@ export function readContent(doc = document) {
       const d = li.dataset;
       return {
         title: bookTitle(li), url: a?.href || '', author: text(by), note: text(li.querySelector('p')),
+        spine: by?.dataset.spine || '', // 书脊上印的作者（可以不写）：默认英文取姓（最后一个词），中文名的英文写法姓在前（比如 Zhang San），就写全名
         // key：左页单独印的那一句（blockquote.key）；quotes：右页的划线
         key: text(li.querySelector('blockquote.key')),
         quotes: [...li.querySelectorAll('blockquote:not(.key)')].map(text).filter(Boolean),

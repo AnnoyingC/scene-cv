@@ -11,11 +11,20 @@ import * as THREE from 'three';
 import { sfx } from './sfx.js';
 
 const COVERS = new URL('../assets/books/covers/', import.meta.url).href;
+// 书单可以是英文也可以是中文：英文字用 EB Garamond（css/style.css 的 @font-face），中文字落到后面的宋体 / 楷体上。
+// pen = 钢笔写的字（读书状态、阅读卡），英文用斜体
 const FONT = {
-  serif: '"Songti SC", "STSong", "Noto Serif SC", "Source Han Serif SC", SimSun, serif',
-  kai: '"Kaiti SC", "STKaiti", KaiTi, "Songti SC", serif',
-  sans: '"PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", sans-serif',
+  serif: '"EB Garamond", "Songti SC", "STSong", "Noto Serif SC", "Source Han Serif SC", SimSun, serif',
+  pen: '"EB Garamond", "Kaiti SC", "STKaiti", KaiTi, "Songti SC", serif',
+  sans: '"Helvetica Neue", Helvetica, Arial, "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", sans-serif',
 };
+const FONTS_USED = ['500 20px "EB Garamond"', 'italic 400 20px "EB Garamond"'];
+// 有没有中文（日文）字：有就按中文排（竖排书脊、按字断行、书名号），没有就按英文排
+const CJK = /[\u3000-\u9fff\uf900-\ufaff\uff00-\uffef]/;
+const latin = (s) => !CJK.test(s || '');
+const shortTitle = (title) => title.split(/[:：]/, 1)[0].trim() || title;
+// 书名怎么写：中文加书名号，英文原样（room.js 的悬停提示也用）
+export const bookName = (t) => (latin(t) ? t : `《${t}》`);
 const ease = (k) => (k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2);
 const clamp01 = (k) => Math.min(1, Math.max(0, k));
 const smooth01 = (a, b, x) => { const k = clamp01((x - a) / (b - a)); return k * k * (3 - 2 * k); };
@@ -53,19 +62,50 @@ function vtext(ctx, s, x, y, size, maxH, font, gap = 1.12) {
   }
   return yy;
 }
-// 横排自动换行（中文按字断行），返回最后一行的底
+// 书脊上的字：中文竖排（一个字一行）；英文横着写、整行转 90°，从上往下读（英文书的书脊都这么印）。字太长放不下时缩小
+function spineText(ctx, s, x, y, size, maxH, font) {
+  if (!latin(s)) return vtext(ctx, s, x, y, size, maxH, font);
+  ctx.font = font.replace('{}', size.toFixed(1) + 'px');
+  const w = ctx.measureText(s).width, sz = w > maxH ? size * (maxH / w) : size;
+  ctx.font = font.replace('{}', sz.toFixed(1) + 'px');
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(Math.PI / 2);
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(s, 0, 0);
+  ctx.restore();
+  return y + Math.min(w, maxH);
+}
+// 横排自动换行：中文按字断行，英文按词断行。返回最后一行的底（align = 'center' 时 x 是中线）
 const NO_START = '，。、；：！？）」』》〉”’…—,.;:!?)';
-function wrap(ctx, s, x, y, maxW, lh, maxLines = 99) {
-  let line = '', lines = 0;
+const tokens = (s) => s.match(/[\u3000-\u9fff\uf900-\ufaff\uff00-\uffef]|[^\s\u3000-\u9fff\uf900-\ufaff\uff00-\uffef]+\s*|\s+/g) || [];
+function lines(ctx, s, maxW) {
+  let line = '';
   const out = [];
-  for (const ch of s) {
+  for (const tk of tokens(s)) {
     // 标点不放在行首：超出一点也挂在上一行末尾
-    if (ctx.measureText(line + ch).width > maxW && line && !NO_START.includes(ch)) { out.push(line); line = ''; }
-    line += ch;
+    if (ctx.measureText((line + tk).trimEnd()).width > maxW && line.trim() && !NO_START.includes(tk.trim())) { out.push(line.trimEnd()); line = tk.trimStart(); continue; }
+    line += tk;
   }
-  if (line) out.push(line);
-  for (const l of out.slice(0, maxLines)) { ctx.fillText(l, x, y + lines * lh); lines++; }
-  return y + lines * lh;
+  if (line.trim()) out.push(line.trimEnd());
+  return out;
+}
+function wrap(ctx, s, x, y, maxW, lh, maxLines = 99) {
+  const out = lines(ctx, s, maxW).slice(0, maxLines);
+  out.forEach((l, i) => ctx.fillText(l, x, y + i * lh));
+  return y + out.length * lh;
+}
+// 封面上的书名：一行放不下就换行，最多 maxLines 行；还放不下就整体缩小。返回用的字号和排好的行
+function fitTitle(ctx, s, maxW, size, maxLines, font) {
+  let fs = size, out;
+  for (;;) {
+    ctx.font = font.replace('{}', fs.toFixed(1) + 'px');
+    out = lines(ctx, s, maxW);
+    const loneArticle = out.length > 1 && /^(?:the|an?)$/i.test(out[0]);
+    if ((!loneArticle && out.length <= maxLines && out.every((l) => ctx.measureText(l).width <= maxW)) || fs < size * 0.4) return { fs, out };
+    fs *= 0.92;
+  }
 }
 const hex = (c, a = 1) => {
   const v = new THREE.Color(c);
@@ -88,19 +128,21 @@ function paintJacket(b, dims, img = null) {
   const H = 1024, s = H / h, W = (2 * w + t) * s;
   const c = canvas(W, H), x = c.getContext('2d');
   const bw = w * s, sw = t * s, fx = bw + sw; // 封底宽、书脊宽、封面从哪里开始
-  let bg = b.color || '#8a5a2b', ink = b.ink || '#f2ead8';
-  if (img) { // 真实封面：书脊和封底取封面的平均色，字用黑或白
-    const avg = avgColor(img), lum = avg.r * 0.2126 + avg.g * 0.7152 + avg.b * 0.0722;
-    bg = '#' + avg.clone().convertLinearToSRGB().getHexString();
-    ink = lum > 0.35 ? '#1d1d1d' : '#f4efe4';
-  }
+  const base = img ? avgColor(img) : new THREE.Color(b.color || '#8a5a2b');
+  const bg = '#' + base.getHexString();
+  // WCAG relative luminance uses linear RGB. THREE.Color already stores linear values.
+  const luminance = 0.2126 * base.r + 0.7152 * base.g + 0.0722 * base.b;
+  const blackContrast = (luminance + 0.05) / 0.05;
+  const whiteContrast = 1.05 / (luminance + 0.05);
+  const spineInk = blackContrast >= whiteContrast ? '#000000' : '#ffffff';
+  const ink = (!img && b.ink) || spineInk;
   x.fillStyle = bg;
   x.fillRect(0, 0, W, H);
   const style = img ? 'image' : b.style;
-  const title = b.title || '无题', author = b.author || '';
+  const title = b.title || 'Untitled', author = b.author || '';
 
   if (style === 'image') {
-    const r = Math.max(bw / img.width, H / img.height); // 铺满封面，多的裁掉
+    const r = Math.min(bw / img.width, H / img.height); // Preserve the lettering at the edges of the original jacket.
     x.drawImage(img, fx + (bw - img.width * r) / 2, (H - img.height * r) / 2, img.width * r, img.height * r);
   } else if (style === 'modern') {
     const gold = ink;
@@ -114,12 +156,22 @@ function paintJacket(b, dims, img = null) {
     x.beginPath();
     x.arc(fx + bw / 2, H * 0.24, bw * 0.018, 0, Math.PI * 2);
     x.fill();
-    const fs = Math.min(bw * 0.15, (bw * 0.78) / Math.max(1, [...title].length));
-    x.font = `700 ${fs}px ${FONT.sans}`;
     x.textAlign = 'center';
     x.textBaseline = 'middle';
-    x.fillText(title, fx + bw / 2, H * 0.45);
-    x.fillRect(fx + bw * 0.35, H * 0.45 + fs * 0.8, bw * 0.3, 2);
+    let fs, below;
+    if (latin(title)) {
+      const t = fitTitle(x, title.toUpperCase(), bw * 0.76, bw * 0.12, 3, `700 {} ${FONT.sans}`);
+      fs = t.fs;
+      const lh = fs * 1.08, y0 = H * 0.50 - ((t.out.length - 1) * lh) / 2;
+      t.out.forEach((l, i) => x.fillText(l, fx + bw / 2, y0 + i * lh));
+      below = y0 + (t.out.length - 1) * lh;
+    } else {
+      fs = Math.min(bw * 0.15, (bw * 0.78) / Math.max(1, [...title].length));
+      x.font = `700 ${fs}px ${FONT.sans}`;
+      x.fillText(title, fx + bw / 2, H * 0.45);
+      below = H * 0.45;
+    }
+    x.fillRect(fx + bw * 0.35, below + fs * 0.8, bw * 0.3, 2);
     x.font = `400 ${bw * 0.045}px ${FONT.sans}`;
     x.fillText(author, fx + bw / 2, H * 0.86);
   } else if (style === 'sea') {
@@ -162,12 +214,19 @@ function paintJacket(b, dims, img = null) {
     x.fillStyle = ink;
     x.textAlign = 'center';
     x.textBaseline = 'middle';
-    const fs = Math.min(bw * 0.13, (bw * 0.8) / Math.max(1, [...title].length));
-    x.font = `800 ${fs}px ${FONT.sans}`;
-    x.fillText(title, fx + bw / 2, H * 0.09);
+    let below = H * 0.09;
+    if (latin(title)) {
+      const t = fitTitle(x, title, bw * 0.8, bw * 0.1, 2, `800 {} ${FONT.sans}`);
+      t.out.forEach((l, i) => x.fillText(l, fx + bw / 2, H * 0.08 + i * t.fs * 1.1));
+      below = H * 0.08 + (t.out.length - 1) * t.fs * 1.1;
+    } else {
+      const fs = Math.min(bw * 0.13, (bw * 0.8) / Math.max(1, [...title].length));
+      x.font = `800 ${fs}px ${FONT.sans}`;
+      x.fillText(title, fx + bw / 2, H * 0.09);
+    }
     x.font = `400 ${bw * 0.04}px ${FONT.sans}`;
     x.fillStyle = hex('#1f3d55');
-    x.fillText(author, fx + bw / 2, H * 0.15);
+    x.fillText(author, fx + bw / 2, below + H * 0.06);
   } else { // literary：米白的纸，竖排书名，淡墨远山，一方红印
     grain(x, fx, 0, bw, H, 0.06, 11);
     const r = rnd(5);
@@ -186,15 +245,28 @@ function paintJacket(b, dims, img = null) {
     x.fillStyle = hex('#ffffff', 0.8); // 雪点
     for (let k = 0; k < 60; k++) { x.beginPath(); x.arc(fx + r() * bw, r() * H * 0.9, 1 + r() * 2.5, 0, Math.PI * 2); x.fill(); }
     x.fillStyle = ink;
-    const fs = bw * 0.16;
-    vtext(x, title, fx + bw * 0.78, H * 0.1, fs, H * 0.45, `500 {} ${FONT.serif}`);
-    x.fillStyle = hex(ink, 0.75);
-    vtext(x, author, fx + bw * 0.62, H * 0.12, bw * 0.05, H * 0.3, `400 {} ${FONT.serif}`);
+    if (latin(title)) { // 英文：书名左对齐排在上面，作者斜体在下面
+      x.textAlign = 'left';
+      x.textBaseline = 'alphabetic';
+      const t = fitTitle(x, title, bw * 0.74, bw * 0.11, 4, `500 {} ${FONT.serif}`);
+      const lh = t.fs * 1.12;
+      t.out.forEach((l, i) => x.fillText(l, fx + bw * 0.13, H * 0.14 + i * lh));
+      x.fillStyle = hex(ink, 0.75);
+      x.font = `italic 400 ${bw * 0.055}px ${FONT.serif}`;
+      x.fillText(author, fx + bw * 0.13, H * 0.14 + (t.out.length - 1) * lh + bw * 0.12, bw * 0.74);
+      x.textAlign = 'center';
+      x.textBaseline = 'middle';
+    } else {
+      const fs = bw * 0.16;
+      vtext(x, title, fx + bw * 0.78, H * 0.1, fs, H * 0.45, `500 {} ${FONT.serif}`);
+      x.fillStyle = hex(ink, 0.75);
+      vtext(x, author, fx + bw * 0.62, H * 0.12, bw * 0.05, H * 0.3, `400 {} ${FONT.serif}`);
+    }
     x.fillStyle = '#b23a2a'; // 红印
     x.fillRect(fx + bw * 0.71, H * 0.6, bw * 0.12, bw * 0.12);
     x.fillStyle = '#f4ead8';
     x.font = `700 ${bw * 0.08}px ${FONT.serif}`;
-    x.fillText([...title][0], fx + bw * 0.77, H * 0.6 + bw * 0.06);
+    x.fillText([...title.replace(/^(?:the|an?)\s+/i, '')][0], fx + bw * 0.77, H * 0.6 + bw * 0.06);
   }
 
   // 封底：几行很淡的"简介"、一个条形码
@@ -215,11 +287,13 @@ function paintJacket(b, dims, img = null) {
   shade.addColorStop(1, 'rgba(0,0,0,0.22)');
   x.fillStyle = shade;
   x.fillRect(bw, 0, sw, H);
-  x.fillStyle = ink;
-  const font = style === 'modern' || style === 'sea' ? `700 {} ${FONT.sans}` : `500 {} ${FONT.serif}`;
-  const end = vtext(x, title, bw + sw / 2, H * 0.06, sw * 0.62, H * 0.5, font);
-  x.fillStyle = hex(ink, 0.75);
-  vtext(x, author.split(/[\s/]+/)[0], bw + sw / 2, end + H * 0.04, sw * 0.36, H * 0.25, `400 {} ${FONT.serif}`);
+  x.fillStyle = spineInk;
+  const font = style === 'modern' || style === 'sea' ? `700 {} ${FONT.sans}` : `600 {} ${FONT.serif}`;
+  const end = spineText(x, shortTitle(title), bw + sw / 2, H * 0.06, latin(title) ? sw * 0.74 : sw * 0.62, H * 0.68, font);
+  x.fillStyle = spineInk;
+  // 作者：<span class="by" data-spine> 写了就印它；中文取第一个词（[法]雨果 → 雨果）；英文取姓（Bob Iger → Iger；两个人取第一个人的姓）
+  const who = b.spine || (latin(author) ? author.split(/[/&,]| and /)[0].trim().split(/\s+/).pop() || '' : author.split(/[\s/]+/)[0]);
+  spineText(x, who, bw + sw / 2, end + H * 0.025, sw * 0.42, H * 0.15, `400 {} ${FONT.serif}`);
   x.fillStyle = hex(ink, 0.6);
   x.fillRect(bw + sw * 0.3, H * 0.92, sw * 0.4, sw * 0.4);
   return c;
@@ -248,10 +322,10 @@ function gutter(x, W, H, side) {
   x.fillStyle = g;
   x.fillRect(0, 0, W, H);
 }
-// 读书状态：读完于 2024 年 11 月 / 在读 · 46%（room.js 的面板也用）
+// 读书状态：Finished Nov 2024 / Reading · 46%。data-read 写读完的月份（"Nov 2024"），只知道读完了写 "done"
 export function readStatus(b) {
-  if (b.read) return b.read === '读完' ? '读完' : `读完于 ${b.read}`;
-  if (b.progress != null) return b.progress < 3 ? '刚开始读' : `在读 · 读到 ${Math.round(b.progress)}%`;
+  if (b.read) return ['done', '读完'].includes(b.read) ? 'Finished' : `Finished ${b.read}`;
+  if (b.progress != null) return b.progress < 3 ? 'Just started' : `Reading · ${Math.round(b.progress)}%`;
   return '';
 }
 // 左页：封面里侧。上面一行钢笔写的读书状态；中间单独印这本书的标志句（blockquote.key），没有就退回到感想（p）
@@ -263,14 +337,14 @@ function paintEndpaper(b, ratio) {
   const status = readStatus(b);
   if (status) {
     x.fillStyle = PEN;
-    x.font = `400 ${W * 0.046}px ${FONT.kai}`;
+    x.font = `italic 400 ${W * 0.05}px ${FONT.pen}`;
     x.fillText(status, W * 0.12, H * 0.12);
     x.fillRect(W * 0.12, H * 0.135, Math.min(W * 0.5, x.measureText(status).width), 2);
   }
   const line = b.key || b.note || '';
   if (line) {
     // 字号跟着句子长短走：短句印得大一点。先量出要几行，整段在页面中间偏上竖直居中
-    const n = [...line].length;
+    const n = latin(line) ? line.length / 2.3 : [...line].length; // 英文按字母数折算：大约 2.3 个字母顶一个汉字宽
     const fs = W * (n <= 12 ? 0.085 : n <= 30 ? 0.07 : n <= 60 ? 0.06 : 0.052), lh = fs * 1.62;
     x.font = `500 ${fs}px ${FONT.serif}`;
     const probe = canvas(4, 4).getContext('2d');
@@ -286,7 +360,7 @@ function paintEndpaper(b, ratio) {
     x.font = `400 ${W * 0.036}px ${FONT.serif}`;
     x.fillStyle = 'rgba(42,38,34,0.6)';
     x.textAlign = 'right';
-    x.fillText(`——《${b.title}》`, W * 0.86, y + fs * 0.4);
+    x.fillText(latin(b.title) ? `— ${shortTitle(b.title)}` : `——《${b.title}》`, W * 0.86, y + fs * 0.4, W * 0.72);
   }
   gutter(x, W, H, 'right');
   return c;
@@ -297,36 +371,54 @@ function paintEndpaper(b, ratio) {
 const QUOTE = { size: 0.046, lh: 1.63, gap: 0.045, top: 0.09, firstTop: 0.28, bottom: 0.89, card: 0.3 };
 const quoteFont = (W, s) => `400 ${W * QUOTE.size * s}px ${FONT.serif}`;
 const probeCtx = (() => { let p; return () => (p ||= canvas(4, 4).getContext('2d')); })();
-// 一条划线在字号倍数 s 下有多高（像素）
-function quoteH(q, W, s) {
-  const x = probeCtx();
-  x.font = quoteFont(W, s);
-  return wrap(x, q, 0, 0, W * 0.7, W * QUOTE.size * s * QUOTE.lh, 99);
-}
+// Break on measured lines. Each fragment keeps its original quote's punctuation and spacing.
 function layoutQuotes(b, ratio) {
-  const H = 1280, W = H * ratio, gap = H * QUOTE.gap;
-  const pages = [{ first: true, items: [] }];
-  let y = H * QUOTE.firstTop;
-  for (const q of b.quotes || []) {
-    // 一条很长的划线：字缩小一点，保证一整页放得下（不截断）
-    let s = 1;
-    while (s > 0.7 && quoteH(q, W, s) > H * (QUOTE.bottom - QUOTE.top)) s -= 0.05;
-    const hq = quoteH(q, W, s);
-    if (y + hq > H * QUOTE.bottom && pages.at(-1).items.length) { pages.push({ first: false, items: [] }); y = H * QUOTE.top; }
-    pages.at(-1).items.push({ q, s });
-    y += hq + gap;
+  const H = 1280, W = H * ratio;
+  const firstSpace = H * (QUOTE.bottom - QUOTE.firstTop), gap = H * QUOTE.gap;
+  const quotes = b.quotes || [];
+  const measure = (scale) => {
+    const ctx = probeCtx();
+    ctx.font = quoteFont(W, scale);
+    return quotes.map(q => lines(ctx, q, W * 0.7)).filter(rows => rows.length);
+  };
+  const leading = (scale) => W * QUOTE.size * scale * QUOTE.lh;
+  const height = (blocks, scale) => blocks.reduce((sum, rows) => sum + rows.length * leading(scale), 0)
+    + gap * Math.max(0, blocks.length - 1);
+  let scale = 1, blocks = measure(scale);
+  const natural = height(blocks, scale);
+  const card = natural < firstSpace * 0.45 && !!(b.publisher || b.marks || b.read || b.progress != null);
+  const available = firstSpace - (card ? H * (QUOTE.card + 0.03) : 0);
+  if (natural <= available) {
+    for (let step = 1; blocks.length && step <= 8; step++) {
+      const next = 1 + step * 0.05, larger = measure(next);
+      if (height(larger, next) > available) break;
+      scale = next;
+      blocks = larger;
+    }
+    const extra = (available - height(blocks, scale)) / Math.max(1, blocks.length);
+    return [{ first: true, items: blocks.map(rows => ({ rows })), scale, card, gap: gap + Math.min(H * 0.06, extra) }];
   }
-  // 第一页撑满：先看要不要印阅读卡，再把字放大到刚好排满（最多 1.4 倍），剩下的空隙匀到条与条之间
-  const p0 = pages[0], top = H * QUOTE.firstTop;
-  const natural = p0.items.reduce((h, it) => h + quoteH(it.q, W, it.s), 0) + gap * Math.max(0, p0.items.length - 1);
-  p0.card = natural < (H * QUOTE.bottom - top) * 0.45 && (b.publisher || b.marks || b.read || b.progress != null);
-  const bottom = H * (p0.card ? QUOTE.bottom - QUOTE.card - 0.03 : QUOTE.bottom);
-  const height = (k) => p0.items.reduce((h, it) => h + quoteH(it.q, W, it.s * k), 0) + gap * Math.max(0, p0.items.length - 1);
-  let k = 1;
-  if (p0.items.length) while (k < 1.4 && height(k + 0.05) <= bottom - top) k += 0.05;
-  p0.scale = k;
-  const spare = p0.items.length ? bottom - top - height(k) : 0;
-  p0.gap = gap + Math.min(H * 0.06, spare / Math.max(1, p0.items.length));
+  let page = { first: true, items: [] }, remaining = firstSpace;
+  const pages = [page], lh = leading(1);
+  for (const rows of blocks) {
+    let start = 0;
+    while (start < rows.length) {
+      const padding = page.items.length ? gap : 0;
+      let count = Math.min(rows.length - start, Math.floor((remaining - padding) / lh));
+      if (!page.items.length) count = Math.max(1, count);
+      // Keep two lines together on either side of a break when possible.
+      if (count > 2 && rows.length - start - count === 1) count--;
+      if (count <= 0 || (count === 1 && rows.length - start > 1 && page.items.length)) {
+        page = { items: [] };
+        pages.push(page);
+        remaining = H * (QUOTE.bottom - QUOTE.top);
+        continue;
+      }
+      page.items.push({ rows: rows.slice(start, start + count), continued: start > 0 });
+      remaining -= padding + count * lh;
+      start += count;
+    }
+  }
   return pages;
 }
 // 阅读卡：像图书馆的借书卡，几行横线，右边一个红色的圆章（读完 / 在读）
@@ -342,24 +434,28 @@ function paintCard(x, b, W, H, y0, h) {
   x.textAlign = 'center';
   x.textBaseline = 'alphabetic';
   x.font = `500 ${W * 0.036}px ${FONT.serif}`;
-  x.fillText('阅 读 卡', x0 + w / 2, y0 + h * 0.15);
-  const rows = [['书名', `《${b.title}》`], ['作者', b.author], ['出版', b.publisher], ['划线', b.marks ? `${b.marks} 条` : ''], ['状态', readStatus(b)]]
+  x.fillText('R E A D I N G   C A R D', x0 + w / 2, y0 + h * 0.15);
+  const rows = [['Title', b.title], ['Author', b.author], ['Publisher', b.publisher], ['Highlights', b.marks ? String(b.marks) : ''], ['Status', readStatus(b)]]
     .filter(([, v]) => v);
   const rh = (h * 0.76) / Math.max(4, rows.length), ry = y0 + h * 0.22;
   x.textAlign = 'left';
+  const labelX = x0 + w * 0.07;
+  const labelFont = `400 ${W * 0.028}px ${FONT.sans}`;
+  x.font = labelFont;
+  const valueX = labelX + Math.max(0, ...rows.map(([label]) => x.measureText(label.toUpperCase()).width)) + w * 0.05;
   rows.forEach(([k, v], i) => {
     const yy = ry + rh * (i + 0.72);
     x.fillStyle = 'rgba(42,38,34,0.55)';
-    x.font = `400 ${W * 0.03}px ${FONT.sans}`;
-    x.fillText(k, x0 + w * 0.07, yy);
+    x.font = labelFont;
+    x.fillText(k.toUpperCase(), labelX, yy);
     x.fillStyle = PEN;
-    x.font = `400 ${W * 0.042}px ${FONT.kai}`;
-    x.fillText(v, x0 + w * 0.22, yy, w * 0.72);
+    x.font = `italic 400 ${W * 0.044}px ${FONT.pen}`;
+    x.fillText(v, valueX, yy, x0 + w * 0.94 - valueX);
     x.fillStyle = 'rgba(42,38,34,0.18)';
     x.fillRect(x0 + w * 0.05, yy + rh * 0.22, w * 0.9, 1);
   });
   if (b.read || b.progress != null) { // 圆章
-    const cx = x0 + w * 0.8, cy = y0 + h * 0.62, r = W * 0.085;
+    const cx = x0 + w * 0.88, cy = y0 + h * 0.14, r = Math.min(w * 0.075, h * 0.1);
     x.translate(cx, cy);
     x.rotate(-0.25);
     x.strokeStyle = 'rgba(178,40,32,0.6)';
@@ -370,8 +466,10 @@ function paintCard(x, b, W, H, y0, h) {
     x.beginPath(); x.arc(0, 0, r * 0.84, 0, Math.PI * 2); x.stroke();
     x.textAlign = 'center';
     x.textBaseline = 'middle';
+    const word = b.read ? 'READ' : 'READING';
     x.font = `700 ${r * 0.62}px ${FONT.serif}`;
-    x.fillText(b.read ? '读完' : '在读', 0, 0);
+    x.font = `700 ${Math.min(r * 0.62, (r * 1.45 * r * 0.62) / x.measureText(word).width)}px ${FONT.serif}`; // 圈里放得下
+    x.fillText(word, 0, 0);
   }
   x.restore();
 }
@@ -384,24 +482,29 @@ function paintQuotes(b, ratio, page, no, side = 'right') {
   if (page.first) {
     x.fillStyle = PRINT;
     x.textAlign = 'center';
-    x.font = `500 ${W * 0.06}px ${FONT.serif}`;
-    x.fillText(b.title, W / 2, H * 0.12);
+    const title = fitTitle(x, b.title, W * 0.8, W * 0.06, 2, `500 {} ${FONT.serif}`);
+    const lineHeight = title.fs * 1.08;
+    const offset = (title.out.length - 1) * lineHeight / 2;
+    title.out.forEach((line, i) => x.fillText(line, W / 2, H * 0.12 - offset + i * lineHeight));
     x.font = `400 ${W * 0.034}px ${FONT.serif}`;
     x.fillStyle = 'rgba(42,38,34,0.7)';
-    x.fillText(b.author, W / 2, H * 0.165);
-    x.fillRect(W * 0.42, H * 0.19, W * 0.16, 1.5);
+    x.fillText(b.author, W / 2, H * 0.165 + offset, W * 0.8);
+    x.fillRect(W * 0.42, H * 0.19 + offset, W * 0.16, 1.5);
     y = H * QUOTE.firstTop;
   }
   const x0 = side === 'right' ? W * 0.17 : W * 0.14, k = page.scale || 1, gap = page.gap || H * QUOTE.gap;
   x.textAlign = 'left';
+  const fs = W * QUOTE.size * k, lh = fs * QUOTE.lh;
   for (const it of page.items) {
-    const s = it.s * k, fs = W * QUOTE.size * s;
-    x.font = `400 ${fs * 1.95}px ${FONT.serif}`;
-    x.fillStyle = 'rgba(178,58,42,0.75)';
-    x.fillText('“', x0 - fs * 1.5, y + fs * 1.3);
+    if (!it.continued) {
+      x.font = `400 ${fs * 1.95}px ${FONT.serif}`;
+      x.fillStyle = 'rgba(178,58,42,0.75)';
+      x.fillText('“', x0 - fs * 1.5, y + fs * 1.3);
+    }
     x.fillStyle = PRINT;
-    x.font = quoteFont(W, s);
-    y = wrap(x, it.q, x0, y + fs, W * 0.7, fs * QUOTE.lh, 99) - fs + gap; // y 是这一条的顶，第一行的基线在 y + 字号
+    x.font = quoteFont(W, k);
+    it.rows.forEach((line, i) => x.fillText(line, x0, y + fs + i * lh));
+    y += lh * it.rows.length + gap;
   }
   if (page.card) {
     const h = page.items.length ? H * QUOTE.card : H * 0.6; // 一条划线都没有：阅读卡占满书名下面那一大块
@@ -630,6 +733,17 @@ export function createBooks({ room, scene, camera, books, frame = () => ({ w: 0,
       m.material = mat;
     }
   }
+  // 书皮上的英文字体（EB Garamond）加载好以前画的是后备字体：加载好了把没有真实封面的书皮重画一遍
+  Promise.all(FONTS_USED.map((f) => document.fonts?.load(f).catch(() => null))).then(() => {
+    for (const e of entries) {
+      if (e.img) continue;
+      const t2 = tex(paintJacket(e.b, e.dims));
+      t2.flipY = false;
+      setJacket(e, t2);
+      e.jacket.dispose();
+      e.jacket = t2;
+    }
+  });
   for (const e of entries) {
     e.homeRot ||= SHELF_ROT.clone();
     e.pull = 0; e.pullT = 0;

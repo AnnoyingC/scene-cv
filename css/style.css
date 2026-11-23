@@ -31,6 +31,8 @@ a { color: var(--accent); }
 .hero h1 { font-size: 40px; line-height: 1.2; margin: 0 0 8px; }
 .tagline { color: var(--muted); margin: 0; }
 .notice { margin-top: 20px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; font-size: 15px; }
+/* 为什么先给静态版（index.html 头部的脚本写在 <html data-why>）：两句话只显示对得上的那句 */
+:root:not([data-why="phone"]) #try-room [data-why="phone"], [data-why="phone"] #try-room [data-why="gpu"] { display: none; }
 section { margin-top: 48px; }
 h2 { font-size: 14px; letter-spacing: 0.12em; color: var(--muted); font-weight: 600; margin: 0 0 12px; }
 .tapes { list-style: none; padding: 0; margin: 0; }
@@ -45,6 +47,7 @@ h2 { font-size: 14px; letter-spacing: 0.12em; color: var(--muted); font-weight: 
 .books p { margin: 4px 0 0; color: var(--muted); font-size: 15px; }
 .books blockquote { margin: 6px 0 0; padding-left: 12px; border-left: 2px solid var(--line); color: var(--muted); font-size: 14px; }
 .books blockquote.key { color: inherit; font-size: 15px; border-left-color: #b23a2a; }
+.books .highlights summary { width: fit-content; padding: 9px 3px; font-size: 14px; color: var(--muted); cursor: pointer; }
 .photos { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
 .photos img { display: block; width: 100%; height: auto; }
 .photos p { margin: 6px 0 0; color: var(--muted); font-size: 14px; }
@@ -272,13 +275,8 @@ h2 { font-size: 14px; letter-spacing: 0.12em; color: var(--muted); font-weight: 
 
 @media (max-width: 600px) {
   .panel { left: 16px; right: 16px; width: auto; max-height: 42vh; }
-  .help { font-size: 12px; }
-  .topbar { gap: 10px; }
   .is-room .topbar { padding: max(12px, env(safe-area-inset-top)) 16px 12px; }
-  .topbar .brand { font-size: 15px; letter-spacing: 0.03em; }
-  .topbar .tabs { gap: 2px; }
-  .topbar .tabs a { padding: 2px calc(7px - 0.1em) 2px 7px; font-size: 14px; letter-spacing: 0.1em; }
-  .back { top: calc(max(12px, env(safe-area-inset-top)) + 42px); }
+  /* 导航栏和底下的提示条在手机上怎么排，见文件最后"窄屏"那一节 */
 }
 
 /* ---------- 简历：一张张 A4 纸（纯文字版里是白纸卡片；3D 版里 js/resume.js 把它们从桌上拿起来，叠成一摞举在眼前） ---------- */
@@ -336,6 +334,9 @@ div.cv-photo { /* 样例里的照片占位：一个剪影 */
   .cv-page { grid-template-columns: minmax(0, 1fr); padding: 1.6em 1.3em; }
   .cv-main { margin-top: 1.4em; }
   .cv-photo { width: 40%; }
+  /* 纯文字版的简历在手机上字大一号：奖项那几行原来只有 11px。3D 版拿在手里的纸是固定 A4，不动 */
+  #content .cv-page { --cv-fs: 15px; }
+  #content .cv-awards { font-size: 0.9em; }
 }
 
 /* 3D 版：拿在手里的一摞纸。纸是固定的 A4（794 × 1123，@96 dpi），整体缩放；字放不下时 --fit 往小调 */
@@ -543,3 +544,42 @@ main h1, main h2 { font-family: var(--display); letter-spacing: 0.04em; }
 .tvsub-hint { color: rgba(246, 239, 226, 0.55); font-size: 12px; text-shadow: 0 1px 3px #000; }
 @media (max-width: 600px) { .tvsub-text { font-size: 15px; } .tvsub-hint { display: none; } }
 @media (prefers-reduced-motion: reduce) { .tvsub-text.in { animation: none; } }
+
+/* ---------- 窄屏（手机）和手指操作。放在文件最后：前面英文字体那一节对所有屏幕都写了导航栏、提示条的字号，
+   写在它前面的手机规则会被它盖掉（同样写法的规则，后写的赢） ---------- */
+/* 提示条的说法跟着操作方式换：鼠标是 Click，手指是 Tap */
+.if-touch { display: none; }
+@media (hover: none) and (pointer: coarse) {
+  .if-mouse { display: none; }
+  .if-touch { display: inline; }
+  /* 句子里的链接：只把手指点得到的范围往上下撑开，行距不变 */
+  .help a, #try-room a { padding: 8px 0; }
+  /* 导航栏每一项：看上去不变，能点的范围上下各多出 9px（横屏手机、iPad 上导航栏还是一行） */
+  .topbar .tabs a::before { content: ""; position: absolute; inset: -9px 0; }
+  .topbar .brand { padding: 6px 0; margin: -6px 0; }
+  /* 电视字幕下的章节小横条：看上去还是 22 × 4 的细条，能点的是 30 × 32 */
+  .tvsub-dots { gap: 0; }
+  .tvsub-dots button { width: 30px; height: 32px; background-size: 22px 4px; }
+  /* 纯文字版的简历：横过来的手机比 640px 宽，还是两栏，字也大一号 */
+  #content .cv-page { --cv-fs: 15px; }
+  #content .cv-awards { font-size: 0.9em; }
+}
+@media (max-width: 600px) {
+  /* 导航栏分两行：名字一行，六项一行平分整个宽度（每一项都是一整格，手指好点）；字号跟着屏幕宽度走 */
+  .topbar { flex-wrap: wrap; gap: 0 10px; }
+  .topbar .brand { flex: 1 1 100%; padding: 3px 0; margin: 0; font-size: 16px; letter-spacing: 0.06em; }
+  .topbar .tabs { flex: 1 1 100%; gap: 0; margin: 0 0 -8px; }
+  .topbar .tabs a { flex: 1 1 auto; padding: 8px 0; border-radius: 0; text-align: center; font-size: clamp(12px, 3.3vw, 14px); letter-spacing: 0.04em; }
+  .topbar .tabs a::before { display: none; } /* 本来就是一整格，不用再往外撑（往上撑会盖住名字那一行） */
+  /* 当前项的反色底只衬在字下面，不铺满整格 */
+  .topbar .tabs .tab-label { display: inline-block; padding: 2px 5px; margin: 0 -5px; border-radius: 4px; }
+  .topbar .tabs a[aria-current="page"], .is-room .topbar .tabs a[aria-current="page"] { background: none; color: inherit; text-shadow: inherit; }
+  .topbar .tabs a[aria-current="page"] .tab-label { background: var(--fg); color: var(--bg); }
+  .is-room .topbar .tabs a[aria-current="page"] .tab-label { background: var(--nav-on); color: var(--nav-on-fg); text-shadow: none; }
+  .is-plain section { scroll-margin-top: 104px; }
+  /* 3D 版：导航栏变高了，返回按钮和唱片卡片往下让 */
+  .back { top: calc(max(12px, env(safe-area-inset-top)) + 82px); }
+  .music-player { top: calc(max(12px, env(safe-area-inset-top)) + 84px); }
+  /* 底部提示条放不下一行：换行、居中 */
+  :root.js .help { width: calc(100% - 32px); white-space: normal; text-align: center; font-size: 14px; line-height: 1.5; }
+}

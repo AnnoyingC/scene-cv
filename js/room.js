@@ -25,7 +25,7 @@ import { createDeskCalendar } from './deskcal.js';
 import { BakedRoom, loadBaked, tvLight } from './baked.js';
 import { CameraPass, GradePass, StreakPass, lookPicker } from './grade.js';
 import { createTurntable } from './turntable.js';
-import { createBooks } from './books.js';
+import { createBooks, bookName } from './books.js';
 import { createPhotos } from './photos.js';
 import { dressSleeves, joinSleeves } from './sleeves.js';
 import { createWindowView } from './window-view.js';
@@ -415,10 +415,11 @@ export async function start(content, { nav = null, music = null, achievements = 
   const look = { yaw: C.yaw, pitch: C.pitch, dist: C.dist, yawT: C.yaw, pitchT: C.pitch, distT: C.dist };
   // 往右转向唱机时镜头怎么跟着挪（见 homePose）：中心往右 33 厘米、往前 28 厘米、低 8 厘米，拉远 22 厘米，多低一点头
   // （在浏览器里比过几组，这组唱机整个露出来、挂钟和照片墙也还在画面里）；__room.turn 可以现场调
-  // 往左转：中心往左挪 1.35 米、往后 9 厘米、低 20 厘米，拉近 25 厘米，多低一点头——镜头像是走到书桌左前方，
-  // 转的途中先经过左墙的书柜，转到头时正对左后墙角画架上的画（书柜在左墙上，只绕着电脑转的话书柜和墙角都在画面外）
+  // 往左转：中心往左挪 1.33 米、往前 95 厘米、高 5 厘米（转到头时正好落在左墙书柜的正中），稍微抬一点头——
+  // 镜头像是退到屋子右前方回头看左墙：转的途中先经过左后墙角画架上的画，转到头时整个书柜在画面中间、书脊看得清，画在右边
+  // （书柜在左墙上，只绕着电脑转的话书柜在画面外）。从书架（#shelf）退回开场时也回到这里，见 setView
   const TURN = { record: { dx: 0.33, dz: 0.28, dy: -0.08, back: 0.22, tilt: -0.12 },
-    shelf: { dx: -1.35, dz: -0.09, dy: -0.2, back: -0.25, tilt: -0.07 } };
+    shelf: { dx: -1.33, dz: 0.95, dy: 0.05, back: 0, tilt: 0.04 } };
   const par = new THREE.Vector2(), parT = new THREE.Vector2(); // 鼠标视差
   const pose = () => ({ pos: new THREE.Vector3(), yaw: 0, pitch: 0, fov: C.fov });
   const cur = pose(), goal = pose();
@@ -563,6 +564,8 @@ export async function start(content, { nav = null, music = null, achievements = 
       setTimeout(() => { if (!resume.shown) showDeskPaper(true); }, 400);
       back.then(() => { if (!resume.shown) showDeskPaper(true); });
     }
+    // 从书架退回开场：镜头退回往左转到头的位置（正对书柜），不回到点书之前转到的半路（那里正对着墙角的画）。竖屏手机往左转不挪中心，不改
+    if (prev === 'shelf' && name === 'home' && camera.aspect >= 1.2) look.yaw = look.yawT = C.yawRange[1];
     resumeReq.open = name === 'resume';
     resumeReq.paper = null;
     pc.setActive(name === 'about');
@@ -672,7 +675,7 @@ export async function start(content, { nav = null, music = null, achievements = 
     if (h.kind === 'contact') return `${h.label} · ${h.handle || h.url}`;
     if (h.kind === 'music') return music?.cardOpen === false ? 'Record player · Pick a record' : music?.cardOpen ? 'Record player · Close' : music?.playing ? 'Record player · Pause' : 'Record player · Play';
     if (h.kind === 'tape') return `▶ ${tapes[h.i].title}`;
-    if (h.kind === 'book') { const e = shelfBooks.entry(h.i); return `《${e.b.title}》 · ${e.b.author}`; }
+    if (h.kind === 'book') { const e = shelfBooks.entry(h.i); return `${bookName(e.b.title)} · ${e.b.author}`; }
     if (h.kind === 'page') {
       if (h.url) return 'Open ↗';
       const pi = shelfBooks.pageInfo();
