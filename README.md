@@ -19,7 +19,7 @@
   <a href="#third-party-assets">Credits</a>
 </p>
 
-![A desk at a rainy night window over Tokyo, with Tokyo Tower lit up outside: an old computer, an orange arm lamp, a Walkman and cassettes, a desk calendar and a TV playing a project](docs/images/hero-room.jpg)
+![A desk at a rainy night window over Tokyo, with Tokyo Tower lit up outside: an old computer, an orange arm lamp, a Walkman and cassettes, a desk calendar and a TV playing a project](docs/images/hero-room-v2.jpg)
 
 - **The objects are the menu.** Click the computer, the printed pages, a tape, the bookshelf, the cork board or the notepad, and the camera flies over and opens that section. The books on the shelf are real books: click one and it slides out, flies up to you and opens. The top navigation bar and the address bar follow along, so every view has a link you can share.
 - **The view outside is alive.** A light rain keeps falling, stars and the Milky Way turn slowly through gaps in the clouds, office lights switch on and off, car lights crawl along the streets, and raindrops ripple the reflections on the river.
@@ -33,24 +33,24 @@ Inspired by the spatial personal site at felixrieseberg.com. The name, résumé,
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/images/room-about.jpg" alt="Close-up of the computer screen: a terminal menu and a short introduction"></td>
-    <td width="50%"><img src="docs/images/room-resume.jpg" alt="Two printed pages float up and stack into a résumé in front of the viewer"></td>
+    <td width="50%"><img src="docs/images/room-about-v2.jpg" alt="Close-up of the computer screen: a terminal menu and a short introduction"></td>
+    <td width="50%"><img src="docs/images/room-resume-v2.jpg" alt="Two printed pages float up and stack into a résumé in front of the viewer"></td>
   </tr>
   <tr>
     <td><b>Computer · About</b><br>The camera flies to the screen, where a terminal shows a menu: who I am, what I'm up to, how I got here, how I think, and questions people ask. Pick an item and its text types itself out letter by letter.</td>
     <td><b>Printed pages · Résumé</b><br>Click the two sheets on the desk and they float up into a stack of A4 pages you can leaf through. Several languages can share one stack, and you can jump straight to another language.</td>
   </tr>
   <tr>
-    <td><img src="docs/images/room-work.jpg" alt="The TV on a cart plays a short programme with subtitles underneath"></td>
-    <td><img src="docs/images/room-shelf.jpg" alt="The bookshelf left of the desk, with one book pulled out and open in front of the viewer"></td>
+    <td><img src="docs/images/room-work-v2.jpg" alt="The TV on a cart plays a short programme with subtitles underneath"></td>
+    <td><img src="docs/images/room-shelf-v2.jpg" alt="The bookshelf left of the desk, with one book pulled out and open in front of the viewer"></td>
   </tr>
   <tr>
     <td><b>VCR · Work</b><br>Each tape is a short programme in chapters, with subtitles under the TV. Click a tape on the rack and it flies into the VCR; after a burst of static it starts playing and the TV's colours light up the room. When a programme ends, the next tape goes in.</td>
     <td><b>Bookshelf · Reading list</b><br>Turn left to the bookshelf. Click a book and it slides out, flies up to you and opens: the left page carries the book's signature line, the right pages carry your highlights.</td>
   </tr>
   <tr>
-    <td><img src="docs/images/room-photos.jpg" alt="A few aged photos pinned loosely to a cork board"></td>
-    <td><img src="docs/images/room-night.jpg" alt="With the room light off, only the desk lamp, the screens and the city outside are left"></td>
+    <td><img src="docs/images/room-photos-v2.jpg" alt="A few aged photos pinned loosely to a cork board"></td>
+    <td><img src="docs/images/room-night-v2.jpg" alt="With the room light off, only the desk lamp, the screens and the city outside are left"></td>
   </tr>
   <tr>
     <td><b>Cork board · Photos</b><br>Aged photos are pinned under the wall clock, overlapping, with their corners curling. Up close you can drag them around.</td>
