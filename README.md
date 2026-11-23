@@ -19,7 +19,7 @@
   <a href="#third-party-assets">Credits</a>
 </p>
 
-![A desk at a city window at night: an old computer, a green desk lamp, a telephone and a TV playing a project](docs/images/hero-room.jpg)
+![A desk at a rainy night window over Tokyo, with Tokyo Tower lit up outside: an old computer, an orange arm lamp, a Walkman and cassettes, a desk calendar and a TV playing a project](docs/images/hero-room.jpg)
 
 - **The objects are the menu.** Click the computer, the printed pages, a tape, the bookshelf, the cork board or the notepad, and the camera flies over and opens that section. The books on the shelf are real books: click one and it slides out, flies up to you and opens. The top navigation bar and the address bar follow along, so every view has a link you can share.
 - **The view outside is alive.** A light rain keeps falling, stars and the Milky Way turn slowly through gaps in the clouds, office lights switch on and off, car lights crawl along the streets, and raindrops ripple the reflections on the river.
@@ -55,6 +55,14 @@ Inspired by the spatial personal site at felixrieseberg.com. The name, résumé,
   <tr>
     <td><b>Cork board · Photos</b><br>Aged photos are pinned under the wall clock, overlapping, with their corners curling. Up close you can drag them around.</td>
     <td><b>Lights</b><br>The desk lamp and the room lights can be switched off, leaving only the screens and the city outside. The image has a cinematic grade: warm lights bleed an orange-red halo, small bright lights draw thin horizontal streaks, and the focus follows whatever the camera is looking at.</td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/room-left.jpg" alt="Turned to the left wall: a tall carved bookcase full of books, and a painting on an easel in the corner"></td>
+    <td><img src="docs/images/room-record.jpg" alt="The record player on the sideboard with side A of the Goldberg Variations on it, and its record card open"></td>
+  </tr>
+  <tr>
+    <td><b>Turn left · Bookcase</b><br>Drag left and the camera turns past a painting on an easel in the corner to the bookcase on the left wall. Every book on its shelves can be pulled out and read.</td>
+    <td><b>Record player · Music</b><br>Two records come with the template, sides A and B of the Open Goldberg Variations (public domain). Side A starts playing on its own; click the record player to change records, set the volume or switch the vinyl sound off.</td>
   </tr>
 </table>
 
