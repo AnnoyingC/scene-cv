@@ -1,9 +1,10 @@
-// 唱片卡片和播放器（点唱机打开）；首次点击才加载音频，不影响 3D 首屏。
+// 唱片卡片和播放器（点唱机打开）。房间加载好以后自动放第一张唱片（见 autoplay）；音频到要放的时候才下载，不影响 3D 首屏。
 import { createVinylAudio } from './vinyl-audio.js';
 import { MUSIC_TRACKS } from './music-tracks.js';
 
 const VOLUME_KEY = 'scenecv.music.volume';
 const TRACK_KEY = 'scenecv.music.track';
+const AUTO_KEY = 'scenecv.music.auto'; // 访客自己按了暂停：记成 off，下次来不自动放
 
 // 界面文字：zh / en（lang 选一种）
 const TEXT = {
@@ -22,8 +23,9 @@ export function createMusicPlayer({ host = document.getElementById('room'), viny
   const audio = document.createElement('audio');
   audio.preload = 'none';
   audio.loop = true;
-  let volume = 0.25;
+  let volume = 0.5; // 默认音量 50%（访客调过就用调过的）
   let track = MUSIC_TRACKS[0];
+  let auto = true;
   const effectKey = 'scenecv.music.vinyl';
   try {
     const saved = localStorage.getItem(VOLUME_KEY);
@@ -31,6 +33,7 @@ export function createMusicPlayer({ host = document.getElementById('room'), viny
     const tone = localStorage.getItem(effectKey);
     if (tone !== null) vinyl = tone === 'true';
     track = MUSIC_TRACKS.find((item) => item.id === localStorage.getItem(TRACK_KEY)) || track;
+    auto = localStorage.getItem(AUTO_KEY) !== 'off';
   } catch { /* 隐私模式也能正常试听。 */ }
   audio.volume = volume;
 
@@ -133,8 +136,9 @@ export function createMusicPlayer({ host = document.getElementById('room'), viny
     message();
     update();
   }
-  async function play() {
-    if (destroyed) return;
+  // quiet：自动播放的尝试，被浏览器拦下也不在卡片上提示"请再点一次"。返回放没放成
+  async function play({ quiet = false } = {}) {
+    if (destroyed) return false;
     const request = ++requestId;
     if (!audio.src) audio.src = track.src;
     if (failed) { failed = false; audio.load(); }
@@ -148,13 +152,15 @@ export function createMusicPlayer({ host = document.getElementById('room'), viny
       }
       // 两个调用都在点击手势里发起，兼容移动浏览器的音频解锁。
       await Promise.all([graph?.resume(), audio.play()]);
+      return true;
     } catch (err) {
-      if (request !== requestId || destroyed) return;
+      if (request !== requestId || destroyed) return false;
       pending = false;
       audio.pause();
       setActive(false);
-      message(err.name === 'NotAllowedError' ? T.again : T.failed);
+      message(quiet ? '' : err.name === 'NotAllowedError' ? T.again : T.failed);
       update();
+      return false;
     }
   }
   function toggle() {
@@ -174,7 +180,38 @@ export function createMusicPlayer({ host = document.getElementById('room'), viny
     try { localStorage.setItem(TRACK_KEY, track.id); } catch { /* 可不保存。 */ }
     if (autoplay) return play();
   }
-  button.addEventListener('click', toggle);
+  // 访客自己按播放 / 暂停：记下来（按了暂停，下次来就不自动放了）
+  button.addEventListener('click', () => {
+    auto = !(pending || !audio.paused);
+    try { localStorage.setItem(AUTO_KEY, auto ? 'on' : 'off'); } catch { /* 可不保存。 */ }
+    toggle();
+  });
+
+  // 自动播放：房间加载好以后调（js/room.js）。浏览器不让网页在访客操作之前出声，所以
+  // 访客已经点过 / 按过页面就马上放；还没有就等第一次点击、拖动或按键，在那次操作里开始放（手机也能解锁音频）。
+  // 访客上次自己按了暂停、或者 allowed() 说不行（底部 Sound 关着）就不放
+  const GESTURES = ['pointerdown', 'pointerup', 'keydown', 'touchend', 'click'];
+  let allowed = () => true;
+  function stopAuto() { GESTURES.forEach((ev) => removeEventListener(ev, onGesture, true)); }
+  function onGesture(e) {
+    if (destroyed || !auto || !allowed() || !audio.paused) return stopAuto();
+    if (pending || player.contains(e.target)) return; // 正在加载，或者访客直接按的是唱片卡片：交给卡片自己的按钮
+    play({ quiet: true }).then((ok) => { if (ok) stopAuto(); });
+  }
+  function autoplay(opts = {}) {
+    allowed = opts.allowed || allowed;
+    if (destroyed || !auto || !allowed() || pending || !audio.paused) return;
+    stopAuto();
+    if (navigator.userActivation?.hasBeenActive) play({ quiet: true }).then((ok) => { if (!ok) GESTURES.forEach((ev) => addEventListener(ev, onGesture, true)); });
+    else GESTURES.forEach((ev) => addEventListener(ev, onGesture, true));
+  }
+  // 底部 Sound 关掉：唱片也停；再打开：关之前在放就接着放
+  let resumeAfterMute = false;
+  function mute(muted) {
+    if (destroyed) return;
+    if (muted) { resumeAfterMute = pending || !audio.paused; stopAuto(); pause(); }
+    else if (resumeAfterMute) { resumeAfterMute = false; play({ quiet: true }); }
+  }
   audio.addEventListener('playing', () => {
     if (destroyed || audio.paused || audio.readyState < 3) return;
     pending = false; setActive(true); message(); update();
@@ -217,6 +254,8 @@ export function createMusicPlayer({ host = document.getElementById('room'), viny
   return {
     toggle,
     selectTrack,
+    autoplay,
+    mute,
     openCard: () => setCard(true),
     closeCard: () => setCard(false),
     toggleCard: () => setCard(!cardOpen),
@@ -225,6 +264,7 @@ export function createMusicPlayer({ host = document.getElementById('room'), viny
     get playing() { return active; },
     destroy() {
       hide();
+      stopAuto();
       destroyed = true;
       removeEventListener('pagehide', hide);
       clearTimeout(idle);

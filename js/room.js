@@ -935,6 +935,10 @@ export async function start(content, { nav = null, music = null, achievements = 
   await new Promise((r) => requestAnimationFrame(() => setTimeout(r)));
   renderer.setAnimationLoop(frame);
 
+  // 唱片：房间出来就放（js/music.js 的 autoplay；浏览器要等访客第一次操作才让出声）。底部 Sound 关着就不放，关掉 Sound 唱片也停
+  music?.autoplay?.({ allowed: () => sfx.on });
+  sfx.onChange((on) => music?.mute?.(!on));
+
   // 调试入口（控制台里用）：__room.tick(dt) 手动推进一帧（后台标签页里动画会被浏览器降速）
   window.__room = {
     go, insertTape, cmd, tick, pick, look, light, camera, renderer, composer, room, tv, pc, turntable, grade: (k) => grade.set(k), lens, streak, books: shelfBooks, openBook, windowView, turn: TURN, resume, paperRect,
