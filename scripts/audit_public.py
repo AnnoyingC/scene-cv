@@ -14,8 +14,8 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 PRIVATE_ROOTS = {'.claude', 'vendor-src', 'dist', 'output', 'node_modules'}
 PRIVATE_FILES = {'.env', '.envrc', '.private-terms'}
-# 只在本地用的个人内容：真实简历（电话、邮箱、照片、PDF）、书的真实封面、个人照片、墙上的海报（有版权的封面）
-PRIVATE_PREFIXES = ('assets/resume/', 'assets/books/covers/', 'assets/photos/', 'assets/posters/', 'photos-src/')
+# 只在本地用的个人内容：真实简历（电话、邮箱、照片、PDF）、真实的论文和报道、书的真实封面、个人照片、墙上的海报（有版权的封面）
+PRIVATE_PREFIXES = ('assets/resume/', 'assets/papers/', 'assets/books/covers/', 'assets/photos/', 'assets/posters/', 'photos-src/')
 PATTERNS = {
     'personal_home_path': rb'/(?:Users|home)/[^/\s\x00]+/',
     'private_key': rb'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----',

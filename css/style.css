@@ -6,6 +6,8 @@
 @font-face { font-family: "EB Garamond"; src: url("../assets/fonts/eb-garamond-italic.woff2") format("woff2"); font-weight: 400 800; font-style: italic; font-display: swap; }
 @font-face { font-family: "Playfair Display"; src: url("../assets/fonts/playfair-display.woff2") format("woff2"); font-weight: 400 900; font-display: swap; }
 @font-face { font-family: "Playfair Display"; src: url("../assets/fonts/playfair-display-italic.woff2") format("woff2"); font-weight: 400 900; font-style: italic; font-display: swap; }
+@font-face { font-family: "UnifrakturMaguntia"; src: url("../assets/fonts/unifraktur-maguntia.woff2") format("woff2"); font-display: swap; }
+@font-face { font-family: "Caveat"; src: url("../assets/fonts/caveat.woff2") format("woff2"); font-weight: 400 700; font-display: swap; }
 
 :root {
   --display: "Cinzel", "Songti SC", "STSong", "Noto Serif SC", serif;
@@ -279,141 +281,282 @@ h2 { font-size: 14px; letter-spacing: 0.12em; color: var(--muted); font-weight: 
   /* 导航栏和底下的提示条在手机上怎么排，见文件最后"窄屏"那一节 */
 }
 
-/* ---------- 简历：一张张 A4 纸（纯文字版里是白纸卡片；3D 版里 js/resume.js 把它们从桌上拿起来，叠成一摞举在眼前） ---------- */
-.cv-deck { display: grid; gap: 28px; }
-.cv-page {
-  --cv-fs: 14px; --cv-ink: #1e2227; --cv-head: #2c3e52; --cv-muted: #6c7d90; --cv-rule: #c9d1da;
-  display: grid; grid-template-columns: minmax(0, 31%) minmax(0, 1fr); column-gap: 1.8em; align-content: start;
-  padding: 2.6em 2.4em; background: #fffefa; color: var(--cv-ink);
-  font: 400 var(--cv-fs)/1.55 "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", sans-serif;
-  white-space: normal; text-align: left; overflow-wrap: break-word; letter-spacing: 0;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12), 0 10px 30px rgba(0, 0, 0, 0.1);
+/* ---------- Papers：书桌上那摞纸（报纸 + 两份论文）。纯文字版里一页页排下来；3D 版里 js/papers.js 把它们从桌上拿起来，扇形错开举在眼前 ---------- */
+.pp-docs { display: grid; gap: 44px; }
+.pp-doc { display: grid; gap: 18px; }
+/* 一页纸是固定 794 × 1123 的版式，按框的宽度整体缩放（--k 由 js/main.js 量了以后设） */
+.pp-frame { position: relative; width: 100%; aspect-ratio: 794 / 1123; overflow: hidden; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12), 0 10px 30px rgba(0, 0, 0, 0.1); }
+/* ---------- 纸：794 × 1123（A4 @ 96 dpi），按框的宽度缩放 ---------- */
+.pp-page {
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .32 0 0 0 0 .27 0 0 0 0 .18 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --paper: #f4eedf; --ink: #1d1b18; --age: none; --grain-o: 0.18;
+  position: absolute; left: 0; top: 0; width: 794px; height: 1123px; transform-origin: 0 0; transform: scale(var(--k, 1));
+  background: var(--paper); color: var(--ink); overflow: hidden; text-align: left; letter-spacing: 0; cursor: inherit;
 }
-.cv-page:lang(zh) { line-height: 1.62; }
-.cv-page a { color: inherit; text-decoration: none; }
-.cv-page a:hover { text-decoration: underline; }
-.cv-page p { margin: 0; }
-.cv-page b { font-weight: 700; color: #101317; }
-.cv-page h4 {
-  margin: 1.15em 0 0.55em; padding-bottom: 0.28em; border-bottom: 1px solid var(--cv-rule);
-  color: var(--cv-head); font-size: 1.2em; font-weight: 700; line-height: 1.3;
-}
-.cv-main h4 { font-size: 1.32em; margin-top: 0.9em; }
-.cv-side > h4:first-child, .cv-main > h4:first-child { margin-top: 0; }
-.cv-photo { display: block; width: 64%; aspect-ratio: 3 / 4; margin: 0 auto 0.8em; object-fit: cover; }
-div.cv-photo { /* 样例里的照片占位：一个剪影 */
-  background:
-    radial-gradient(circle at 50% 38%, #b9c2cc 0 17%, transparent 17.5%),
-    radial-gradient(ellipse 46% 30% at 50% 100%, #b9c2cc 0 99%, transparent 100%),
-    linear-gradient(#e6eaee, #d6dce2);
-}
-.cv-name { margin: 0 0 0.7em; text-align: center; color: var(--cv-head); font-size: 2.15em; font-weight: 700; line-height: 1.2; }
-.cv-kv, .cv-skills { display: grid; grid-template-columns: auto minmax(0, 1fr); margin: 0; }
-.cv-kv { gap: 0.3em 1em; }
-.cv-kv dt { color: var(--cv-muted); }
-.cv-kv dd, .cv-skills dd { margin: 0; }
-.cv-skills { gap: 0.25em 0.9em; }
-.cv-skills dt { font-weight: 700; }
-.cv-page:lang(en) .cv-skills { font-size: 0.88em; line-height: 1.45; }
-.cv-awards { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5em; font-size: 0.82em; line-height: 1.38; }
-.cv-awards b { display: block; }
-.cv-awards span { display: flex; justify-content: space-between; gap: 0.8em; color: var(--cv-muted); }
-.cv-awards time { flex: none; }
-.cv-roles { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3em; font-weight: 700; line-height: 1.45; }
-.cv-item { margin: 0 0 0.85em; }
-.cv-item:last-child { margin-bottom: 0; }
-.cv-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1.2em; }
-.cv-head b { color: var(--cv-head); font-size: 1.1em; }
-.cv-head time { flex: none; color: #4d5560; }
-.cv-sub { color: var(--cv-muted); font-style: italic; }
-.cv-page:lang(zh) .cv-sub { font-style: normal; } /* 中文不做假斜体；里面的 i 照样斜 */
-.cv-sub b { color: inherit; }
-.cv-item ul { list-style: none; margin: 0.2em 0 0; padding: 0; }
-.cv-item li::before { content: "•"; display: inline-block; width: 1.3em; text-indent: 0.25em; }
-@media (max-width: 640px) {
-  .cv-page { grid-template-columns: minmax(0, 1fr); padding: 1.6em 1.3em; }
-  .cv-main { margin-top: 1.4em; }
-  .cv-photo { width: 40%; }
-  /* 纯文字版的简历在手机上字大一号：奖项那几行原来只有 11px。3D 版拿在手里的纸是固定 A4，不动 */
-  #content .cv-page { --cv-fs: 15px; }
-  #content .cv-awards { font-size: 0.9em; }
+.pp-page::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: var(--age), var(--grain); mix-blend-mode: multiply; opacity: var(--grain-o); }
+.pp-page.pp-news { --paper: #e5dabd; --ink: #26221c; --grain-o: 0.42; --age: radial-gradient(ellipse 78% 72% at 50% 46%, transparent 52%, rgba(146, 104, 36, 0.55) 100%); }
+
+/* A：会议两栏（ICRA 一类的会议论文） */
+.pp-conf { font-family: "Times New Roman", Times, "Liberation Serif", serif; padding: 66px 74px 58px 82px; display: flex; flex-direction: column; }
+.pp-conf .arx { position: absolute; left: 16px; top: 50%; writing-mode: vertical-rl; transform: translateY(-50%) rotate(180deg); font-size: 22px; color: #8f8a82; white-space: nowrap; letter-spacing: 0.01em; }
+.pp-conf .t { font-weight: 700; font-size: 20px; line-height: 1.28; text-align: center; margin: 4px 30px 16px; text-wrap: balance; }
+.pp-conf .au { display: flex; justify-content: center; gap: 34px; font-size: 14.6px; }
+.pp-conf .af { text-align: center; font-size: 13.2px; margin-top: 4px; }
+.pp-conf .em { text-align: center; font: 12px "Courier New", Courier, monospace; margin-top: 3px; }
+.pp-conf sup { font-size: 0.68em; line-height: 0; }
+.pp-page .teaser { margin: 18px 0 14px; }
+.pp-page .panels { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+.pp-page .ph { position: relative; aspect-ratio: 4 / 3; overflow: hidden; background: linear-gradient(180deg, #aebccb 0 50%, #8b7b66 50% 100%); }
+.pp-page .ph i { position: absolute; left: 62%; top: 50%; width: 21%; aspect-ratio: 0.8; border-radius: 6px 6px 14px 14px; background: linear-gradient(120deg, rgba(232, 243, 250, 0.95), rgba(150, 182, 204, 0.55)); border: 1.5px solid rgba(58, 82, 100, 0.65); transform: translate(-50%, -62%); }
+.pp-page .ph b { position: absolute; left: 6%; top: 20%; width: 52%; height: 7%; background: #3a3f46; border-radius: 3px; transform-origin: 0 50%; transform: rotate(26deg); }
+.pp-page .ph b::after { content: ""; position: absolute; right: -5%; top: -80%; width: 13%; height: 260%; background: #262a2f; border-radius: 2px; }
+.pp-page .ph.input b { transform: rotate(8deg); }
+.pp-page .ph.blur b, .pp-page .ph.blur i { filter: blur(2.4px); }
+.pp-page .ph.blur b + b { opacity: 0.45; transform: rotate(33deg); }
+.pp-page .ph.ref b { transform: rotate(29deg); }
+.pp-page .labs { display: grid; grid-template-columns: repeat(4, 1fr); text-align: center; font-size: 11.6px; margin-top: 3px; }
+.pp-page .teaser figcaption { font-size: 12.2px; line-height: 1.32; text-align: justify; margin-top: 8px; }
+.pp-conf .cols { flex: 1; min-height: 0; column-count: 2; column-gap: 24px; column-fill: auto; font-size: 12.8px; line-height: 1.25; text-align: justify; hyphens: auto; overflow: hidden; }
+.pp-conf .cols p { margin: 0; text-indent: 1.2em; }
+.pp-conf .cols .h { font-weight: 700; font-size: 14.4px; line-height: 1.3; margin: 11px 0 6px; break-after: avoid; }
+.pp-conf .cols .h.abs-h { text-align: center; margin-top: 0; }
+.pp-conf .cols .abs { font-style: italic; margin-bottom: 8px; }
+.pp-conf .cols ul { margin: 3px 0 3px; padding-left: 1.4em; }
+.pp-conf .cols li { margin-bottom: 2px; }
+.pp-conf .pg { text-align: center; font-size: 12.6px; padding-top: 10px; }
+
+/* B：期刊两栏（Nature 式） */
+.pp-jour { font-family: Georgia, "Times New Roman", serif; padding: 50px 62px 44px; display: flex; flex-direction: column; }
+.pp-jour .top { display: flex; justify-content: space-between; align-items: baseline; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+.pp-jour .kind { font-weight: 800; font-size: 23px; }
+.pp-jour .doi { font-size: 11px; color: #6b655b; }
+.pp-jour .t { font: 800 31px/1.12 "Helvetica Neue", Helvetica, Arial, sans-serif; letter-spacing: -0.012em; margin: 28px 0 14px; max-width: 94%; }
+.pp-jour .au { font: 400 13px/1.45 "Helvetica Neue", Helvetica, Arial, sans-serif; }
+.pp-jour .lead { display: grid; grid-template-columns: 148px 1fr; gap: 22px; margin: 24px 0 18px; }
+.pp-jour .meta { font: 400 10.6px/1.6 "Helvetica Neue", Helvetica, Arial, sans-serif; color: #5e584e; display: grid; gap: 7px; align-content: start; }
+.pp-jour .meta b { display: block; color: var(--ink); font-weight: 600; }
+.pp-jour .chk { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-weight: 600; color: var(--ink); }
+.pp-jour .chk::before { content: ""; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #3b6c9a; }
+.pp-jour .sum { font-weight: 700; font-size: 13.4px; line-height: 1.44; }
+.pp-jour .cols { flex: 1; min-height: 0; column-count: 2; column-gap: 26px; column-fill: auto; font-size: 12.4px; line-height: 1.44; text-align: justify; hyphens: auto; overflow: hidden; }
+.pp-jour .cols p { margin: 0; text-indent: 1em; }
+.pp-jour .cols p.first { text-indent: 0; }
+.pp-jour .cols .h { font: 800 13px/1.3 "Helvetica Neue", Helvetica, Arial, sans-serif; margin: 11px 0 4px; break-after: avoid; }
+.pp-jour figure { break-inside: avoid; margin: 8px 0 10px; }
+.pp-jour figure svg { display: block; width: 100%; height: auto; }
+.pp-jour figcaption { font: 400 10.5px/1.42 "Helvetica Neue", Helvetica, Arial, sans-serif; text-align: left; margin-top: 5px; }
+.pp-jour .foot { display: flex; justify-content: space-between; font: 400 10.5px "Helvetica Neue", Helvetica, Arial, sans-serif; border-top: 1px solid #b5ad9f; padding-top: 7px; margin-top: 10px; }
+
+/* C：报纸（小报头版） */
+.pp-news { font-family: Georgia, "Times New Roman", serif; padding: 30px 34px 26px; display: flex; flex-direction: column; }
+.pp-news .head { display: grid; grid-template-columns: 118px 1fr 118px; align-items: center; gap: 10px; }
+.pp-news .ear { border: 1px solid var(--ink); padding: 6px 7px; font: 700 9.6px/1.35 Georgia, serif; text-transform: uppercase; letter-spacing: 0.05em; text-align: center; }
+.pp-news .mast { font: 400 76px/1.05 "UnifrakturMaguntia", "Old English Text MT", serif; text-align: center; white-space: nowrap; }
+.pp-news .dl { display: flex; justify-content: space-between; gap: 12px; border-top: 4px double var(--ink); border-bottom: 1px solid var(--ink); padding: 5px 2px 4px; margin-top: 8px; font: 700 10.4px Georgia, serif; letter-spacing: 0.09em; text-transform: uppercase; }
+.pp-news .kicker { font: 700 11.5px Georgia, serif; letter-spacing: 0.2em; text-transform: uppercase; margin-top: 16px; color: #7c2d1f; }
+.pp-news .hl { font: 700 46px/1.04 "Playfair Display", Georgia, serif; letter-spacing: -0.012em; margin: 6px 0 10px; text-wrap: balance; }
+.pp-news .deck { font: italic 400 17px/1.32 "Playfair Display", Georgia, serif; margin: 0 0 12px; max-width: 92%; }
+.pp-news .grid { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 14px; border-top: 1px solid var(--ink); padding-top: 10px; }
+.pp-news .main { display: flex; flex-direction: column; min-height: 0; }
+.pp-news .photo { position: relative; height: 250px; overflow: hidden; background: linear-gradient(180deg, #979797 0 63%, #545454 63% 100%); filter: grayscale(1) contrast(1.15); }
+.pp-news .photo .win { position: absolute; left: 5%; top: 9%; width: 28%; height: 46%; background: linear-gradient(#e3e3e3, #b9b9b9); box-shadow: inset 0 0 0 7px #727272; }
+.pp-news .photo .hd, .pp-news .photo .bd { position: absolute; background: #2f2f2f; }
+.pp-news .photo .hd { width: 60px; height: 70px; border-radius: 50%; }
+.pp-news .photo .bd { width: 150px; height: 200px; border-radius: 72px 72px 10px 10px; background: #3c3c3c; }
+.pp-news .photo .p1.hd { left: 48%; top: 17%; } .pp-news .photo .p1.bd { left: 43%; top: 44%; }
+.pp-news .photo .p2.hd { left: 73%; top: 23%; background: #262626; } .pp-news .photo .p2.bd { left: 68%; top: 50%; background: #2c2c2c; }
+.pp-news .photo .arm { position: absolute; left: 14%; top: 60%; width: 34%; height: 13px; background: #1f1f1f; transform-origin: 0 50%; transform: rotate(-24deg); border-radius: 3px; }
+.pp-news .photo .arm::after { content: ""; position: absolute; right: -10px; top: -14px; width: 16px; height: 40px; background: #1a1a1a; }
+.pp-news .photo::after { content: ""; position: absolute; inset: 0; background-image: radial-gradient(circle, rgba(20, 18, 15, 0.6) 0.95px, transparent 1.55px); background-size: 4px 4px; mix-blend-mode: multiply; }
+.pp-news .cap { font: italic 400 10.6px/1.35 Georgia, serif; margin: 5px 0 8px; }
+.pp-news .cap b { font-style: normal; letter-spacing: 0.08em; font-size: 9.4px; }
+.pp-news .by { font: 700 10.4px Georgia, serif; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; }
+.pp-news .story { flex: 1; min-height: 0; column-count: 4; column-gap: 14px; column-rule: 1px solid rgba(38, 34, 28, 0.5); column-fill: auto; font-size: 11.6px; line-height: 1.33; text-align: justify; hyphens: auto; overflow: hidden; }
+.pp-news .story p { margin: 0; text-indent: 0.9em; }
+.pp-news .story p.dc { text-indent: 0; }
+.pp-news .story p.dc::first-letter { float: left; font: 700 41px/0.86 "Playfair Display", Georgia, serif; padding: 3px 4px 0 0; }
+.pp-news .story .jump { text-indent: 0; font: italic 700 10.6px Georgia, serif; margin-top: 4px; }
+.pp-news .side { border-left: 1px solid var(--ink); padding-left: 12px; display: flex; flex-direction: column; gap: 10px; font-size: 11px; line-height: 1.34; min-height: 0; overflow: hidden; }
+.pp-news .side h4 { margin: 0; font: 700 12px Georgia, serif; letter-spacing: 0.18em; text-transform: uppercase; border-bottom: 2px solid var(--ink); padding-bottom: 3px; }
+.pp-news .side h5 { margin: 0 0 2px; font: 700 13px/1.2 "Playfair Display", Georgia, serif; }
+.pp-news .side .wx { margin-top: auto; border: 1px solid var(--ink); padding: 7px 8px; text-align: center; font-size: 10.5px; }
+.pp-news .side .wx strong { display: block; font: 700 25px/1.1 "Playfair Display", Georgia, serif; }
+
+/* 报纸里面的版（第 4 版）：页眉一行、续头版的故事（三栏，中间一句引语）、右边配图和两个小方框、底下一条广告 */
+.pp-news-in .folio { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 4px double var(--ink); padding-bottom: 5px; font: 700 10.5px Georgia, serif; letter-spacing: 0.09em; text-transform: uppercase; }
+.pp-news-in .folio .fmast { font: 400 27px/1 "UnifrakturMaguntia", "Old English Text MT", serif; letter-spacing: 0; text-transform: none; }
+.pp-news-in .kicker { margin-top: 14px; }
+.pp-news-in .hl2 { font: 700 35px/1.07 "Playfair Display", Georgia, serif; letter-spacing: -0.01em; margin: 6px 0 9px; text-wrap: balance; }
+.pp-news-in .jumpfrom { border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); padding: 3px 0; margin-bottom: 11px; font: 700 10.5px Georgia, serif; letter-spacing: 0.16em; text-transform: uppercase; }
+.pp-news-in .grid2 { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 232px; gap: 16px; }
+.pp-news-in .story2 { min-height: 0; column-count: 3; column-gap: 14px; column-rule: 1px solid rgba(38, 34, 28, 0.5); column-fill: auto; font-size: 11.6px; line-height: 1.33; text-align: justify; hyphens: auto; overflow: hidden; }
+.pp-news-in .story2 p { margin: 0; text-indent: 0.9em; }
+.pp-news-in .story2 p.dc { text-indent: 0; }
+.pp-news-in .story2 p.dc::first-letter { float: left; font: 700 41px/0.86 "Playfair Display", Georgia, serif; padding: 3px 4px 0 0; }
+.pp-news-in .story2 .pull { break-inside: avoid; margin: 9px 0; padding: 8px 0 7px; border-top: 2px solid var(--ink); border-bottom: 1px solid var(--ink); text-indent: 0; text-align: left; font: italic 700 18px/1.2 "Playfair Display", Georgia, serif; }
+.pp-news-in .story2 .bh { margin: 12px 0 6px; padding-top: 5px; border-top: 2px solid var(--ink); font: 700 11.5px Georgia, serif; letter-spacing: 0.16em; text-transform: uppercase; break-after: avoid; }
+.pp-news-in .story2 .bi { text-indent: 0; margin-bottom: 7px; }
+.pp-news-in .story2 .pull span { display: block; margin-top: 6px; font: 400 9.6px Georgia, serif; font-style: normal; letter-spacing: 0.12em; text-transform: uppercase; }
+.pp-news-in .side2 { border-left: 1px solid var(--ink); padding-left: 14px; display: flex; flex-direction: column; gap: 9px; min-height: 0; overflow: hidden; font-size: 11px; line-height: 1.35; }
+.pp-news-in .side2 .cap { margin: 0; }
+.pp-news .photo.photo2 { flex: none; height: 230px; background: linear-gradient(180deg, #a6a6a6 0 58%, #4c4c4c 58% 100%); }
+.pp-news .photo2 .cup { position: absolute; left: 30%; top: 30%; width: 30%; height: 42%; border-radius: 8px 8px 22px 22px; background: linear-gradient(115deg, #f2f2f2, #b5b5b5 45%, #8a8a8a); border: 3px solid #5d5d5d; }
+.pp-news .photo2 .arm { left: 46%; top: 22%; width: 58%; height: 22px; transform-origin: 0 50%; transform: rotate(-32deg); }
+.pp-news .photo2 .arm::after { left: -14px; right: auto; top: -22px; width: 22px; height: 66px; }
+.pp-news-in .box { border: 1px solid var(--ink); padding: 8px 10px 9px; }
+.pp-news-in .box h4 { margin: 0 0 6px; padding-bottom: 3px; border-bottom: 2px solid var(--ink); font: 700 11.5px Georgia, serif; letter-spacing: 0.16em; text-transform: uppercase; }
+.pp-news-in .box ol { margin: 0; padding-left: 1.3em; display: grid; gap: 4px; }
+.pp-news-in .box p { margin: 0 0 3px; }
+.pp-news-in .box.nums b { font: 700 19px/1 "Playfair Display", Georgia, serif; margin-right: 4px; }
+.pp-news-in .ad { margin-top: 12px; border: 4px double var(--ink); padding: 9px 14px 10px; text-align: center; font: 700 17px/1.2 "Playfair Display", Georgia, serif; }
+.pp-news-in .ad small { display: block; margin-top: 4px; font: 400 10.5px Georgia, serif; letter-spacing: 0.12em; text-transform: uppercase; }
+
+/* 用过的痕迹：荧光笔、红笔、咖啡渍、旧纸边 */
+.pp-page mark.hm { background: linear-gradient(transparent 12%, rgba(255, 226, 64, 0.62) 12% 88%, transparent 88%); box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+.pp-page .pen { position: absolute; z-index: 3; font: 500 25px/1.05 "Caveat", "Bradley Hand", cursive; color: #b4271c; white-space: nowrap; pointer-events: none; }
+.pp-page .pu { text-decoration: underline wavy rgba(180, 39, 28, 0.85); text-decoration-thickness: 1.4px; text-underline-offset: 3px; }
+.pp-page.pp-conf, .pp-page.pp-jour {
+  --grain-o: 0.3;
+  --age: radial-gradient(ellipse 84% 80% at 50% 47%, transparent 64%, rgba(150, 108, 42, 0.38) 100%),
+    radial-gradient(circle at 83% 12%, rgba(140, 98, 40, 0.22) 0 2px, transparent 3px),
+    radial-gradient(circle at 14% 71%, rgba(140, 98, 40, 0.18) 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 66% 88%, rgba(140, 98, 40, 0.16) 0 2.5px, transparent 4px);
 }
 
-/* 3D 版：拿在手里的一摞纸。纸是固定的 A4（794 × 1123，@96 dpi），整体缩放；字放不下时 --fit 往小调 */
-.cvx { position: fixed; inset: 0; z-index: 3; color: #efe6d6; font-family: var(--sans); }
-.cvx[hidden] { display: none; }
-.cvx.is-closing { pointer-events: none; }
+/* 论文第 2、3 页 */
+.pp-page .pipe { margin: 0 0 14px; }
+.pp-page .pipe-row { display: flex; align-items: stretch; gap: 8px; }
+.pp-page .pb { flex: 1; display: grid; place-content: center; border: 1.5px solid #3b4a5a; background: #e2e8ed; padding: 16px 6px; text-align: center; font-size: 13px; font-weight: 700; }
+.pp-page .pb small { display: block; font-weight: 400; font-size: 11px; }
+.pp-page .pb.img { background: linear-gradient(180deg, #aebccb 0 50%, #8b7b66 50%); color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5); }
+.pp-page .pa { align-self: center; font-size: 20px; }
+.pp-page .loop { margin: 0 auto; width: 74%; height: 20px; border: 1.5px dashed #3b4a5a; border-top: 0; display: grid; place-items: end center; font-size: 11px; font-style: italic; padding-bottom: 2px; }
+.pp-page .pipe figcaption, .pp-page .bt caption { font-size: 12px; line-height: 1.32; text-align: justify; margin-top: 8px; }
+.pp-page .eq { text-align: center; margin: 7px 0; position: relative; font-size: 13.5px; }
+.pp-page .eq span { position: absolute; right: 0; }
+.pp-page .bt { width: 100%; border-collapse: collapse; font-size: 11.4px; margin: 6px 0 9px; break-inside: avoid; }
+.pp-page .bt caption { caption-side: top; margin: 0 0 5px; text-indent: 0; }
+.pp-page .bt th, .pp-page .bt td { padding: 2px 4px; text-align: center; font-weight: 400; }
+.pp-page .bt thead tr { border-top: 1.5px solid currentColor; border-bottom: 1px solid currentColor; }
+.pp-page .bt tbody tr:last-child { border-bottom: 1.5px solid currentColor; }
+.pp-page .bt th:first-child, .pp-page .bt td:first-child { text-align: left; }
+.pp-jour .bt { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 10.4px; }
+.pp-jour .bt caption { font-size: 10.4px; text-align: left; }
+.pp-page .rl { margin: 0; padding-left: 2.4em; font-size: 10.6px; line-height: 1.24; text-align: left; }
+.pp-page .rl li { margin-bottom: 3px; }
+.pp-conf .rl li::marker { content: "[" counter(list-item) "] "; }
+.pp-jour .rl { font: 400 9.8px/1.36 "Helvetica Neue", Helvetica, Arial, sans-serif; padding-left: 1.8em; }
+.pp-jour .mh { font: 800 21px "Helvetica Neue", Helvetica, Arial, sans-serif; margin: 6px 0 12px; }
+.pp-jour .cols.small { font-size: 10.9px; line-height: 1.4; }
+.pp-jour .bm { font: 400 10px/1.4 "Helvetica Neue", Helvetica, Arial, sans-serif; margin-top: 8px; text-align: left; }
+.pp-jour .bm b { font-weight: 800; }
+
+.pp-page .pc { border-radius: 50%; box-shadow: 0 0 0 1.6px rgba(180, 39, 28, 0.85); padding: 0 2px; }
+
+/* 3D 版：拿在手里的三份。每份是一个 794 × 1123 的框（.ppx-doc），整体缩放；框里一张张纸（.ppx-leaf）按订法翻 */
+.ppx { position: fixed; inset: 0; z-index: 3; color: #efe6d6; font-family: var(--sans); }
+.ppx[hidden] { display: none; }
+.ppx.is-closing { pointer-events: none; }
 /* 只压暗四周：背景的虚化是镜头对焦到手里的纸（js/grade.js 的景深），不是凑过去看 */
-.cvx-scrim {
+.ppx-scrim {
   position: absolute; inset: 0; opacity: 0; transition: opacity 0.6s;
   background: radial-gradient(ellipse 80% 90% at 50% 50%, rgba(8, 6, 4, 0.22), rgba(4, 4, 6, 0.74));
 }
-.cvx.is-open .cvx-scrim { opacity: 1; }
-.cvx-stage { position: absolute; left: 0; right: 0; top: var(--top, 64px); bottom: var(--bottom, 64px); overflow: hidden; }
-.cvx.is-zoom .cvx-stage { overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(239, 230, 214, 0.28) transparent; }
-.cvx-deck { position: relative; width: 100%; height: 100%; }
+.ppx.is-open .ppx-scrim { opacity: 1; }
+.ppx-stage { position: absolute; left: 0; right: 0; top: var(--top, 64px); bottom: var(--bottom, 64px); overflow: hidden; }
+.ppx.is-zoom .ppx-stage { overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(239, 230, 214, 0.28) transparent; }
+.ppx-deck { position: relative; width: 100%; height: 100%; }
 /* 拿在手里：整摞纸跟着手很轻地晃（放大阅读时不晃） */
-.cvx.is-open:not(.is-zoom) .cvx-deck { animation: cvx-hold 7s ease-in-out infinite; }
-@keyframes cvx-hold {
+.ppx.is-open:not(.is-zoom) .ppx-deck { animation: ppx-hold 7s ease-in-out infinite; }
+@keyframes ppx-hold {
   0%, 100% { transform: translate(0, 0) rotate(0deg); }
   30% { transform: translate(1.5px, -2.5px) rotate(0.12deg); }
   65% { transform: translate(-1px, 1.5px) rotate(-0.1deg); }
 }
-@media (prefers-reduced-motion: reduce) { .cvx.is-open .cvx-deck { animation: none; } }
-.cvx-sheet {
-  position: absolute; left: 50%; top: 50%; width: 794px; height: 1123px; transform-origin: 50% 50%;
+@media (prefers-reduced-motion: reduce) { .ppx.is-open .ppx-deck { animation: none; } }
+.ppx-doc {
+  position: absolute; left: 50%; top: 50%; width: 794px; height: 1123px; transform-origin: 50% 50%; perspective: 1800px; isolation: isolate;
   transition: transform 0.5s cubic-bezier(0.2, 0.75, 0.25, 1), filter 0.5s, opacity 0.35s;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 26px 60px -12px rgba(0, 0, 0, 0.65);
-  cursor: zoom-in; touch-action: none; user-select: none; -webkit-user-select: none;
+  cursor: default; touch-action: none; user-select: none; -webkit-user-select: none;
 }
-.cvx-sheet:not(.is-front) { cursor: default; }
-.cvx.is-zoom .cvx-sheet { cursor: zoom-out; touch-action: auto; user-select: text; -webkit-user-select: text; }
+/* 订书钉那份、报纸翻页时整张立起来，正对着人：透视放远一点，角和边不会冲到眼前变形 */
+.ppx-doc.is-staple { perspective: 4200px; }
+.ppx-doc.is-fold { perspective: 3200px; }
+.ppx-doc::before { content: ""; position: absolute; inset: 1% 0.5% -1.5% 1%; z-index: -1; background: rgba(0, 0, 0, 0.55); filter: blur(26px); }
+.ppx-doc.is-front { cursor: zoom-in; }
+.ppx.is-zoom .ppx-doc { cursor: zoom-out; touch-action: auto; user-select: text; -webkit-user-select: text; }
+.ppx-leaf { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform 0.32s ease; }
+.ppx-face { position: absolute; inset: 0; overflow: hidden; backface-visibility: hidden; -webkit-backface-visibility: hidden; box-shadow: 0 0 0 0.5px rgba(60, 45, 25, 0.25), 0 1px 3px rgba(0, 0, 0, 0.3); }
+.ppx-face.back { transform: rotateY(180deg); background: #ebe4d1; }
+.ppx-doc.is-fold .ppx-face.back { background: #dcd1b2; }
+.ppx-face .pp-page.is-through { opacity: 0.06; transform: scaleX(-1); transform-origin: 50% 50%; }
+.ppx-face .pp-page.is-through::after { display: none; }
 /* 台灯那边来的暖光，纸的下角稍微暗一点 */
-.cvx-sheet::after {
+.ppx-face.front::after {
   content: ""; position: absolute; inset: 0; pointer-events: none; mix-blend-mode: multiply;
   background: linear-gradient(160deg, rgba(255, 214, 165, 0.16), rgba(255, 255, 255, 0) 38%, rgba(255, 255, 255, 0) 72%, rgba(60, 35, 10, 0.07));
 }
-.cvx .cv-page {
-  position: absolute; inset: 0; width: 794px; height: 1123px; overflow: hidden;
-  padding: 50px 42px 40px 48px; column-gap: 26px; grid-template-columns: 214px minmax(0, 1fr);
-  --cv-fs: calc(12.3px * var(--fit, 1)); box-shadow: none;
+/* 报纸：上半张不动，下半张绕中线折到后面 / 展开 */
+.ppx-half { position: absolute; inset: 0; transform-style: preserve-3d; }
+.ppx-half.top .ppx-face { clip-path: inset(0 0 50% 0); }
+.ppx-half.bot { transform-origin: 50% 50%; }
+.ppx-half.bot .ppx-face { clip-path: inset(50% 0 0 0); }
+/* 订书钉那份翻页时抬起一角（js/papers.js 的 foldTo）：翻起来的那一角是纸背、沿折线有一道高光；
+   折线这边的纸面压一道暗，下面那张沿折线落一道影子。阴影条都是 2400 × 4000 的长条，左边对齐折线，朝折线的法向渐变 */
+.pp-page.is-ghost { opacity: 0.06; }
+.pp-page.is-ghost::after { display: none; }
+.ppx-shade { position: absolute; left: 0; top: 0; width: 2400px; height: 4000px; transform-origin: 0 0; pointer-events: none; display: none; }
+.ppx-leaf.is-folding .ppx-shade.crease, .ppx-leaf.is-under .ppx-shade.under { display: block; }
+.ppx-shade.crease { background: linear-gradient(to right, rgba(40, 25, 10, 0.2), rgba(40, 25, 10, 0.07) 26px, rgba(40, 25, 10, 0) 90px); }
+.ppx-shade.under { background: linear-gradient(to right, rgba(20, 12, 5, 0.42), rgba(20, 12, 5, 0.14) 34px, rgba(20, 12, 5, 0) 140px); }
+.ppx-flapw { position: absolute; inset: 0; transform: translateZ(1px); pointer-events: none; filter: drop-shadow(-3px 5px 7px rgba(0, 0, 0, 0.34)); }
+.ppx-flapw[hidden] { display: none; }
+.ppx-flap { position: absolute; left: 0; top: 0; width: 794px; height: 1123px; transform-origin: 0 0; overflow: hidden; background: #ebe4d1; }
+.ppx-flap > .ppx-shade { display: block; background: linear-gradient(to right, rgba(255, 252, 244, 0.7), rgba(255, 252, 244, 0.25) 18px, rgba(255, 252, 244, 0) 60px, rgba(70, 45, 20, 0.05) 260px, rgba(70, 45, 20, 0.14) 100%); }
+/* 订书钉、回形针：压在整份的最上面；便利贴伸出纸的右边 */
+.ppx-bind { position: absolute; z-index: 80; pointer-events: none; overflow: visible; }
+.ppx-bind.staple { left: 4px; top: 29px; width: 103px; transform: rotate(-45deg); }
+.ppx-bind.clip { left: 64px; top: -52px; width: 52px; transform: rotate(3deg); }
+.ppx-tab {
+  position: absolute; right: -72px; width: 104px; height: 40px; border-radius: 0 3px 3px 0; display: flex; align-items: center; justify-content: flex-end; padding-right: 14px;
+  font: 600 24px/1 "Caveat", "Bradley Hand", cursive; color: rgba(40, 30, 20, 0.85); box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2); transform: translateZ(0.5px);
 }
-.cvx-arrow {
+.ppx-arrow {
   position: absolute; top: 50%; z-index: 2; width: 52px; height: 52px; margin-top: -26px; padding: 0 0 4px;
   border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(12, 12, 16, 0.62);
   color: #efe6d6; font: 30px/1 var(--sans); cursor: pointer; backdrop-filter: blur(8px);
   opacity: 0; transition: opacity 0.4s 0.2s, background-color 0.15s;
 }
-.cvx-arrow.prev { left: 22px; }
-.cvx-arrow.next { right: 22px; }
-.cvx-arrow:hover { background: rgba(30, 30, 36, 0.9); }
-.cvx-arrow:disabled { visibility: hidden; }
-.cvx-bar {
+.ppx-arrow.prev { left: 22px; }
+.ppx-arrow.next { right: 22px; }
+.ppx-arrow:hover { background: rgba(30, 30, 36, 0.9); }
+.ppx-arrow:disabled { visibility: hidden; }
+.ppx-bar {
   position: absolute; left: 50%; bottom: max(14px, env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 2;
   display: flex; align-items: center; gap: 10px; padding: 5px 6px; max-width: calc(100vw - 24px);
   border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(12, 12, 16, 0.74); backdrop-filter: blur(10px);
   font-size: 13px; white-space: nowrap; opacity: 0; transition: opacity 0.4s 0.2s;
 }
-.cvx.is-open .cvx-arrow, .cvx.is-open .cvx-bar { opacity: 1; }
-.cvx-langs { display: flex; gap: 2px; padding: 2px; border-radius: 999px; background: rgba(255, 255, 255, 0.06); }
-.cvx-langs[hidden] { display: none; }
-.cvx-langs button, .cvx-tool {
+.ppx.is-open .ppx-arrow, .ppx.is-open .ppx-bar { opacity: 1; }
+.ppx-docs { display: flex; gap: 2px; padding: 2px; border-radius: 999px; background: rgba(255, 255, 255, 0.06); }
+.ppx-docs[hidden] { display: none; }
+.ppx-docs button, .ppx-tool {
   border: 0; border-radius: 999px; padding: 5px 13px; background: transparent; color: var(--nav-dim);
   font: inherit; text-decoration: none; cursor: pointer; transition: color 0.15s, background-color 0.15s;
 }
-.cvx-langs button:hover, .cvx-tool:hover { color: var(--nav-fg); background: rgba(255, 255, 255, 0.08); }
-.cvx-langs button[aria-pressed="true"] { background: var(--nav-on); color: var(--nav-on-fg); }
-.cvx-tool[hidden] { display: none; }
-.cvx-count { min-width: 3.4em; text-align: center; color: #a39a8b; font-variant-numeric: tabular-nums; }
-.cvx-tip { color: #8f8778; font-size: 12px; padding-right: 8px; }
-.cvx button:focus-visible, .cvx a:focus-visible { outline: 2px solid var(--nav-fg); outline-offset: 2px; }
+.ppx-docs button:hover, .ppx-tool:hover { color: var(--nav-fg); background: rgba(255, 255, 255, 0.08); }
+.ppx-docs button[aria-pressed="true"] { background: var(--nav-on); color: var(--nav-on-fg); }
+.ppx-tool[hidden] { display: none; }
+.ppx-count { min-width: 3.4em; text-align: center; color: #a39a8b; font-variant-numeric: tabular-nums; }
+.ppx-tip { color: #8f8778; font-size: 12px; padding-right: 8px; }
+.ppx button:focus-visible, .ppx a:focus-visible { outline: 2px solid var(--nav-fg); outline-offset: 2px; }
 @media (max-width: 700px) {
-  .cvx-arrow { width: 40px; height: 40px; margin-top: -20px; font-size: 24px; }
-  .cvx-arrow.prev { left: 8px; }
-  .cvx-arrow.next { right: 8px; }
-  .cvx-tip { display: none; }
-  .cvx-bar { gap: 4px; }
-  .cvx-langs button, .cvx-tool { padding: 5px 10px; }
+  .ppx-arrow { width: 40px; height: 40px; margin-top: -20px; font-size: 24px; }
+  .ppx-arrow.prev { left: 8px; }
+  .ppx-arrow.next { right: 8px; }
+  .ppx-tip { display: none; }
+  .ppx-bar { gap: 4px; }
+  .ppx-docs button, .ppx-tool { padding: 5px 9px; }
 }
 
 /* ---------- 关于：电脑菜单的内容（3D 版画在旧电脑屏幕上，js/pc.js）；纯文字版按页面语言只显示一份 ---------- */
@@ -560,9 +703,6 @@ main h1, main h2 { font-family: var(--display); letter-spacing: 0.04em; }
   /* 电视字幕下的章节小横条：看上去还是 22 × 4 的细条，能点的是 30 × 32 */
   .tvsub-dots { gap: 0; }
   .tvsub-dots button { width: 30px; height: 32px; background-size: 22px 4px; }
-  /* 纯文字版的简历：横过来的手机比 640px 宽，还是两栏，字也大一号 */
-  #content .cv-page { --cv-fs: 15px; }
-  #content .cv-awards { font-size: 0.9em; }
 }
 @media (max-width: 600px) {
   /* 导航栏分两行：名字一行，六项一行平分整个宽度（每一项都是一整格，手指好点）；字号跟着屏幕宽度走 */

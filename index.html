@@ -38,7 +38,7 @@
   "js/photos.js",
   "js/sleeves.js",
   "js/window-view.js",
-  "js/resume.js",
+  "js/papers.js",
   "js/sfx.js",
   "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/shaders/CopyShader.js",
   "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/postprocessing/ShaderPass.js",
@@ -181,7 +181,7 @@
         <h3>Who I am</h3>
         <p>Two or three sentences about yourself: where you study or work, and what you research or care about.</p>
         <p>Another paragraph on how you got here: where you started, what you moved on to, and why.</p>
-        <p>This computer holds what a résumé can't: what I'm doing now, how I got here, and how I think about problems. The paper résumé is on the desk — click it to pick it up. The work itself plays on the TV to the right.</p>
+        <p>This computer holds what a résumé can't: what I'm doing now, how I got here, and how I think about problems. My papers, and a newspaper clipping, lie on the desk — click the stack to pick it up. The work itself plays on the TV to the right.</p>
       </article>
       <article data-cmd="NOW" data-updated="2026.11">
         <h3>What I'm up to</h3>
@@ -216,133 +216,364 @@
           <li><b>A question people often ask you?</b>
             <p>Your answer.</p></li>
           <li><b>How can I reach you?</b>
-            <p>Contact details are in the notepad on the desk. The paper résumé is on the desk too — click it to pick it up.</p></li>
+            <p>Contact details are in the notepad on the desk. The papers are on the desk too — click the stack to pick them up.</p></li>
         </ol>
       </article>
     </div>
   </section>
 
-  <section id="resume" data-nav="Résumé">
-    <h2>Résumé</h2>
+  <section id="papers" data-nav="Papers">
+    <h2>Papers</h2>
     <!--
-      每个 article.cv-page 是一张 A4 纸。3D 版里是书桌上那两张打印纸：点纸，纸从桌上浮起来，在眼前叠成一摞（js/resume.js），
-      左右翻着看；中英文放在同一摞里，上面的按钮直接翻到那种语言。纯文字版里就是一张张白纸卡片。
-        lang          这一页的语言（同一种语言连着写，比如中文 1 页、英文 2 页）
-        data-label    切换按钮上显示的名字
-        data-pdf      这种语言的 PDF（可选，有了就显示下载按钮）
-      纸上的结构：.cv-side 左栏（照片 img.cv-photo、名字 h3.cv-name、dl.cv-kv 联系方式、h4 小标题、ul.cv-awards 奖项、
-      dl.cv-skills 技能、ul.cv-roles 职务），.cv-main 右栏（h4 小标题、.cv-item 一段经历：.cv-head 标题 + 时间、p.cv-sub 副标题、ul 要点）。
-      3D 版的纸是固定的 A4 大小，字放不下会自动整体缩小一点。
-      下面是样例。也可以把真实简历（电话、邮箱、照片）写在 assets/resume/resume.html（写法和下面一样），这个文件夹不进 Git；
-      有它的时候网页启动后换成它，公开的 index.html 里就不用写个人信息。
+      书桌上键盘左边那摞纸：三份文件，压在最上面的是对折的报纸，下面是两份论文（会议论文订书钉订着，期刊论文别着回形针）。
+      3D 版里点这摞纸，整摞拿到眼前（js/papers.js）：报纸展开在最前面，两份论文在后面扇形错开；左右翻，订书钉那份一页页绕着钉子掀过去，
+      回形针那份一张张抽到后面；底栏的按钮直接换到某一份。纯文字版里就是一页页纸，按这里的顺序排。
+        article.pp-doc    一份文件（顺序 = 拿在手里从前往后；桌上是倒过来叠的：第一份压在最上面）
+          data-label      底栏按钮上的名字；data-slug 地址里的名字（#papers/conference）
+          data-bind       怎么订：fold（报纸，桌上对折，翻页像翻报纸）/ staple（左上角一颗订书钉）/ clip（回形针）
+          data-tabs       伸出纸边的便利贴：第几页:颜色(y 黄 p 粉 b 蓝 g 绿):手写的字，几张用 | 隔开
+          data-pdf        这份文件的 PDF（可选，有了就显示下载按钮）
+        .pp-frame > .pp-page   一页纸，固定 794 × 1123（A4 @ 96 dpi）；版式 pp-news 报纸头版（pp-news pp-news-in 是报纸里面的版：
+                               续头版的故事、配图、小方框）、pp-conf 会议两栏、pp-jour 期刊两栏
+      纸上手写的红笔（.pen）、荧光笔（mark.hm）、波浪线（.pu）、红圈（.pc）都是可删的痕迹。下面是样例，报道只放真的。
+      桌上那摞纸的纸面是烘焙进房间的（blender/bake_room.py 用 scripts/render-papers.mjs 截的这几页），改了第一页记得重新截图、烘焙。
     -->
-    <div class="cv-deck">
-      <article class="cv-page" lang="zh-CN" data-label="中文">
-        <div class="cv-side">
-          <div class="cv-photo" role="img" aria-label="照片占位"></div>
-          <h3 class="cv-name">你的名字</h3>
-          <dl class="cv-kv">
-            <dt>电话</dt><dd>138 0000 0000</dd>
-            <dt>邮箱</dt><dd>you@example.com</dd>
-            <dt>城市</dt><dd>某某市</dd>
-          </dl>
-          <h4>教育背景</h4>
-          <p>某某大学</p>
-          <p>2023.09 - 至今　某某专业本科在读</p>
-          <p>研究方向　<b>写下你关心的方向</b></p>
-          <h4>获奖经历</h4>
-          <ul class="cv-awards">
-            <li><b>某某全国大学生竞赛</b><span>一等奖<time>2026</time></span></li>
-            <li><b>某某数学建模竞赛</b><span>二等奖<time>2025</time></span></li>
-            <li><b>某某创新创业大赛</b><span>省级三等奖<time>2024</time></span></li>
-          </ul>
-          <h4>相关技能</h4>
-          <dl class="cv-skills">
-            <dt>编程</dt><dd>Python、C++</dd>
-            <dt>方向</dt><dd>写下你熟悉的工具和框架</dd>
-            <dt>语言</dt><dd>英语 CET-6</dd>
-          </dl>
-          <h4>校园经历</h4>
-          <ul class="cv-roles">
-            <li>某某社团负责人</li>
-            <li>某某志愿活动组织者</li>
-          </ul>
+    <div class="pp-docs">
+      <article class="pp-doc" data-label="News" data-slug="news" data-bind="fold">
+        <div class="pp-frame">
+          <div class="pp-page pp-news">
+            <div class="head">
+              <div class="ear">Today: rain<br>High 14° · Low 9°</div>
+              <div class="mast">Your City Daily</div>
+              <div class="ear">Late city<br>edition</div>
+            </div>
+            <div class="dl"><span>Vol. XII · No. 318</span><span>Tuesday, November 24, 2026</span><span>¥2.00</span></div>
+            <div class="kicker">Campus</div>
+            <div class="hl">Student's Robot Learns by Watching, Takes National Prize</div>
+            <p class="deck">Your Name, 21, beat teams from 40 universities with a robot arm built from spare parts and a cheap webcam.</p>
+            <div class="grid">
+              <div class="main">
+                <div class="photo"><span class="win"></span><span class="arm"></span><span class="hd p1"></span><span class="bd p1"></span><span class="hd p2"></span><span class="bd p2"></span></div>
+                <p class="cap">Your Name, left, and Coauthor Name test the arm in the university's robotics lab on Monday. <b>STAFF PHOTO</b></p>
+                <div class="by">By A. Reporter · Staff Writer</div>
+                <div class="story">
+                  <p class="dc">The robot on Your Name's lab bench does not look like much: an aluminium arm, a webcam and a tangle of cables held together with tape. Last week it beat entries from 40 universities to take first prize at the national undergraduate robotics competition.</p>
+                  <p>“It learns a task by watching you do it twice,” said Your Name, a third-year student at Your University. “Then it tries, fails and tries again. Most of what I did was make the failing cheaper.”</p>
+                  <p>The judges cited the arm's ability to pick up objects it had never seen, including a glass cup that defeated most of the field. The method behind it is described in a paper now under review at an international conference.</p>
+                  <p>Advisor Name, who leads the university's robotics lab, said the project began as a summer exercise. “I gave the students a broken arm and a month,” Advisor Name said. “Your Name came back with a working robot and a list of everything that was still wrong with it.”</p>
+                  <p>Not everything went to plan. In the final round the arm dropped its first object, and the team had four minutes to restart the system. “We had practised that too,” said Coauthor Name, a teammate. “Restarting was the one thing we were sure would work.”</p>
+                  <p>The prize carries a research grant, which the team plans to spend on a second arm, so that two robots can practise on each other.</p>
+                  <p>Your Name grew up near the old harbor, where the family ran a bicycle repair shop. “Fixing bicycles is not so different,” Your Name said. “You look at what is wrong and change one thing at a time.”</p>
+                  <p>The team will show the robot at the city science museum on Saturday. Entry is free.</p>
+                  <p class="jump">Continued on Page 4</p>
+                </div>
+              </div>
+              <aside class="side">
+                <h4>In Brief</h4>
+                <div><h5>Metro Line 4 reaches the harbor</h5>The extension adds three stations and runs every six minutes at peak hours, the transit authority said.</div>
+                <div><h5>Library open late for exams</h5>The main library will stay open until midnight through the exam period, starting Monday.</div>
+                <div><h5>Night market returns</h5>Stalls along the river reopen on Friday after the summer repairs to the embankment.</div>
+                <div class="wx">Weather<strong>14° / 9°</strong>Rain through Thursday, clearing by the weekend.</div>
+              </aside>
+            </div>
         </div>
-        <div class="cv-main">
-          <h4>实习经历</h4>
-          <div class="cv-item">
-            <div class="cv-head"><b>某某公司 · 某某岗位实习生</b><time>2026.01 - 2026.03</time></div>
-            <ul>
-              <li>一句话写清楚你做了什么、<b>用了什么方法</b>、带来了什么结果。</li>
-              <li>能量化就量化：比如把某个指标从 <b>A 提升到 B</b>。</li>
-              <li>每段经历写 2 到 4 条，重要的放前面。</li>
-            </ul>
+        </div>
+        <div class="pp-frame">
+          <div class="pp-page pp-news pp-news-in">
+            <div class="folio"><span>4</span><span class="fmast">Your City Daily</span><span>Tuesday, November 24, 2026</span></div>
+            <div class="kicker">Campus</div>
+            <div class="hl2">Team Plans a Second Arm So Two Robots Can Practise on Each Other</div>
+            <div class="jumpfrom">Robot, from Page 1</div>
+            <div class="grid2">
+              <div class="story2">
+                <p class="dc">Your Name built the first version of the arm in a dormitory, from a second-hand kit and a webcam taped to the wrist. The gripper was printed in the university library, where the 3-D printer is free for students before nine in the morning.</p>
+                <p>The breakthrough came in October, when the team stopped trying to make the robot succeed and started counting how it failed. “Every dropped cup told us something,” said Coauthor Name. “We just had to write it down.”</p>
+                <p>The method is simple to describe. The robot watches a person pick up an object twice, then tries on its own. Each failure is replayed in a computer simulation overnight, and by morning the robot has practised the same grasp thousands of times.</p>
+                <p class="pull">“Every dropped cup told us something.”<span>Coauthor Name, teammate</span></p>
+                <p>Glass was the hardest test. Cameras that measure depth see straight through it, so most robots reach for a cup that is not where they think it is. The team's robot moves its own camera a few centimetres and compares the two views, the way a person tilts their head to judge a distance.</p>
+                <p>Advisor Name said the result surprised the department. “We have robots that cost a hundred times more,” Advisor Name said. “None of them can pick up a wine glass.”</p>
+                <p>The prize money will pay for a second arm. With two, the team hopes the robots can take turns: one sets a task, the other learns it, and then they swap.</p>
+                <p>The team has been invited to show the work at an international conference next year. Until then, the arm lives on a bench by the window of the robotics lab, where it practises every night.</p>
+                <p>Not everyone on the team studies robotics. Coauthor Name came from the physics department after a lecture on optics and wrote the simulator the robot now spends its nights in. “I had never touched a robot,” Coauthor Name said. “But I knew how light bends through glass, and that turned out to matter.”</p>
+                <p>The judges were also struck by how little the project cost. Apart from the arm and the camera, the team used parts from the lab's spare-parts drawer and free software. The full list, down to the price of every screw, is published with the paper, so that other students can build the same robot.</p>
+                <p>Advisor Name said that was deliberate. “A result that only works in a lab with a big budget is not much use to anyone,” Advisor Name said. “We wanted something a school could copy.”</p>
+                <p>Several schools have already asked. A secondary school near the harbor plans to build its own arm in the spring, with the team visiting once a month to help.</p>
+                <p>The next test will be a kitchen. “Cups are easy compared with a sink full of dishes,” Your Name said. “But that is where a robot would actually help someone.”</p>
+                <p>“It never gets bored,” Your Name added. “That is the one thing it is better at than us.”</p>
+                <h5 class="bh">Also on campus</h5>
+                <p class="bi"><b>Robotics club recruits.</b> The student robotics club meets on Thursdays at 19:00 in the engineering building. No experience is needed; the club provides the tools and spare parts.</p>
+                <p class="bi"><b>Lab tours on Saturday.</b> The robotics lab opens to visitors from 14:00 to 16:00 during the museum open day. Visitors can try teaching the arm a task themselves.</p>
+                <p class="bi"><b>Read the paper.</b> The team's paper, with the full parts list, is on the university's website.</p>
+              </div>
+              <aside class="side2">
+                <div class="photo photo2"><span class="cup"></span><span class="arm"></span></div>
+                <p class="cap">The arm closes on a glass cup, the object that stopped most robots in the final round. <b>STAFF PHOTO</b></p>
+                <div class="box">
+                  <h4>How it learns</h4>
+                  <ol>
+                    <li>Watch a person do the task twice.</li>
+                    <li>Try it, and note where it fails.</li>
+                    <li>Replay the failures in simulation overnight.</li>
+                    <li>Try again the next morning.</li>
+                  </ol>
+                </div>
+                <div class="box nums">
+                  <h4>By the numbers</h4>
+                  <p><b>40</b> universities in the final</p>
+                  <p><b>2</b> demonstrations per task</p>
+                  <p><b>78%</b> of grasps on glassware</p>
+                </div>
+                <div class="box">
+                  <h4>The team</h4>
+                  <p><b>Your Name</b> · method and robot</p>
+                  <p><b>Coauthor Name</b> · simulation</p>
+                  <p><b>Advisor Name</b> · robotics lab</p>
+                </div>
+              </aside>
+            </div>
+            <div class="ad">Open Day at the City Science Museum<small>Saturday 10:00–17:00 · See the prize-winning robot · Free entry</small></div>
           </div>
-          <h4>科研经历</h4>
-          <div class="cv-item">
-            <div class="cv-head"><b>论文或课题的标题</b><time>2025</time></div>
-            <p class="cv-sub">会议或期刊名称 · 当前状态</p>
-            <ul>
-              <li>要解决的问题，以及为什么值得解决。</li>
-              <li>你负责的部分：<b>方法设计、实验、分析</b>。</li>
-              <li>最关键的一个结果。</li>
-            </ul>
-          </div>
-          <h4>项目经历</h4>
-          <div class="cv-item">
-            <div class="cv-head"><b>一个项目的名字</b><time>2024–2025</time></div>
-            <p class="cv-sub">项目的来源或性质</p>
-            <ul>
-              <li>项目是什么、给谁用。</li>
-              <li>你做的部分和用到的技术。</li>
-            </ul>
-          </div>
-          <h4>其他荣誉</h4>
-          <p>2024–2025 学年：<b>某某奖学金</b></p>
         </div>
       </article>
-      <article class="cv-page" lang="en" data-label="English">
-        <div class="cv-side">
-          <div class="cv-photo" role="img" aria-label="Photo placeholder"></div>
-          <h3 class="cv-name">Your Name</h3>
-          <dl class="cv-kv">
-            <dt>Phone</dt><dd>+86 138 0000 0000</dd>
-            <dt>Email</dt><dd>you@example.com</dd>
-            <dt>City</dt><dd>Your city</dd>
-          </dl>
-          <h4>Education</h4>
-          <p>Your University</p>
-          <p>B.Eng. in Your Major, 2023.09 – Present</p>
-          <p>Research interests: <b>what you care about</b></p>
-          <h4>Awards</h4>
-          <ul class="cv-awards">
-            <li><b>National Undergraduate Competition</b><span>First Prize<time>2026</time></span></li>
-            <li><b>Mathematical Contest in Modeling</b><span>Second Prize<time>2025</time></span></li>
-          </ul>
-          <h4>Skills</h4>
-          <dl class="cv-skills">
-            <dt>Programming</dt><dd>Python, C++</dd>
-            <dt>Tools</dt><dd>Frameworks you know well</dd>
-          </dl>
+      <article class="pp-doc" data-label="Conference" data-slug="conference" data-bind="staple" data-tabs="2:y:Fig. 2|2:b:Tab. 1|3:p:Refs">
+        <div class="pp-frame">
+          <div class="pp-page pp-conf">
+            <div class="arx">arXiv:2611.04817v1 [cs.RO] 24 Nov 2026</div>
+            <span class="pen" style="right:78px;top:20px;transform:rotate(-3deg)">v3 · to Prof. Advisor by Fri</span>
+            <span class="pen" style="right:8px;top:560px;transform:rotate(-7deg);font-size:22px;text-align:center">why<br>40k?</span>
+            <div class="t">Your Paper Title: One Clause That Says What the Method Does</div>
+            <div class="au"><span>Your Name<sup>1</sup></span><span>Coauthor Name<sup>2</sup></span><span>Advisor Name<sup>1</sup></span></div>
+            <div class="af"><sup>1</sup>Your University &nbsp;&nbsp; <sup>2</sup>Partner Lab</div>
+            <div class="em">{you, advisor}@example.edu</div>
+            <figure class="teaser">
+              <div class="panels">
+                <div class="ph input"><b></b><i></i></div>
+                <div class="ph blur"><b></b><b></b><i></i></div>
+                <div class="ph"><b></b><i></i></div>
+                <div class="ph ref"><b></b><i></i></div>
+              </div>
+              <div class="labs"><span>Input</span><span>Baseline [12]</span><span>Ours</span><span>Reference</span></div>
+              <figcaption><b>Figure 1.</b> Put the one picture that explains your paper here. A reader who picks up the printout looks at this before anything else, so say what to compare: the baseline smears the gripper as it reaches for the glass, while ours keeps both the gripper and the glass sharp.</figcaption>
+            </figure>
+            <div class="cols">
+              <div class="h abs-h">Abstract</div>
+              <p class="abs">Replace this paragraph with your abstract. A reader who picks this printout up off the desk reads the title, this paragraph and Figure 1, and often nothing else, so give the whole paper here in five sentences: the problem, why current methods fall short, your idea, how you tested it, and the strongest result. For example: <mark class="hm">grasp planners trained on opaque objects miss transparent ones</mark>, because depth sensors see straight through them. We predict depth from two views and a short motion of the gripper, and train the planner on 40k simulated scenes. On two real-robot benchmarks the success rate on glassware rises from 41% to <span class="pc">78%</span> with no loss in speed.</p>
+              <div class="h">1. Introduction</div>
+              <p>This page is the first page of a paper as it comes off a printer. It follows the usual two-column conference layout: a centred title block, one figure across both columns, then the abstract and the text in two justified columns of ten-point serif type. The line in the left margin is the stamp arXiv adds to every preprint; keep it once your paper is public.</p>
+              <p>Open the introduction with the task and why it matters to someone outside your lab. Then name the gap: what current methods assume, and the case where that assumption breaks. <span class="pu">One concrete failure, like the smeared gripper in Figure 1,</span> does more work than a paragraph of adjectives.</p>
+              <p>Next, <mark class="hm">state the key idea in a sentence that a first-year student could repeat</mark>. Say what you changed, not only what you achieved. If the method has a name, introduce it here and use the same name in every figure, table and caption, so that a reader who flips straight to Table 2 still knows which row is yours.</p>
+              <p>Close the introduction with the contributions, usually as a short list:</p>
+              <ul>
+                <li>A method that does one thing better, stated in one line.</li>
+                <li>A dataset or benchmark, if you built one, with its size.</li>
+                <li>Experiments on two or more benchmarks, and an ablation that removes each part in turn.</li>
+              </ul>
+              <p>Give the code and data link as it will appear in print, for example github.com/your-name/your-project, so that someone holding the paper can still find it.</p>
+              <div class="h">2. Related Work</div>
+              <p>Group prior work by idea rather than by year. For each group, write one sentence on what it does and one on how your work differs [3, 7, 12]. Citations stay as numbers in brackets; the full list sits at the end of the paper.</p>
+              <p><i>Learning to grasp.</i> Early systems matched object models to depth images [4, 9]. Learned planners [2, 15] replaced the models with networks trained on millions of grasps, but they still read depth from the same sensor, which is exactly where transparent objects fail.</p>
+              <p><i>Depth completion.</i> A second line of work repairs the depth image before planning [6, 11, 18]. These methods need a clean background and several seconds per frame, which rules out the closed-loop setting we study. Our model instead treats the motion of the gripper itself as a second view, so it needs no extra camera and runs inside the control loop at the same rate as the planner.</p>
+              <div class="h">3. Method</div>
+              <p>Start the method with a short overview that matches a figure: what goes in, what comes out, and the two or three stages in between. Then give each stage its own subsection, in the same order as the figure, so that a reader can keep one finger on Figure 2 while reading.</p>
+              <p>Define every symbol the first time it appears. Given two frames <i>I</i><sub>1</sub> and <i>I</i><sub>2</sub> taken a short gripper motion <i>T</i> apart, the network predicts a depth map <i>D</i> for the first frame; training minimises the photometric error after warping one frame into the other, plus a smoothness term weighted by <i>λ</i>. Put the full loss in a numbered equation, and keep the numbers so that later sections can refer back to it.</p>
+              <p>State what you hold fixed and what you learn. A reviewer reading on paper cannot click through to your code, so the text alone has to be enough to rebuild the method.</p>
+            </div>
+            <div class="pg">1</div>
         </div>
-        <div class="cv-main">
-          <h4>Experience</h4>
-          <div class="cv-item">
-            <div class="cv-head"><b>Company - Role Intern</b><time>2026.01 – 2026.03</time></div>
-            <ul>
-              <li>One line on what you did, <b>how you did it</b>, and what changed because of it.</li>
-              <li>Quantify when you can: moved a metric <b>from A to B</b>.</li>
-            </ul>
-          </div>
-          <h4>Research</h4>
-          <div class="cv-item">
-            <div class="cv-head"><b>Title of a Paper or Project</b><time>2025</time></div>
-            <p class="cv-sub">Venue · Status</p>
-            <ul>
-              <li>The problem, and why it matters.</li>
-              <li>Your part: <b>method, experiments, analysis</b>.</li>
-            </ul>
-          </div>
+        </div>
+        <div class="pp-frame">
+          <div class="pp-page pp-conf">
+            <figure class="pipe">
+              <div class="pipe-row">
+                <div class="pb img">I<sub>1</sub>, I<sub>2</sub><small>two frames</small></div><div class="pa">→</div>
+                <div class="pb">Depth network<small>shared encoder</small></div><div class="pa">→</div>
+                <div class="pb">Depth <i>D</i><small>per pixel</small></div><div class="pa">→</div>
+                <div class="pb">Grasp planner<small>6-DoF pose</small></div>
+              </div>
+              <div class="loop">the gripper's next motion <i>T</i> gives the next pair of frames</div>
+              <figcaption><b>Figure 2.</b> Overview of the method. Two frames taken a short gripper motion apart pass through a shared encoder; the predicted depth goes to an off-the-shelf grasp planner, and the planner's next motion supplies the next pair of frames.</figcaption>
+            </figure>
+            <div class="cols">
+              <div class="h">3.1. Depth from gripper motion</div>
+              <p>Given two frames <i>I</i><sub>1</sub> and <i>I</i><sub>2</sub> and the known motion <i>T</i> between them, the network predicts a depth map <i>D</i> for the first frame. We warp <i>I</i><sub>2</sub> into the first view with <i>D</i> and <i>T</i>, and train on the photometric difference, so no ground-truth depth is needed:</p>
+              <div class="eq"><i>L</i> = <i>L</i><sub>photo</sub> + <i>λ</i> <i>L</i><sub>smooth</sub><span>(1)</span></div>
+              <p>Here <i>L</i><sub>smooth</sub> penalises depth gradients where the image is flat, and <i>λ</i> = 0.1 in all experiments. Transparent surfaces break the photometric term, because the background moves behind them; we mask pixels whose error stays high across both directions of the warp.</p>
+              <div class="h">3.2. Closing the loop</div>
+              <p>The planner proposes a grasp from <i>D</i>, and the gripper moves 2 cm towards it before the next prediction. Each step therefore produces a new pair of frames for free, and the depth gets sharper as the gripper approaches the object.</p>
+              <div class="h">4. Experiments</div>
+              <p>We test on two real-robot benchmarks with 12 transparent and 20 opaque objects, 200 grasps per method and setting. A grasp counts as a success when the object is lifted 10 cm and held for three seconds.</p>
+              <table class="bt">
+                <caption><b>Table 1.</b> Grasp success rate (%) and time per prediction. Best results in bold.</caption>
+                <thead><tr><th>Method</th><th>Glass</th><th>Opaque</th><th>ms</th></tr></thead>
+                <tbody><tr><td>Planner only [2]</td><td>41.2</td><td>88.0</td><td><b>32</b></td></tr><tr><td>Depth completion [6]</td><td>63.5</td><td>86.1</td><td>410</td></tr><tr><td>Two cameras [11]</td><td>70.1</td><td>88.4</td><td>58</td></tr><tr><td>Ours</td><td><b>78.4</b></td><td><b>89.2</b></td><td>35</td></tr></tbody>
+              </table>
+              <p>Table 1 gives the main result. The planner alone fails on most glassware; depth completion helps but is too slow for closed-loop control. Ours reaches 78.4% on glass at almost the planner's own speed, and does not hurt opaque objects.</p>
+              <p><i>Ablations.</i> Removing the mask drops glass success to 66%; replacing the gripper motion with a fixed second camera costs 8 points, because the fixed baseline is too short at close range.</p>
+            </div>
+            <div class="pg">2</div>
+        </div>
+        </div>
+        <div class="pp-frame">
+          <div class="pp-page pp-conf">
+            <div class="cols">
+              <p>Failure cases fall into two groups: thin stems of wine glasses, which the network smooths away, and objects placed in front of a mirror, where the warp finds a consistent but wrong surface. Both appear in the supplementary video.</p>
+              <div class="h">5. Conclusion</div>
+              <p>State what you showed and what it does not yet cover. In one paragraph: the method, the strongest number, the main limit, and the next step a reader could take. Avoid repeating the abstract word for word.</p>
+              <p><b>Acknowledgements.</b> Thank the people and grants that made the work possible, and anyone who lent you a robot.</p>
+              <div class="h">References</div>
+              <ol class="rl">
+                    <li>A. Author, D. Engineer, and F. Advisor. A paper on grasping transparent objects. In Proc. ICCV, pages 1–9, 2014.</li>
+                    <li>B. Researcher, E. Student, and G. Colleague. A paper on depth from camera motion. In Proc. ICRA, pages 38–46, 2019.</li>
+                    <li>C. Scholar, F. Advisor, and H. Reviewer. A paper on closed-loop grasp planning. In Proc. CoRL, pages 75–83, 2024.</li>
+                    <li>D. Engineer, G. Colleague, and A. Author. A paper on depth completion for robots. In Proc. RSS, pages 112–120, 2017.</li>
+                    <li>E. Student, H. Reviewer, and B. Researcher. A paper on self-supervised depth. IEEE Robotics and Automation Letters, pages 149–157, 2022.</li>
+                    <li>F. Advisor, A. Author, and C. Scholar. A paper on household manipulation benchmarks. In Proc. ECCV, pages 186–194, 2015.</li>
+                    <li>G. Colleague, B. Researcher, and D. Engineer. A paper on learning from demonstrations. In Proc. IROS, pages 223–231, 2020.</li>
+                    <li>H. Reviewer, C. Scholar, and E. Student. A paper on visual servoing. In Advances in NeurIPS, pages 260–268, 2025.</li>
+                    <li>A. Author, D. Engineer, and F. Advisor. A paper on grasp quality networks. In Proc. ICCV, pages 297–305, 2018.</li>
+                    <li>B. Researcher, E. Student, and G. Colleague. A paper on simulation-to-real transfer. In Proc. ICRA, pages 34–42, 2023.</li>
+                    <li>C. Scholar, F. Advisor, and H. Reviewer. A paper on active perception. In Proc. CoRL, pages 71–79, 2016.</li>
+                    <li>D. Engineer, G. Colleague, and A. Author. A paper on photometric losses. In Proc. RSS, pages 108–116, 2021.</li>
+                    <li>E. Student, H. Reviewer, and B. Researcher. A paper on tactile feedback in grasping. IEEE Robotics and Automation Letters, pages 145–153, 2014.</li>
+                    <li>F. Advisor, A. Author, and C. Scholar. A paper on multi-view stereo. In Proc. ECCV, pages 182–190, 2019.</li>
+                    <li>G. Colleague, B. Researcher, and D. Engineer. A paper on object pose estimation. In Proc. IROS, pages 219–227, 2024.</li>
+                    <li>H. Reviewer, C. Scholar, and E. Student. A paper on policy learning from video. In Advances in NeurIPS, pages 256–264, 2017.</li>
+                    <li>A. Author, D. Engineer, and F. Advisor. A paper on grasping transparent objects. In Proc. ICCV, pages 293–301, 2022.</li>
+                    <li>B. Researcher, E. Student, and G. Colleague. A paper on depth from camera motion. In Proc. ICRA, pages 30–38, 2015.</li>
+                    <li>C. Scholar, F. Advisor, and H. Reviewer. A paper on closed-loop grasp planning. In Proc. CoRL, pages 67–75, 2020.</li>
+                    <li>D. Engineer, G. Colleague, and A. Author. A paper on depth completion for robots. In Proc. RSS, pages 104–112, 2025.</li>
+                    <li>E. Student, H. Reviewer, and B. Researcher. A paper on self-supervised depth. IEEE Robotics and Automation Letters, pages 141–149, 2018.</li>
+                    <li>F. Advisor, A. Author, and C. Scholar. A paper on household manipulation benchmarks. In Proc. ECCV, pages 178–186, 2023.</li>
+                    <li>G. Colleague, B. Researcher, and D. Engineer. A paper on learning from demonstrations. In Proc. IROS, pages 215–223, 2016.</li>
+                    <li>H. Reviewer, C. Scholar, and E. Student. A paper on visual servoing. In Advances in NeurIPS, pages 252–260, 2021.</li>
+                    <li>A. Author, D. Engineer, and F. Advisor. A paper on grasp quality networks. In Proc. ICCV, pages 289–297, 2014.</li>
+                    <li>B. Researcher, E. Student, and G. Colleague. A paper on simulation-to-real transfer. In Proc. ICRA, pages 26–34, 2019.</li>
+                    <li>C. Scholar, F. Advisor, and H. Reviewer. A paper on active perception. In Proc. CoRL, pages 63–71, 2024.</li>
+                    <li>D. Engineer, G. Colleague, and A. Author. A paper on photometric losses. In Proc. RSS, pages 100–108, 2017.</li>
+                    <li>E. Student, H. Reviewer, and B. Researcher. A paper on tactile feedback in grasping. IEEE Robotics and Automation Letters, pages 137–145, 2022.</li>
+                    <li>F. Advisor, A. Author, and C. Scholar. A paper on multi-view stereo. In Proc. ECCV, pages 174–182, 2015.</li>
+                  </ol>
+            </div>
+            <div class="pg">3</div>
+        </div>
+        </div>
+      </article>
+      <article class="pp-doc" data-label="Journal" data-slug="journal" data-bind="clip">
+        <div class="pp-frame">
+          <div class="pp-page pp-jour">
+            <span class="pen" style="left:150px;top:40px;transform:rotate(-2deg)">accepted · print 3 copies</span>
+            <div class="top"><span class="kind">Article</span><span class="doi">https://doi.org/10.0000/example-2026-0001</span></div>
+            <div class="t">Your paper title in sentence case, as a journal would set it</div>
+            <div class="au">Your Name<sup>1</sup>, Coauthor Name<sup>2</sup>, Second Coauthor<sup>1,2</sup> &amp; Advisor Name<sup>1</sup> ✉</div>
+            <div class="lead">
+              <div class="meta"><span><b>Received:</b>3 March 2026</span><span><b>Accepted:</b>9 October 2026</span><span><b>Published online:</b>24 November 2026</span><span class="chk">Check for updates</span></div>
+              <p class="sum">Journals in this style open with one bold summary paragraph of about two hundred words, written for any scientist rather than only for your field. Put the background in the first two sentences and the open problem in the third. Then say what you found, how you found it and why it changes what people in the field can do. Leave out abbreviations and citations here: a reader who stops after this paragraph should still be able to tell a colleague what the paper shows. Robots that learn from a few demonstrations still fail on transparent and reflective objects, which make up much of a real kitchen. Here we show that <mark class="hm">the motion of the robot's own gripper is enough to recover the missing depth</mark>, raising the success rate on glassware from 41% to 78%.</p>
+            </div>
+            <div class="cols">
+              <p class="first">This sheet shows the opening page of a journal article in the two-column style used by Nature and similar journals. The title runs across the page in a heavy sans-serif, the authors follow, and the dates of submission and acceptance sit in the narrow margin beside the summary paragraph.</p>
+              <p>The main text then starts without a heading. Write the first paragraphs for a reader from a neighbouring field: what was known, what was missing and what you set out to test. Journals in this style number nothing in the main text; sections carry short bold headings instead.</p>
+              <div class="h">Learning a grasp from two demonstrations</div>
+              <p class="first">Describe the approach in words first and keep the equations for the Methods at the end. A figure that shows the whole pipeline on one example (Fig. 1a) saves a page of description.</p>
+              <p>Report the main result with its uncertainty, for example <mark class="hm">a success rate of 78 ± 4% across five runs</mark> against 41 ± 6% for the strongest baseline (Fig. 1b), and say how many trials each number comes from.</p>
+              <p>Keep each paragraph to one point. Journals in this style cut long main texts hard, so anything a specialist needs and a general reader does not, such as hyperparameters, the full list of baselines or the hardware, goes into the Methods, where it can run as long as it needs. A reader who wants to rebuild the robot should find everything there without searching the main text.</p>
+              <figure>
+                <svg viewBox="0 0 330 150" role="img" aria-label="Two-panel chart">
+                  <text x="2" y="12" font-family="Libre Franklin, Arial" font-weight="800" font-size="12" fill="#1d1b18">a</text>
+                  <text x="172" y="12" font-family="Libre Franklin, Arial" font-weight="800" font-size="12" fill="#1d1b18">b</text>
+                  <g stroke="#8d877c" stroke-width=".8"><line x1="18" y1="128" x2="160" y2="128"/><line x1="18" y1="20" x2="18" y2="128"/><line x1="188" y1="128" x2="326" y2="128"/><line x1="188" y1="20" x2="188" y2="128"/></g>
+                  <g fill="#b3ada2"><rect x="24" y="86" width="9" height="42"/><rect x="47" y="70" width="9" height="58"/><rect x="70" y="92" width="9" height="36"/><rect x="93" y="60" width="9" height="68"/><rect x="116" y="96" width="9" height="32"/><rect x="139" y="78" width="9" height="50"/></g>
+                  <g fill="#3b6c9a"><rect x="33" y="44" width="9" height="84"/><rect x="56" y="36" width="9" height="92"/><rect x="79" y="50" width="9" height="78"/><rect x="102" y="30" width="9" height="98"/><rect x="125" y="56" width="9" height="72"/><rect x="148" y="40" width="9" height="88"/></g>
+                  <polyline points="196,110 228,96 260,88 292,84 320,82" fill="none" stroke="#b3ada2" stroke-width="2"/>
+                  <polyline points="196,96 228,64 260,46 292,38 320,34" fill="none" stroke="#3b6c9a" stroke-width="2"/>
+                  <g fill="#3b6c9a"><circle cx="196" cy="96" r="2.6"/><circle cx="228" cy="64" r="2.6"/><circle cx="260" cy="46" r="2.6"/><circle cx="292" cy="38" r="2.6"/><circle cx="320" cy="34" r="2.6"/></g>
+                  <g font-family="Libre Franklin, Arial" font-size="8" fill="#5e584e"><text x="20" y="142">cup · bowl · bottle · mug · vase · jar</text><text x="196" y="142">1</text><text x="228" y="142">2</text><text x="260" y="142">4</text><text x="292" y="142">8</text><text x="316" y="142">16</text></g>
+                </svg>
+                <figcaption><b>Fig. 1 | Learning a grasp from two demonstrations.</b> <b>a</b>, Success rate on six kinds of glassware for the baseline (grey) and our method (blue). <b>b</b>, Success rate as the number of demonstrations grows. Error bars are omitted here; give s.d. across five runs in the real figure.</figcaption>
+              </figure>
+              <div class="h">Where it fails</div>
+              <p class="first">Readers trust a paper more when it shows its limits. Name the conditions in which the method breaks, and show one example of each in the Extended Data. Our model still fails on mirrors larger than the gripper's field of view, and on objects that move while the gripper approaches them.</p>
+              <p>End the main text with what the result makes possible next, in two or three sentences, and leave the detailed comparison with earlier work to the discussion.</p>
+              <div class="h">Outlook</div>
+              <p class="first">The same idea should carry over to any robot that can move its own camera. The next step is a robot that learns from a single demonstration recorded on a phone, which would let anyone teach it a new object at home without a depth sensor or a lab.</p>
+              <p>Finish with the limits of the claim rather than with a slogan: what you showed, on which robots, and under which lighting. Readers remember the last paragraph, so make it one they can quote accurately.</p>
+            </div>
+            <div class="foot"><span>Journal Name | Vol 000 | 24 November 2026</span><span>1</span></div>
+        </div>
+        </div>
+        <div class="pp-frame">
+          <div class="pp-page pp-jour">
+            <div class="mh">Methods</div>
+            <div class="cols small">
+              <div class="h">Robot and sensors</div>
+              <p class="first">Describe the hardware so that another lab could buy or build the same setup: the arm, the gripper, the camera and where it is mounted, and the computer that runs the model. Give model numbers and the control rate, here a six-axis arm with a parallel gripper and a wrist camera at 30 frames per second.</p>
+              <div class="h">Training data</div>
+              <p class="first">Say where every training example comes from and how many there are. We rendered 40,000 scenes with 312 object models, a third of them transparent, under randomised lighting and backgrounds.</p>
+              <p>State what you excluded and why. Scenes in which the object was fully hidden from both views were removed before training, about 3% of the total.</p>
+              <table class="bt">
+                <caption><b>Extended Data Table 1 | Success rate by object class.</b> Mean ± s.d. over five runs of 40 grasps.</caption>
+                <thead><tr><th>Class</th><th>Baseline</th><th>Ours</th></tr></thead>
+                <tbody><tr><td>Cup</td><td>44 ± 5</td><td>81 ± 3</td></tr><tr><td>Bowl</td><td>52 ± 6</td><td>84 ± 4</td></tr><tr><td>Bottle</td><td>36 ± 7</td><td>74 ± 5</td></tr><tr><td>Vase</td><td>30 ± 6</td><td>69 ± 6</td></tr></tbody>
+              </table>
+              <div class="h">Evaluation</div>
+              <p class="first">Define success before the experiments, and say who judged it. A grasp counted as successful when the object was lifted 10 cm and held for 3 s; trials were scored by a person who did not know which method was running.</p>
+              <div class="h">Statistics</div>
+              <p class="first">Report the test, the number of runs and what the error bars show. Differences between methods were tested with a two-sided paired t-test across the five runs.</p>
+              <div class="h">Reporting summary</div>
+              <p class="first">Many journals ask for a separate checklist on data, code and statistics. Fill it in at submission, and keep the answers consistent with this section.</p>
+            </div>
+            <div class="foot"><span>Journal Name | Vol 000 | 24 November 2026</span><span>2</span></div>
+        </div>
+        </div>
+        <div class="pp-frame">
+          <div class="pp-page pp-jour">
+            <div class="cols small">
+              <div class="h">Data availability</div>
+              <p class="first">Say where the data can be downloaded and under which licence, for example a public repository with a permanent identifier. Data that cannot be shared should be named, with the reason.</p>
+              <div class="h">Code availability</div>
+              <p class="first">Give the repository and the exact version used for the paper, for example github.com/your-name/your-project, tag v1.0.</p>
+              <ol class="rl">
+                    <li>Author, A., Engineer, D. &amp; Advisor, F. A paper on grasping transparent objects. <i>Journal Name</i> <b>3</b>, 103–112 (2014).</li>
+                    <li>Researcher, B., Student, E. &amp; Colleague, G. A paper on depth from camera motion. <i>Journal Name</i> <b>10</b>, 214–223 (2019).</li>
+                    <li>Scholar, C., Advisor, F. &amp; Reviewer, H. A paper on closed-loop grasp planning. <i>Journal Name</i> <b>17</b>, 325–334 (2024).</li>
+                    <li>Engineer, D., Colleague, G. &amp; Author, A. A paper on depth completion for robots. <i>Journal Name</i> <b>24</b>, 436–445 (2017).</li>
+                    <li>Student, E., Reviewer, H. &amp; Researcher, B. A paper on self-supervised depth. <i>Journal Name</i> <b>31</b>, 547–556 (2022).</li>
+                    <li>Advisor, F., Author, A. &amp; Scholar, C. A paper on household manipulation benchmarks. <i>Journal Name</i> <b>38</b>, 658–667 (2015).</li>
+                    <li>Colleague, G., Researcher, B. &amp; Engineer, D. A paper on learning from demonstrations. <i>Journal Name</i> <b>5</b>, 769–778 (2020).</li>
+                    <li>Reviewer, H., Scholar, C. &amp; Student, E. A paper on visual servoing. <i>Journal Name</i> <b>12</b>, 880–889 (2025).</li>
+                    <li>Author, A., Engineer, D. &amp; Advisor, F. A paper on grasp quality networks. <i>Journal Name</i> <b>19</b>, 991–1000 (2018).</li>
+                    <li>Researcher, B., Student, E. &amp; Colleague, G. A paper on simulation-to-real transfer. <i>Journal Name</i> <b>26</b>, 202–211 (2023).</li>
+                    <li>Scholar, C., Advisor, F. &amp; Reviewer, H. A paper on active perception. <i>Journal Name</i> <b>33</b>, 313–322 (2016).</li>
+                    <li>Engineer, D., Colleague, G. &amp; Author, A. A paper on photometric losses. <i>Journal Name</i> <b>40</b>, 424–433 (2021).</li>
+                    <li>Student, E., Reviewer, H. &amp; Researcher, B. A paper on tactile feedback in grasping. <i>Journal Name</i> <b>7</b>, 535–544 (2014).</li>
+                    <li>Advisor, F., Author, A. &amp; Scholar, C. A paper on multi-view stereo. <i>Journal Name</i> <b>14</b>, 646–655 (2019).</li>
+                    <li>Colleague, G., Researcher, B. &amp; Engineer, D. A paper on object pose estimation. <i>Journal Name</i> <b>21</b>, 757–766 (2024).</li>
+                    <li>Reviewer, H., Scholar, C. &amp; Student, E. A paper on policy learning from video. <i>Journal Name</i> <b>28</b>, 868–877 (2017).</li>
+                    <li>Author, A., Engineer, D. &amp; Advisor, F. A paper on grasping transparent objects. <i>Journal Name</i> <b>35</b>, 979–988 (2022).</li>
+                    <li>Researcher, B., Student, E. &amp; Colleague, G. A paper on depth from camera motion. <i>Journal Name</i> <b>42</b>, 190–199 (2015).</li>
+                    <li>Scholar, C., Advisor, F. &amp; Reviewer, H. A paper on closed-loop grasp planning. <i>Journal Name</i> <b>9</b>, 301–310 (2020).</li>
+                    <li>Engineer, D., Colleague, G. &amp; Author, A. A paper on depth completion for robots. <i>Journal Name</i> <b>16</b>, 412–421 (2025).</li>
+                    <li>Student, E., Reviewer, H. &amp; Researcher, B. A paper on self-supervised depth. <i>Journal Name</i> <b>23</b>, 523–532 (2018).</li>
+                    <li>Advisor, F., Author, A. &amp; Scholar, C. A paper on household manipulation benchmarks. <i>Journal Name</i> <b>30</b>, 634–643 (2023).</li>
+                    <li>Colleague, G., Researcher, B. &amp; Engineer, D. A paper on learning from demonstrations. <i>Journal Name</i> <b>37</b>, 745–754 (2016).</li>
+                    <li>Reviewer, H., Scholar, C. &amp; Student, E. A paper on visual servoing. <i>Journal Name</i> <b>4</b>, 856–865 (2021).</li>
+                    <li>Author, A., Engineer, D. &amp; Advisor, F. A paper on grasp quality networks. <i>Journal Name</i> <b>11</b>, 967–976 (2014).</li>
+                    <li>Researcher, B., Student, E. &amp; Colleague, G. A paper on simulation-to-real transfer. <i>Journal Name</i> <b>18</b>, 178–187 (2019).</li>
+                    <li>Scholar, C., Advisor, F. &amp; Reviewer, H. A paper on active perception. <i>Journal Name</i> <b>25</b>, 289–298 (2024).</li>
+                    <li>Engineer, D., Colleague, G. &amp; Author, A. A paper on photometric losses. <i>Journal Name</i> <b>32</b>, 400–409 (2017).</li>
+                    <li>Student, E., Reviewer, H. &amp; Researcher, B. A paper on tactile feedback in grasping. <i>Journal Name</i> <b>39</b>, 511–520 (2022).</li>
+                    <li>Advisor, F., Author, A. &amp; Scholar, C. A paper on multi-view stereo. <i>Journal Name</i> <b>6</b>, 622–631 (2015).</li>
+                    <li>Colleague, G., Researcher, B. &amp; Engineer, D. A paper on object pose estimation. <i>Journal Name</i> <b>13</b>, 733–742 (2020).</li>
+                    <li>Reviewer, H., Scholar, C. &amp; Student, E. A paper on policy learning from video. <i>Journal Name</i> <b>20</b>, 844–853 (2025).</li>
+                    <li>Author, A., Engineer, D. &amp; Advisor, F. A paper on grasping transparent objects. <i>Journal Name</i> <b>27</b>, 955–964 (2018).</li>
+                    <li>Researcher, B., Student, E. &amp; Colleague, G. A paper on depth from camera motion. <i>Journal Name</i> <b>34</b>, 166–175 (2023).</li>
+                  </ol>
+              <p class="bm"><b>Acknowledgements</b> Thank people, funders and facilities.</p>
+              <p class="bm"><b>Author contributions</b> Y.N. designed the method and ran the experiments. C.N. built the robot setup. A.N. supervised the project. All authors wrote the paper.</p>
+              <p class="bm"><b>Competing interests</b> The authors declare no competing interests.</p>
+              <p class="bm"><b>Correspondence</b> should be addressed to Advisor Name.</p>
+            </div>
+            <div class="foot"><span>Journal Name | Vol 000 | 24 November 2026</span><span>3</span></div>
+        </div>
         </div>
       </article>
     </div>
@@ -573,7 +804,7 @@
   <section id="credits">
     <h2>Credits</h2>
     <!-- 下面的列表由 node scripts/credits_html.mjs 生成（来自 assets/vendor/credits.json），别手改 -->
-    <p class="intro">The models in the desk room come from Sketchfab and Poly Haven and are used under their own licences; each entry lists the author, the original, the licence and how it was changed. The walls, desk and the remaining small objects are built with Blender scripts, and the wood grain is procedural. The rainy night outside the window is the real neighbourhood around Tokyo Tower: buildings and terrain from MLIT's PLATEAU 3D city model, streets, shops and trees from OpenStreetMap, distant facades cut from CC0 night photos; Tokyo Tower itself, the street furniture and the shop fronts are modelled by script. The 3D runs on <a href="https://threejs.org/">three.js</a> (MIT). Fonts: Cinzel, EB Garamond and Playfair Display (SIL Open Font License).</p>
+    <p class="intro">The models in the desk room come from Sketchfab and Poly Haven and are used under their own licences; each entry lists the author, the original, the licence and how it was changed. The walls, desk and the remaining small objects are built with Blender scripts, and the wood grain is procedural. The rainy night outside the window is the real neighbourhood around Tokyo Tower: buildings and terrain from MLIT's PLATEAU 3D city model, streets, shops and trees from OpenStreetMap, distant facades cut from CC0 night photos; Tokyo Tower itself, the street furniture and the shop fronts are modelled by script. The 3D runs on <a href="https://threejs.org/">three.js</a> (MIT). Fonts: Cinzel, EB Garamond, Playfair Display, UnifrakturMaguntia and Caveat (SIL Open Font License).</p>
     <!-- credits:begin -->
     <ul class="credit-list">
       <li><a href="https://sketchfab.com/3d-models/persian-rug-fe13eecfc9b8405dab1fe76c5dd28a4c">Persian Rug</a> <span class="by">Nicholas Record · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>

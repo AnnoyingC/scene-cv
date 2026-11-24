@@ -9,7 +9,7 @@ const GAP = 650; // 同时解锁好几个时，一张接一张滑出来的间隔
 
 // route：解锁后导航栏里打开的那一项（= index.html 里 section 的 id）
 export const ACHIEVEMENTS = [
-  { id: 'resume', route: 'resume', title: 'Paper Trail', desc: 'Picked up the printed pages on the desk.', icon: 'paper' },
+  { id: 'resume', route: 'papers', title: 'Paper Trail', desc: 'Picked up the papers on the desk.', icon: 'paper' }, // id 沿用旧的：已经解锁的人不丢
   { id: 'shelf', route: 'shelf', title: 'Bookworm', desc: 'Found the bookshelf.', icon: 'book' },
   { id: 'photos', route: 'photos', title: 'Pinned Memories', desc: 'Took a closer look at the cork board.', icon: 'photo' },
 ];
@@ -29,7 +29,7 @@ function save(ids) {
   try { localStorage.setItem(KEY, JSON.stringify(ids)); } catch { /* 存不了就只在这一次里记着 */ }
 }
 
-// label(route)：导航栏上那一项叫什么（写进卡片："Now in the menu: Résumé"）
+// label(route)：导航栏上那一项叫什么（写进卡片："Now in the menu: Papers"）
 export function createAchievements({ label = () => '', doc = document } = {}) {
   const got = new Set(load().filter((id) => ACHIEVEMENTS.some((a) => a.id === id)));
   const listeners = [];
@@ -112,7 +112,7 @@ export function createAchievements({ label = () => '', doc = document } = {}) {
       for (const fn of listeners) fn(a);
       return true;
     },
-    // 去过某个视角（#resume / #shelf / #photos …）：解锁打开这一项的成就
+    // 去过某个视角（#papers / #shelf / #photos …）：解锁打开这一项的成就
     visit(route) {
       const a = ACHIEVEMENTS.find((x) => x.route === route);
       return a ? api.unlock(a.id) : false;

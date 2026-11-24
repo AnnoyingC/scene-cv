@@ -3,12 +3,12 @@
 //   - 点物件 → 镜头飞过去：电脑 = 关于我，电视和录像带 = 作品，书架 = 书单，记事本 = 联系
 //   - 书架上的真书（js/books.js）：悬停抽出一点，点了抽出来飞到眼前翻开（#shelf/书名）
 //   - 挂钟下面的软木板（js/photos.js）：钉着做旧的照片，点了镜头凑到板前看（#photos）
-//   - 桌上的两张打印纸 = 简历（js/resume.js，#resume、#resume/en）：镜头不动，纸从桌上被拿起来举到眼前，左右换一张看；
-//     对焦拉到手里的纸上，屋子虚下去
+//   - 键盘左边那摞纸 = Papers（js/papers.js，#papers、#papers/conference …）：对折的报纸压着两份论文。镜头不动，整摞从桌上被拿起来
+//     举到眼前（报纸展开），左右翻；对焦拉到手里的纸上，屋子虚下去
 //   - 窗外（js/window-view.js）：城市全景 + 实时的天空、云、星河、雨、车流、水面涟漪
 //     #about #work #shelf #online 都是真实 URL，可以分享，浏览器后退键可用；#credits 是素材致谢（镜头不动，只开面板）
 //   - 点桌上的录像带：整盒（纸盒和带子是一体的）飞进录像机，电视播放对应的画面模块；电视画面的颜色实时染色房间
-//   - 成就（js/achievements.js）：第一次拿起简历、走到书架、凑近软木板，右下角弹成就卡片、导航栏打开那一项
+//   - 成就（js/achievements.js）：第一次拿起桌上的纸、走到书架、凑近软木板，右下角弹成就卡片、导航栏打开那一项
 //   - 点台灯 / 落地灯开关灯（切的是烘焙好的光照层的系数，不重新算光）
 //   - 悬停高亮：热点盒子来自 manifest，着色器把盒子里的像素提亮
 //   - 书桌上的木头万年历拨到今天的日期，点它会拨乱再拨回来（js/deskcal.js）
@@ -29,7 +29,7 @@ import { createBooks, bookName } from './books.js';
 import { createPhotos } from './photos.js';
 import { dressSleeves, joinSleeves } from './sleeves.js';
 import { createWindowView } from './window-view.js';
-import { createResumeViewer } from './resume.js';
+import { createPapersViewer } from './papers.js';
 import { sfx } from './sfx.js';
 import { roomFiles, bootStage, bootDone } from './boot.js';
 
@@ -41,9 +41,9 @@ const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
 const angle = (a) => Math.atan2(Math.sin(a), Math.cos(a));
 const deg = THREE.MathUtils.degToRad;
-const ROUTES = ['about', 'resume', 'work', 'shelf', 'photos', 'online'];
+const ROUTES = ['about', 'papers', 'work', 'shelf', 'photos', 'online'];
 // 界面文字用英文（书架上的书是中文内容，书名、作者照旧）
-const HINTS = { about: 'Computer · About me', resume: 'Printed pages · Résumé', work: 'TV · Work', shelf: 'Bookshelf · Reading list', photos: 'Cork board · Photos', online: 'Notepad · Contact' };
+const HINTS = { about: 'Computer · About me', papers: 'Newspaper & papers · Papers', work: 'TV · Work', shelf: 'Bookshelf · Reading list', photos: 'Cork board · Photos', online: 'Notepad · Contact' };
 
 export async function start(content, { nav = null, music = null, achievements = null, personal = false } = {}) {
   const { tapes, books = [], links } = content;
@@ -51,7 +51,7 @@ export async function start(content, { nav = null, music = null, achievements = 
   $('room').hidden = false;
   const canvas = $('gl'), hintEl = $('hint'), backBtn = $('back'), panel = $('panel'), help = $('help');
   const baseTitle = content.name || document.title;
-  const TITLES = { home: baseTitle, about: `About · ${baseTitle}`, resume: `Résumé · ${baseTitle}`, work: `Work · ${baseTitle}`, shelf: `Books · ${baseTitle}`, photos: `Photos · ${baseTitle}`, online: `Contact · ${baseTitle}`, credits: `Credits · ${baseTitle}` };
+  const TITLES = { home: baseTitle, about: `About · ${baseTitle}`, papers: `Papers · ${baseTitle}`, work: `Work · ${baseTitle}`, shelf: `Books · ${baseTitle}`, photos: `Photos · ${baseTitle}`, online: `Contact · ${baseTitle}`, credits: `Credits · ${baseTitle}` };
 
   // ---------- 渲染器 ----------
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
@@ -300,21 +300,23 @@ export async function start(content, { nav = null, music = null, achievements = 
       if (view === 'photos') renderPanel();
     });
 
-  // ---------- 桌上的两张打印纸 = 简历（js/resume.js）----------
-  // 热点 resume 每张纸一个盒子，后一个压在上面：最上面那张是第一种语言（中文），底下那张是第二种（English）。
-  // 镜头不凑过去：点纸，这几页纸从桌上被拿起来（起点 = 那张纸此刻在屏幕上的样子），对焦拉到手里的纸上
-  const paperBoxes = M.hotspots?.resume || [];
-  const resume = paperBoxes.length ? createResumeViewer({
-    pages: () => document.querySelectorAll('#resume .cv-page'),
+  // ---------- 键盘左边那摞纸 = Papers（js/papers.js）----------
+  // 热点 papers 每份文件一个盒子，从下往上：期刊论文、会议论文、对折的报纸（盒子是报纸朝上那半张）。内容层里的顺序是倒过来的
+  // （#papers 的第一份 = 压在最上面的报纸），所以第 i 份 ↔ 第 n-1-i 个盒子。旧的烘焙只有 resume 两个盒子，也认。
+  // 镜头不凑过去：点纸，整摞从桌上被拿起来（起点 = 每份此刻在屏幕上的样子），对焦拉到手里的纸上
+  const PAPERS_HOT = M.hotspots?.papers ? 'papers' : 'resume';
+  const paperBoxes = M.hotspots?.[PAPERS_HOT] || [];
+  const papers = paperBoxes.length ? createPapersViewer({
+    docs: () => document.querySelectorAll('#papers .pp-doc'),
     top: () => nav?.height() ?? 0,
     onClose: () => go('home'),
-    onTurn: (slug) => { // 翻到另一种语言：地址跟着变（#resume = 第一种，#resume/en = 第二种），不加历史记录
-      if (view !== 'resume') return;
-      const url = '#resume' + (slug ? '/' + slug : '');
+    onTurn: (slug) => { // 换到另一份：地址跟着变（#papers = 报纸，#papers/conference …），不加历史记录
+      if (view !== 'papers') return;
+      const url = '#papers' + (slug ? '/' + slug : '');
       if (location.hash !== url) history.replaceState(null, '', url);
     },
   }) : null;
-  if (resume) $('room').insertBefore(resume.el, backBtn);
+  if (papers) $('room').insertBefore(papers.el, backBtn);
 
   // ---------- 电视下面的字幕：节目带（js/tapes/show.js）一章一章地放，每章一句；下面一排小横条是章节，点了跳过去 ----------
   const zhUI = () => (document.documentElement.lang || '').toLowerCase().startsWith('zh');
@@ -350,17 +352,16 @@ export async function start(content, { nav = null, music = null, achievements = 
     [...subDots.children].forEach((b, i) => b.setAttribute('aria-current', String(i === cap.i)));
     subHint.textContent = zhUI() ? '↑↓ 换章 · ← → 换带' : '↑↓ chapters · ← → tapes';
   }
-  const resumeReq = { open: false, paper: null }; // 要拿起来了（等镜头回到开场的位置）；从哪张纸拿起来
-  // 桌上那摞纸（烘焙里单独的材质 paper、paperink，烘焙时不挡光，所以藏起来桌面上没有影子）：拿起来时离开桌面，放回去时再出现
-  const deskPaper = ['paper', 'paperink'].flatMap((n) => room.byMat.get(n) || []);
+  const papersReq = { open: false }; // 要拿起来了（等镜头回到开场的位置）
+  // 桌上那摞纸（烘焙里名字以 paper 开头的材质，烘焙时不挡光，所以藏起来桌面上没有影子）：拿起来时离开桌面，放回去时再出现
+  const deskPaper = [...room.byMat].filter(([n]) => n.startsWith('paper')).flatMap(([, ms]) => ms);
   const showDeskPaper = (v) => { for (const m of deskPaper) m.visible = v; };
   const inBox = (b, p, pad = 0.01) => {
     const qx = p.x - b.c[0], qz = p.z - b.c[2], c = Math.cos(b.r), s = Math.sin(b.r);
     return Math.abs(c * qx - s * qz) <= b.h[0] + pad && Math.abs(p.y - b.c[1]) <= b.h[1] + pad && Math.abs(s * qx + c * qz) <= b.h[2] + pad;
   };
-  const paperAt = (p) => { for (let k = paperBoxes.length - 1; k >= 0; k--) if (inBox(paperBoxes[k], p)) return k; return paperBoxes.length - 1; };
-  const paperLang = (k) => Math.min(paperBoxes.length - 1 - k, Math.max(0, (resume?.langs().length ?? 1) - 1)); // 第 k 张纸 → 第几种语言
-  const langPaper = (li) => Math.max(0, paperBoxes.length - 1 - li);
+  const docBox = (i) => clamp(paperBoxes.length - 1 - i, 0, paperBoxes.length - 1); // 第 i 份文件 → 桌上第几个盒子
+  const deskRects = (p = null) => (papers?.docs() || []).map((_, i) => paperRect(docBox(i), p));
   // 桌上第 k 张纸在屏幕上的样子：中心、宽、高（透视压扁的）、上沿朝哪（度）。pose 给了就按那个镜头姿态算
   const projCam = new THREE.PerspectiveCamera(), projV = new THREE.Vector3();
   function paperRect(k, p = null) {
@@ -385,15 +386,8 @@ export async function start(content, { nav = null, music = null, achievements = 
       rot: THREE.MathUtils.radToDeg(Math.atan2(T[0] - B[0], B[1] - T[1])),
     };
   }
-  function openResume(k) { // 点了桌上第 k 张纸
-    const slug = resume.langs()[paperLang(k)]?.slug || '';
-    const url = '#resume' + (slug ? '/' + slug : '');
-    if (location.hash !== url) history.pushState(null, '', url);
-    setView('resume');
-    resumeReq.paper = k;
-  }
-  function syncResumeFromHash() { // 后退 / 前进到 #resume/en 之类：翻到那种语言
-    if (view === 'resume' && resume?.shown) resume.goTo(resume.indexForSlug(hashParts()[1]));
+  function syncPapersFromHash() { // 后退 / 前进到 #papers/journal 之类：换到那一份
+    if (view === 'papers' && papers?.shown) papers.goTo(papers.indexForSlug(hashParts()[1]));
   }
 
   const light = { room: 1, roomT: 1, lamp: 1, lampT: 1 };
@@ -521,7 +515,7 @@ export async function start(content, { nav = null, music = null, achievements = 
     // 换目标时焦点慢慢跟过去，飞行途中就像摄影师在拉焦
     fwd.set(0, 0, -1).applyQuaternion(camera.quaternion);
     let fd;
-    if (view === 'resume' && resume?.shown) fd = 0.32; // 手里拿着纸：对焦在眼前三十厘米，屋子整个虚下去
+    if (view === 'papers' && papers?.shown) fd = 0.32; // 手里拿着纸：对焦在眼前三十厘米，屋子整个虚下去
     else {
       const fp = shelfBooks?.focus() || (orbiting() ? center : focusPt.fromArray(M.views[view].target));
       fd = Math.max(0.15, focusPt.subVectors(fp, camera.position).dot(fwd));
@@ -541,12 +535,15 @@ export async function start(content, { nav = null, music = null, achievements = 
     let h = location.hash.slice(1);
     try { h = decodeURIComponent(h); } catch { /* 保留原样 */ }
     const k = h.indexOf('/');
-    return k < 0 ? [h, ''] : [h.slice(0, k), h.slice(k + 1)];
+    const r = k < 0 ? [h, ''] : [h.slice(0, k), h.slice(k + 1)];
+    if (r[0] === 'resume') r[0] = 'papers'; // 旧地址：桌上那摞纸以前是简历
+    return r;
   };
-  const hasView = (h) => (h === 'resume' ? !!resume : !!M.views?.[h]); // 简历没有镜头视角：纸拿到眼前来
+  const hasView = (h) => (h === 'papers' ? !!papers : !!M.views?.[h]); // 桌上的纸没有镜头视角：纸拿到眼前来
+  if (/^#resume\b/.test(location.hash)) history.replaceState(null, '', '#papers'); // 旧地址：桌上那摞纸以前是简历
   const viewFromHash = () => { const [h] = hashParts(); return h === 'credits' || (ROUTES.includes(h) && hasView(h)) ? h : 'home'; };
-  // 致谢只是开个面板、简历是把纸拿起来：镜头都还是开场那样绕着电脑，不凑过去
-  const orbiting = () => view === 'home' || view === 'credits' || view === 'resume';
+  // 致谢只是开个面板、桌上的纸是拿起来看：镜头都还是开场那样绕着电脑，不凑过去
+  const orbiting = () => view === 'home' || view === 'credits' || view === 'papers';
   const goalPose = (out) => (orbiting() ? homePose(out) : focusPose(view, out));
   function go(name) {
     const url = name === 'home' ? location.pathname + location.search : '#' + name;
@@ -559,15 +556,14 @@ export async function start(content, { nav = null, music = null, achievements = 
     view = name;
     music?.closeCard?.(); // 换了视角就不再是在摆弄唱机：唱片卡片收起来
     if (name !== 'shelf') shelfBooks?.close();
-    if (prev === 'resume' && resume) { // 放回桌上（从现在的镜头看过去的位置）：手里的纸开始淡出、快落到桌面时，桌上那摞纸接上
-      const back = resume.close(paperRect(langPaper(resume.langIndex())));
-      setTimeout(() => { if (!resume.shown) showDeskPaper(true); }, 400);
-      back.then(() => { if (!resume.shown) showDeskPaper(true); });
+    if (prev === 'papers' && papers) { // 放回桌上（从现在的镜头看过去的位置）：手里的纸开始淡出、快落到桌面时，桌上那摞纸接上
+      const back = papers.close(deskRects());
+      setTimeout(() => { if (!papers.shown) showDeskPaper(true); }, 420);
+      back.then(() => { if (!papers.shown) showDeskPaper(true); });
     }
     // 从书架退回开场：镜头退回往左转到头的位置（正对书柜），不回到点书之前转到的半路（那里正对着墙角的画）。竖屏手机往左转不挪中心，不改
     if (prev === 'shelf' && name === 'home' && camera.aspect >= 1.2) look.yaw = look.yawT = C.yawRange[1];
-    resumeReq.open = name === 'resume';
-    resumeReq.paper = null;
+    papersReq.open = name === 'papers';
     pc.setActive(name === 'about');
     if (name === 'work' && loaded == null) insertTape(0, { animate: !instant });
     setHover(null);
@@ -576,11 +572,11 @@ export async function start(content, { nav = null, music = null, achievements = 
     document.title = TITLES[name];
     nav?.setActive(name === 'home' ? null : name);
     renderPanel();
-    achievements?.visit(name); // 第一次拿起简历、走到书架、凑近软木板：成就 + 导航栏打开那一项
+    achievements?.visit(name); // 第一次拿起桌上的纸、走到书架、凑近软木板：成就 + 导航栏打开那一项
     if (instant || first) fly = null;
     else startFly();
   }
-  addEventListener('popstate', () => { setView(viewFromHash()); syncBookFromHash(); syncResumeFromHash(); });
+  addEventListener('popstate', () => { setView(viewFromHash()); syncBookFromHash(); syncPapersFromHash(); });
 
   // ---------- HTML 面板 ----------
   function renderPanel() {
@@ -666,7 +662,7 @@ export async function start(content, { nav = null, music = null, achievements = 
         return { kind: 'about', key: 'about' + (a ? a.do + (a.row ?? '') : ''), uv: hit.uv.clone() };
       }
       const name = room.hotspotAt(hit.point);
-      if (name === 'resume') { const k = paperAt(hit.point); return { kind: 'resume', key: 'resume' + k, paper: k }; }
+      if (name === PAPERS_HOT) return { kind: 'papers', key: 'papers' };
       return name ? { kind: name, key: name } : null; // 第一个可见的面：是热点就返回，不是就挡住后面的东西
     }
     return null;
@@ -681,10 +677,6 @@ export async function start(content, { nav = null, music = null, achievements = 
       const pi = shelfBooks.pageInfo();
       if (!pi) return '';
       return h.side === 'right' ? (pi.page < pi.pages ? 'Next page →' : '') : (pi.page > 1 ? '← Previous page' : '');
-    }
-    if (h.kind === 'resume' && h.paper != null) {
-      const L = resume?.langs()[paperLang(h.paper)];
-      return L && resume.langs().length > 1 ? `Printed pages · Résumé (${L.label})` : HINTS.resume;
     }
     if (h.kind === 'calendar') return deskCal ? `Calendar · ${deskCal.label()}` : '';
     if (h.kind === 'art') return M.art?.title || ''; // 墙角画架上的画：只有提示（画名在 manifest.art），点了不跳转
@@ -705,7 +697,7 @@ export async function start(content, { nav = null, music = null, achievements = 
       shelfBooks?.hover(h?.kind === 'book' ? h.i : null);
       if (h?.kind === 'tape') { if (phys[h.i]?.state === 'rack') phys[h.i].pullT = 1; }
       else if (h?.kind === 'book' || h?.kind === 'page') { /* 书自己抽出来提亮，不画热点盒子 */ }
-      else if (h) room.highlight(h.kind); // 移开时不清盒子，让高亮淡出
+      else if (h) room.highlight(h.kind === 'papers' ? PAPERS_HOT : h.kind); // 移开时不清盒子，让高亮淡出
       canvas.style.cursor = h ? 'pointer' : view === 'home' ? 'grab' : 'default';
     }
     const text = h && x != null ? hintText(h) : ''; // 导航栏悬停时只高亮物件，不显示提示
@@ -743,7 +735,6 @@ export async function start(content, { nav = null, music = null, achievements = 
     else if (h.kind === 'lamp') { light.lampT = light.lampT ? 0 : 1; sfx.play('switch'); }
     else if (h.kind === 'room') { light.roomT = light.roomT ? 0 : 1; sfx.play('switch', { rate: 0.85 }); }
     else if (h.kind === 'about' && view === 'about') pc.click(h.uv);
-    else if (h.kind === 'resume') openResume(h.paper ?? paperBoxes.length - 1);
     else if (h.tvScreen) { tv.run?.seek?.(1); sfx.play('tv-glitch'); sfx.play('tv-static', { gain: 0.25, dur: 0.25 }); }
     else if (h.kind !== view) go(h.kind);
     if (mouse) setHover(pick(x, y), x, y);
@@ -831,7 +822,7 @@ export async function start(content, { nav = null, music = null, achievements = 
   }, { passive: false });
   addEventListener('keydown', (e) => {
     if (view === 'about' && !e.metaKey && !e.ctrlKey && !e.altKey && pc.key(e)) { e.preventDefault(); return; } // 电脑菜单：方向键、回车、Esc 返回上一层、数字、L
-    if (view === 'resume' && resume?.key(e)) { e.preventDefault(); return; } // 拿着简历：← → 换一张，凑近读时 Esc 先拿远
+    if (view === 'papers' && papers?.key(e)) { e.preventDefault(); return; } // 拿着纸：← → 翻，凑近读时 Esc 先拿远
     if (e.key === 'Escape') {
       if (music?.cardOpen && music.closeCard) { music.closeCard(); return; } // 唱片卡片开着：Esc 先收起它
       if (closeBook()) return;
@@ -902,10 +893,9 @@ export async function start(content, { nav = null, music = null, achievements = 
     }
     updateCamera(dt);
     // 镜头回到开场的位置（从别的视角过来时要先飞回来）就把纸拿起来：起点按镜头到位时纸在屏幕上的样子算
-    if (resumeReq.open && view === 'resume' && (!fly || fly.t > 0.75)) {
-      resumeReq.open = false;
-      const at = resume.indexForSlug(hashParts()[1]);
-      if (resume.open(at, paperRect(resumeReq.paper ?? langPaper(resume.langAt(at)), goal))) showDeskPaper(false);
+    if (papersReq.open && view === 'papers' && (!fly || fly.t > 0.75)) {
+      papersReq.open = false;
+      if (papers.open(papers.indexForSlug(hashParts()[1]), deskRects(goal))) showDeskPaper(false);
     }
     shelfBooks?.update(dt);
     const pk = view === 'shelf' ? JSON.stringify(shelfBooks?.pageInfo() ?? null) : ''; // 书翻开了 / 翻到别的页：面板上的页码跟着变
@@ -941,7 +931,7 @@ export async function start(content, { nav = null, music = null, achievements = 
 
   // 调试入口（控制台里用）：__room.tick(dt) 手动推进一帧（后台标签页里动画会被浏览器降速）
   window.__room = {
-    go, insertTape, cmd, tick, pick, look, light, camera, renderer, composer, room, tv, pc, turntable, grade: (k) => grade.set(k), lens, streak, books: shelfBooks, openBook, windowView, turn: TURN, resume, paperRect,
+    go, insertTape, cmd, tick, pick, look, light, camera, renderer, composer, room, tv, pc, turntable, grade: (k) => grade.set(k), lens, streak, books: shelfBooks, openBook, windowView, turn: TURN, papers, paperRect, deskRects,
     get photos() { return photoWall; },
     get view() { return view; }, get loaded() { return loaded; }, get hover() { return hover; },
     hoverAt: (x, y) => setHover(pick(x, y), x, y), clickAt: (x, y) => click(x, y, true),

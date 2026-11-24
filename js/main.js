@@ -21,7 +21,8 @@ function plain(reason) {
 }
 
 // 只在本地的个人内容（这几个文件夹不进 Git，公开仓库里 index.html 是样例）：打开个人模式时有就换进内容层，没有就照样用样例。
-//   assets/resume/resume.html         真实简历的几页纸 → #resume（3D 版每次拿起纸都从内容层复制，纯文字版直接显示）
+//   assets/papers/papers.html         真实的论文、报道（几个 article.pp-doc，写法和 index.html #papers 一样）→ #papers
+//                                     （3D 版每次拿起纸都从内容层复制，纯文字版直接显示）
 //   assets/resume/contact.html        真实联系方式的几个 <li> → #online 的列表（记事本、联系面板、纯文字版）
 //   assets/books/books.html           真实书单的 <li>（和样例一样多、一样的顺序和尺寸：房间是按样例的尺寸烘焙的）→ #shelf 的列表
 //   assets/books/covers/covers.json   书名 → 真实封面的文件名 → #shelf 那本书的 data-cover
@@ -29,17 +30,21 @@ function plain(reason) {
 // 个人模式默认关着：本地预览和公开的 GitHub 版一模一样（全是样例），不会一半真一半假。
 // 网址加 ?personal，或者 <html data-personal>（个人网站的构建脚本会加上）才打开。
 // 3D 场景等这几样换好了再读内容层
+// 纯文字版里的纸：每页是固定 794 × 1123 的版式，按框的宽度整体缩放（--k）
+const pageFit = new ResizeObserver((es) => { for (const e of es) e.target.style.setProperty('--k', String(e.contentRect.width / 794)); });
+const fitPages = () => document.querySelectorAll('#papers .pp-frame').forEach((f) => pageFit.observe(f));
+fitPages();
 const PERSONAL = new URLSearchParams(location.search).has('personal') || document.documentElement.hasAttribute('data-personal');
 const local = (path, as) => (PERSONAL ? fetch(new URL(path, import.meta.url), { cache: 'no-cache' })
   .then((r) => (r.ok ? r[as]() : null)).catch(() => null) : Promise.resolve(null));
 const personal = Promise.all([
-  local('../assets/resume/resume.html', 'text').then((html) => {
-    const deck = document.querySelector('#resume .cv-deck');
-    if (!html || !deck) return;
+  local('../assets/papers/papers.html', 'text').then((html) => {
+    const list = document.querySelector('#papers .pp-docs');
+    if (!html || !list) return;
     const t = document.createElement('template');
     t.innerHTML = html;
-    const pages = t.content.querySelectorAll('.cv-page');
-    if (pages.length) deck.replaceChildren(...pages);
+    const docs = t.content.querySelectorAll('.pp-doc');
+    if (docs.length) { list.replaceChildren(...docs); fitPages(); }
   }),
   local('../assets/resume/contact.html', 'text').then((html) => {
     const list = document.querySelector('#online .links');

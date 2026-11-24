@@ -107,29 +107,6 @@ def quad(g, w, h, mi, pos, rot=(0, 0, 0)):
     return fs
 
 
-def _cuts(lo, hi, marks, a, b, n=1):
-    """一条边上的分割点：两端、均分的 n 段，加上每个记号的两条边（裁到范围里）。"""
-    s = {lo + (hi - lo) * i / n for i in range(n + 1)}
-    s |= {min(max(v, lo), hi) for mk in marks for v in (mk[a], mk[b])}
-    return sorted(s)
-
-
-def _mark(marks, x, y, base):
-    return next((mk[4] for mk in marks if mk[0] <= x <= mk[1] and mk[2] <= y <= mk[3]), base)
-
-
-def sheet(g, w, h, base, marks, pos, rot=(0, 0, 0)):
-    """一张平的纸，上面的字行 marks = [(x0, x1, y0, y1, 材质), ...]（纸面本地坐标，米）织进同一块网格：
-    字和纸连成一个 lightmap 岛、共用纸的光照（单独的细条面片在 lightmap 里不到一个像素，烘出来是黑的）。"""
-    m = C @ g @ M(pos, rot)
-    xs, ys = _cuts(-w / 2, w / 2, marks, 0, 1), _cuts(-h / 2, h / 2, marks, 2, 3)
-    v = [[T.bm.verts.new(m @ Vector((x, y, 0))) for x in xs] for y in ys]
-    for j in range(len(ys) - 1):
-        for i in range(len(xs) - 1):
-            mi = _mark(marks, (xs[i] + xs[i + 1]) / 2, (ys[j] + ys[j + 1]) / 2, base)
-            T.tag([T.bm.faces.new((v[j][i], v[j][i + 1], v[j + 1][i + 1], v[j + 1][i]))], mi)
-
-
 def cyl(g, r_top, r_bot, h, segs, mi, pos, rot=(0, 0, 0), caps=True):
     r = bmesh.ops.create_cone(T.bm, cap_ends=caps, cap_tris=False, segments=segs, radius1=r_bot, radius2=r_top,
                               depth=h, matrix=C @ g @ M(pos, rot) @ P)
@@ -710,15 +687,13 @@ CAM = dict(target=tuple(Vector(PC_SCREEN['pos']) + Vector((0, 0.08, -0.1))), dis
 # 按人的习惯只留这一套：台灯夹在左后角；靠窗那一排是看的东西，正面朝开场镜头；
 # 手边是用的东西；音乐的东西挨着电脑左边。新加长的左边那一截，前半留空，当写字的地方。
 LAMP_CLAMP_AT = (DESK_LX + 0.07, TOP - DESK_T / 2, DESK_BACK)  # 夹子咬住后沿，离左头 7 厘米
-# 灯头离桌面 52 厘米、对着简历和键盘之间：光铺满左半张桌子（开关一眼看得出），纸不在光斑正中心。
+# 灯头离桌面 52 厘米、对着那摞纸和键盘之间：光铺满左半张桌子（开关一眼看得出），纸不在光斑正中心。
 # 低到 38 厘米、正对着纸时，光只照亮一张纸：亮了就过曝，暗了开关又看不出区别
 LAMP_HEAD_AT = (DESK_X - 0.66, TOP + 0.52, -1.58)             # 灯头中心
-LAMP_AIM_AT = (DESK_X - 0.40, TOP, -1.40)                     # 灯罩口对着简历右边、键盘左边
+LAMP_AIM_AT = (DESK_X - 0.40, TOP, -1.40)                     # 灯罩口对着那摞纸右边、键盘左边
 NOTE_X, NOTE_Z, NOTE_ROT = DESK_X + 0.44, -1.32, -0.06        # 记事本在键盘右边
 MUG_AT = (DESK_X + 0.31, -1.58)
 CAL_X, CAL_Z, DCAL_YAW = DESK_X - 0.84, -1.84, 0.30           # 万年历在台灯右边，字朝开场镜头
-# 两张简历叠成一摞，落在灯下面：底下那张只比上面的偏几毫米、歪 3°，边上露出一线（第二张放在最上面）
-SHEETS = ((DESK_X - 0.436, -1.384, 0.02), (DESK_X - 0.43, -1.39, -0.03))
 
 # 摇臂灯。发布的 glTF 是大约 88 厘米的静止姿势，没有骨骼；绑定在同一份素材的 blend 里。
 # 灯夹夹在桌子左后角的后沿，灯头和灯罩口按上面的坐标去够。姿势改的是控制骨，取网格时把骨骼应用到顶点上。
@@ -1191,29 +1166,184 @@ for k_, pc_ in DESKCAL['pieces'].items():
     print(f"[deskcal] {k_}: " + ', '.join(f"{f['label']} n{tuple(round(c, 1) for c in f['n'])} up{tuple(round(c, 1) for c in f['up'])}" for f in pc_['faces']))
 
 # ---------- 桌上的杂物：让桌子看起来有人在用 ----------
-# 两张打印纸，斜着叠在台灯和记事本之间（一张一半压在记事本、电脑底下），纸上一行行灰色的字。
-# 两张纸 = 简历（热点 resume，每张一个盒子，后一张压在上面）：点纸，网页里叠出 A4 简历（js/resume.js）
 paper, ink = mat('mug', '#e8e2d4'), mat('rbtn', '#8a8580')
-# 简历纸、纸上的字单独两个材质：
-#   - 纸压暗一档：它正好在台灯底下，用 #e8e2d4 的话不悬停也是桌上最亮的一块、冒辉光
-#   - 网页里拿起简历时把这摞纸藏起来（js/room.js 按材质名找）；烘焙时它们不挡光（见下面的 NO_SHADOW），
-#     桌面上不留纸的黑影，下面那张也不会被上面那张压成黑边
-sheet_paper, sheet_ink = mat('paper', '#ccc6b8'), mat('paperink', '#8a8580')
-FLAT = (-math.pi / 2, 0, 0)  # quad 平放、朝上；本地 y（纸的上沿方向）→ 世界 -z
-rnd_p = random.Random(3)
-for k, (px, pz, a) in enumerate(SHEETS):
-    g = G((px, TOP + 0.0006 + k * 0.0008, pz), (0, a, 0))
-    flat_aabb(f'paper{k}', px, pz, 0.21, 0.297, a, TOP, TOP + 0.004)
-    lines = [(-0.07, 0.02, 0.119, 0.125, sheet_ink)]  # 标题；纸面本地 y 朝纸的上沿
-    for i in range(16):
-        if i % 6 == 5:
-            continue  # 段落之间空一行
-        lw = 0.16 if i % 6 != 4 else rnd_p.uniform(0.05, 0.12)
-        y = 0.1 - i * 0.0125
-        lines.append((-0.08, -0.08 + lw, y - 0.0011, y + 0.0011, sheet_ink))
-    with hot('resume', a):
-        sheet(g, 0.21, 0.297, sheet_paper, lines, (0, 0, 0), FLAT)
-# 简历没有 VIEWS：镜头不凑过去，网页把纸从桌上"拿起来"举到眼前
+
+# ---------- 键盘左边那摞纸 = Papers（热点 papers，每份一个盒子，从下往上：期刊论文、会议论文、对折的报纸） ----------
+# 网页里点这摞纸，三份一起拿到眼前（js/papers.js）。摆法照手里拿着的样子：期刊论文在右后，会议论文在中间压着它，
+# 对折的报纸盖在两份的中下部（报纸朝上的是头版上半张，折痕朝人）。
+# 纸面贴图是 index.html #papers 每份的第一页（scripts/render-papers.mjs 截到 output/papers-tex/，没有就用纯色）。
+# 材质名都以 paper 开头：网页里拿起来时整摞藏起来（js/room.js 按名字找）；烘焙时不挡光（NO_SHADOW），桌面不留纸的影子。
+# 纸面在台灯底下，网页里按 PAPER_TINT 压暗一档（manifest.tints），不然不悬停也是桌上最亮的一块、冒辉光。
+PAPER_TEX = os.path.join(ROOT, 'output', 'papers-tex')
+PAPERS = dict(  # 中心 x、z，绕竖轴转的角度 yaw，宽 w、深 d（米）；本地 -z 是纸的上沿（朝窗）
+    journal=dict(x=DESK_X - 0.38, z=-1.465, yaw=-0.06, w=0.21, d=0.297),
+    conference=dict(x=DESK_X - 0.49, z=-1.41, yaw=0.04, w=0.21, d=0.297),
+    news=dict(x=DESK_X - 0.46, z=-1.30, yaw=0.09, w=0.28, d=0.198),  # 对折以后：宽 28 厘米、深 19.8 厘米（半张）
+)
+PAPER_TINT = {'paper_conference': '#e0ddd8', 'paper_journal': '#e0ddd8', 'paper_news': '#e6e3dc'}
+PAPER_Y = dict(journal=(0.0004, 0.0003), conference=(0.0014, 0.0003))  # 每份最底下那张离桌面多高、一张比一张高多少
+NEWS_T = 0.003  # 对折的报纸厚 3 毫米
+
+
+def paper_frame(k, y=0.0):
+    p = PAPERS[k]
+    return G((p['x'], TOP + y, p['z']), (0, p['yaw'], 0))
+
+
+def paper_local(k, x, z):
+    """世界 (x, z) → 第 k 份纸的本地坐标"""
+    p = PAPERS[k]
+    c, s, dx, dz = math.cos(p['yaw']), math.sin(p['yaw']), x - p['x'], z - p['z']
+    return c * dx - s * dz, s * dx + c * dz
+
+
+def paper_material(name, color, image=None):
+    mt = plain_material(name, color)
+    if image and os.path.exists(image):
+        nt = mt.node_tree
+        tx = nt.nodes.new('ShaderNodeTexImage')
+        tx.image = bpy.data.images.load(image)
+        tx.extension = 'EXTEND'
+        nt.links.new(tx.outputs['Color'], next(n for n in nt.nodes if n.type == 'BSDF_PRINCIPLED').inputs['Base Color'])
+    elif image:
+        print(f'[warn] 没找到 {os.path.relpath(image, ROOT)}（先跑 scripts/render-papers.mjs），纸面用纯色')
+    return mt
+
+
+def paper_object(name, mt, verts, faces, uvs):
+    """verts：three 世界坐标；faces：顶点编号（朝上的一面按需要自动翻正）；uvs：每个顶点的贴图坐标"""
+    fixed = []
+    for f in faces:
+        a, b, c = (Vector(verts[i]) for i in f[:3])
+        fixed.append(tuple(f) if (b - a).cross(c - a).y >= 0 else tuple(reversed(f)))
+    me = bpy.data.meshes.new(name)
+    me.from_pydata([tuple(tb(v)) for v in verts], [], fixed)
+    uv = me.uv_layers.new(name='UVMap')
+    uv.data.foreach_set('uv', [c for f in me.polygons for li in f.loop_indices for c in uvs[me.loops[li].vertex_index]])
+    me.materials.append(mt)
+    ob = bpy.data.objects.new(name, me)
+    scene.collection.objects.link(ob)
+    PLACED.append((ob, 25))
+    return ob
+
+
+def paper_sheet(k, name, mt, y, about=None, rot=0.0, shift=(0.0, 0.0)):
+    """第 k 份里的一张平纸：绕 about（本地点，默认中心）在纸面里转 rot 度、再挪 shift（米）"""
+    p, g = PAPERS[k], paper_frame(k)
+    hw, hd = p['w'] / 2, p['d'] / 2
+    ax, az = about or (0.0, 0.0)
+    c, s = math.cos(math.radians(rot)), math.sin(math.radians(rot))
+    vs, uvs = [], []
+    for lx, lz in ((-hw, hd), (hw, hd), (hw, -hd), (-hw, -hd)):
+        qx, qz = lx - ax, lz - az
+        vs.append(tuple(g @ Vector((ax + c * qx + s * qz + shift[0], y, az - s * qx + c * qz + shift[1]))))
+        uvs.append(((lx + hw) / p['w'], (hd - lz) / p['d']))  # 纸的上沿（本地 -z）= 贴图的上沿
+    paper_object(name, mt, vs, [(0, 1, 2, 3)], uvs)
+    return vs
+
+
+def paper_hot(k, y1):
+    p, g = PAPERS[k], paper_frame(k)
+    pts = [tuple(g @ Vector((sx * p['w'] / 2, y, sz * p['d'] / 2))) for sx in (-1, 1) for sz in (-1, 1) for y in (0.0, y1)]
+    HOT_PTS.setdefault(HOT_ID, []).extend(pts)
+    flat_aabb('paper_' + k, p['x'], p['z'], p['w'], p['d'], p['yaw'], TOP, TOP + y1)
+
+
+plain_sheet = paper_material('paper_sheet', '#d9d2c2')          # 底下几张：没有字（看得见的只是错开的一条边）
+TAB_COLORS = dict(y='#f2c94c', b='#79b0d6', p='#eb8fa6')
+
+def build_papers():
+    """三份纸（局部变量都关在函数里：模块里的 x0、x1 之类是房间的尺寸，不能被盖掉）"""
+    # 期刊论文：三张别着回形针，底下两张随手错开一点
+    with hot('papers', PAPERS['journal']['yaw']):
+        y0, dy = PAPER_Y['journal']
+        paper_sheet('journal', 'paper_journal_3', plain_sheet, y0, rot=-0.7, shift=(-0.0015, 0.0025))
+        paper_sheet('journal', 'paper_journal_2', plain_sheet, y0 + dy, rot=0.8, shift=(0.0018, -0.001))
+        paper_sheet('journal', 'paper_journal_1', paper_material('paper_journal', '#e8e2d4', os.path.join(PAPER_TEX, 'journal.jpg')), y0 + 2 * dy)
+        # 回形针：网页里那根（js/papers.js 的 CLIP_PATH，24 × 72 的格子）按 0.47 毫米一格摆在左上角，横跨纸的上沿
+        _cs = 0.00047
+        def _arc(cx, cy, r, a0, a1, n=8):
+            return [(cx + r * math.cos(a0 + (a1 - a0) * i / n), cy + r * math.sin(a0 + (a1 - a0) * i / n)) for i in range(n + 1)]
+        _svg = [(8, 20), (8, 56)] + _arc(12, 56, 4, math.pi, 0)[1:] + [(16, 10)] + _arc(10, 10, 6, 0, -math.pi)[1:] + [(4, 62)] + _arc(12, 62, 8, math.pi, 0)[1:] + [(20, 26)]
+        _g, _p = paper_frame('journal', y0 + 2 * dy + 0.0006), PAPERS['journal']
+        tube([tuple(_g @ Vector((-_p['w'] / 2 + 0.035 + (u - 12) * _cs, 0, -_p['d'] / 2 + (v - 22) * _cs))) for u, v in _svg], 0.00045, mat('paper_clip', '#b9bcc0'), segs=5)
+        paper_hot('journal', y0 + 2 * dy + 0.001)
+
+    # 会议论文：三张，左上角一颗订书钉；底下两张绕着钉子错开一点（右下角散开几毫米），第 2、3 页上贴着便利贴伸出右边
+    with hot('papers', PAPERS['conference']['yaw']):
+        y0, dy = PAPER_Y['conference']
+        _p = PAPERS['conference']
+        _corner = (-_p['w'] / 2 + 0.008, -_p['d'] / 2 + 0.008)
+        paper_sheet('conference', 'paper_conference_3', plain_sheet, y0, about=_corner, rot=1.6)
+        paper_sheet('conference', 'paper_conference_2', plain_sheet, y0 + dy, about=_corner, rot=0.8)
+        paper_sheet('conference', 'paper_conference_1', paper_material('paper_conference', '#e8e2d4', os.path.join(PAPER_TEX, 'conference.jpg')), y0 + 2 * dy)
+        _g = paper_frame('conference', y0 + 1.5 * dy)
+        for _k, (_c, _top) in enumerate((('y', 0.15), ('b', 0.25), ('p', 0.35))):  # 和 index.html 的 data-tabs 一样：Fig. 2、Tab. 1、Refs
+            quad(_g, 0.019, 0.011, mat('paper_tab_' + _c, TAB_COLORS[_c]), (_p['w'] / 2 + 0.0035, 0, -_p['d'] / 2 + _top * _p['d'] + 0.0055), (-math.pi / 2, 0, 0))
+        _g = paper_frame('conference', y0 + 2 * dy + 0.00045)
+        box(_g, 0.0125, 0.0005, 0.0011, mat('paper_staple', '#c4c7cb'), _corner[0] + 0.004, 0, _corner[1] + 0.004, (0, math.pi / 4, 0))
+        paper_hot('conference', y0 + 2 * dy + 0.001)
+
+    # 报纸：对折，朝上的是头版上半张，折痕朝人。底面顺着底下的纸搭下来：压在论文上的地方抬起来，伸出论文的地方落到桌面
+    with hot('papers', PAPERS['news']['yaw']):
+        _p, _g = PAPERS['news'], paper_frame('news')
+        hw, hd, NX, NZ = _p['w'] / 2, _p['d'] / 2, 10, 14
+        _lift = dict(journal=PAPER_Y['journal'][0] + 2 * PAPER_Y['journal'][1], conference=PAPER_Y['conference'][0] + 2 * PAPER_Y['conference'][1])
+
+        def _support(lx, lz):  # 这一点底下垫着多高（论文的上表面，或者桌面）
+            wx, wz = (_g @ Vector((lx, 0, lz))).x, (_g @ Vector((lx, 0, lz))).z
+            h = 0.0002
+            for k_, top_ in _lift.items():
+                qx, qz = paper_local(k_, wx, wz)
+                if abs(qx) <= PAPERS[k_]['w'] / 2 + 0.002 and abs(qz) <= PAPERS[k_]['d'] / 2 + 0.002:
+                    h = max(h, top_ + 0.0004)
+            return h
+
+        _xs = [-hw + 2 * hw * i / NX for i in range(NX + 1)]
+        _zs = [-hd + 2 * hd * j / NZ for j in range(NZ + 1)]
+        _base = np.array([[max(_support(x + dx, z + dz) for dx in (-0.012, 0, 0.012) for dz in (-0.012, 0, 0.012)) for x in _xs] for z in _zs])
+        for _ in range(3):  # 纸有点硬：台阶抹平成缓坡
+            _pad = np.pad(_base, 1, mode='edge')
+            _base = np.maximum(_base, (_pad[:-2, 1:-1] + _pad[2:, 1:-1] + _pad[1:-1, :-2] + _pad[1:-1, 2:] + 4 * _base) / 8)
+        _base[-1, :] = _base[-1, :].min()  # 折痕那条边平平地落在桌面上（折边的圆柱按它算）
+        vs, uvs, fs = [], [], []
+        for j, z in enumerate(_zs):
+            for i, x in enumerate(_xs):
+                bow = 0.0012 * math.sin(math.pi * (z + hd) / (2 * hd)) * (1 - 0.3 * abs(x) / hw)  # 中间微微拱起
+                vs.append(tuple(_g @ Vector((x, _base[j, i] + NEWS_T + bow, z))))
+                uvs.append(((x + hw) / _p['w'], 1 - 0.5 * (z + hd) / _p['d']))  # 上半张：贴图 v 从 1（报头）到 0.5（中线）
+        for j in range(NZ):
+            for i in range(NX):
+                a = j * (NX + 1) + i
+                fs.append((a, a + 1, a + NX + 2, a + NX + 1))
+        paper_object('paper_news_top', paper_material('paper_news', '#e5dabd', os.path.join(PAPER_TEX, 'news.jpg')), vs, fs, uvs)
+        # 折边：半个圆柱，从上面那层绕到底下那层（落在桌面）；两侧、远处的开口边各一条窄边，看得出厚度
+        _r, _fold = NEWS_T / 2, mat('paper_news_fold', '#c9bf9f')
+
+        def _face(q, inside):  # 一块面，朝外（背对 inside 那一点）
+            q = [Vector(v) for v in q]
+            n_ = (q[1] - q[0]).cross(q[3] - q[0])
+            if n_.dot(sum(q, Vector()) / 4 - Vector(inside)) < 0:
+                q = q[::-1]
+            T.tag([T.bm.faces.new([T.bm.verts.new(tb(v)) for v in q])], _fold)
+
+        for i in range(NX):
+            x0, x1, b0, b1 = _xs[i], _xs[i + 1], _base[-1, i], _base[-1, i + 1]
+            ring = lambda x, b, t: _g @ Vector((x, b + _r + _r * math.sin(t), hd + _r * math.cos(t) * 0.9))  # noqa: E731
+            axis = _g @ Vector(((x0 + x1) / 2, (b0 + b1) / 2 + _r, hd))
+            for k in range(6):
+                t0, t1 = math.pi / 2 - math.pi * k / 6, math.pi / 2 - math.pi * (k + 1) / 6
+                _face([ring(x0, b0, t0), ring(x1, b1, t0), ring(x1, b1, t1), ring(x0, b0, t1)], axis)
+        _mid = _g @ Vector((0, float(_base.mean()) + _r, 0))
+        for idx in ([(0, i) for i in range(NX + 1)], [(j, 0) for j in range(NZ + 1)], [(j, NX) for j in range(NZ + 1)]):  # 远处、左、右
+            for (j0, i0), (j1, i1) in zip(idx, idx[1:]):
+                top0, top1 = Vector(vs[j0 * (NX + 1) + i0]), Vector(vs[j1 * (NX + 1) + i1])
+                _face([top0, top1, top1 - Vector((0, NEWS_T, 0)), top0 - Vector((0, NEWS_T, 0))], _mid)
+        paper_hot('news', float(_base.max()) + NEWS_T + 0.0015)
+
+
+build_papers()
+# Papers 没有 VIEWS：镜头不凑过去，网页把纸从桌上拿起来举到眼前
 
 # ---------- 书桌右边：电视推车（黑铁架子、两层木板，带小轮子），斜着朝向开场镜头 ----------
 # 上层：自己搭的薄录像机 + 上面的 CRT 电视 + 天线；下层：几盒录像带、一摞杂志。
@@ -2184,8 +2314,8 @@ def save_encoded(img, path):
 
 
 _poster_restore = []
-NO_SHADOW = ('paper', 'paperink')  # 简历那摞纸：网页里拿起来时藏起来，桌面上不能留它的影子
-for _pmn in [m.name for m in me.materials if m.name.startswith('poster') or m.name in NO_SHADOW]:  # 海报、胶带不挡光、不反光：墙上不留影子（公开版网页里把它们藏起来，墙还是干净的）
+# 桌上那摞纸（材质名以 paper 开头）：网页里拿起来时藏起来，桌面上不能留它的影子
+for _pmn in [m.name for m in me.materials if m.name.startswith('poster') or m.name.startswith('paper')]:  # 海报、胶带不挡光、不反光：墙上不留影子（公开版网页里把它们藏起来，墙还是干净的）
     _nt = me.materials[_pmn].node_tree
     _out = next(n for n in _nt.nodes if n.type == 'OUTPUT_MATERIAL')
     _bsdf = next(n for n in _nt.nodes if n.type == 'BSDF_PRINCIPLED')
@@ -2253,6 +2383,7 @@ manifest.update({
                 for k, s in (('pc', PC_SCREEN), ('tv', TV_SCREEN))},
     'emitters': EMIT,
     'cutout': CUTOUT,
+    'tints': PAPER_TINT,  # 有贴图的材质在网页里再乘的颜色（桌上那摞纸在台灯底下，压暗一档）
     'deskcal': DESKCAL,
     'art': {'title': ART_TITLE},  # 墙角那幅画的名字（鼠标停在画上时的提示）
     'glass': {'window_glass': 0.16, 'poster_tape_shadow': 0.22},  # 窗玻璃：淡淡一层，窗外隔着玻璃；海报胶带底下的影子
