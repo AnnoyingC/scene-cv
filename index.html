@@ -939,7 +939,10 @@
   <div id="hint" class="hint" aria-hidden="true"></div>
   <button id="back" class="back" type="button" hidden>← Back</button>
   <aside id="panel" class="panel" hidden></aside>
-  <div id="help" class="help"><span class="if-mouse">Click</span><span class="if-touch">Tap</span> things to explore · Drag to look around · <a href="?plain=1">Text version</a></div>
+  <div id="help" class="help">
+    <span id="desk-help"><span class="if-mouse">Click</span><span class="if-touch">Tap</span> things to explore · <a id="window-link" href="#window">Look out the window</a> · <a href="?plain=1">Text version</a></span>
+    <span id="window-help" hidden>Drag to look around</span>
+  </div>
 </div>
 
 <script type="module" src="js/main.js"></script>

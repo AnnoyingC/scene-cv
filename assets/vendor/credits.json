@@ -712,6 +712,29 @@
       ]
     }
   ],
+  "optionalViews": {
+    "street-a": [
+      {
+        "source": "Geospatial Information Authority of Japan",
+        "title": "Seamless aerial photographs, Standard Map and optimal vector tiles",
+        "url": "https://maps.gsi.go.jp/development/ichiran.html",
+        "terms": "https://www.gsi.go.jp/kikakuchousei/kikakuchousei40182.html",
+        "note": "Aerial imagery was sampled to place tree cover in Shiba Park. Standard Map tiles supplied road and water masks for distant lighting. Building footprints were extracted from vector tiles and given estimated heights in Blender."
+      },
+      {
+        "source": "NASA Earth Observatory, via NASA GIBS",
+        "title": "Earth at Night (Black Marble), 2016, Suomi NPP VIIRS",
+        "url": "https://science.nasa.gov/earth/earth-observatory/earth-at-night/maps/",
+        "note": "Brightness sampled from the VIIRS_Night_Lights layer was used to vary the intensity of the distant city lights. SceneCV designed the individual lights and materials."
+      },
+      {
+        "source": "Tokyo Metropolitan Government, Bureau of Construction",
+        "title": "Shiba Park Management Plan, March 2026, p. 12",
+        "url": "https://www.kensetsu.metro.tokyo.lg.jp/documents/d/kensetsu/080326kbetsumpshiba",
+        "note": "The plan map was used to align the Shiba Park layout."
+      }
+    ]
+  },
   "excluded": [
     {
       "title": "Old Map 3D Model",

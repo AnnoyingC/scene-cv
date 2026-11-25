@@ -37,8 +37,8 @@ Inspired by the spatial personal site at felixrieseberg.com. The name, résumé,
     <td width="50%"><a href="docs/images/tokyo-window-night.webp"><img src="docs/images/tokyo-window-night.webp" alt="The same skyline from the apartment window at night, with Tokyo Tower lit up on the right"></a></td>
   </tr>
   <tr>
-    <td><b>Before the lights come on · 灯亮之前</b><br>The orange frame of Tokyo Tower rises above a city of white rooftops in Blender.<br>在 Blender 的白模街区里，顺着层层屋顶望去，一眼就能认出东京塔的橙色钢架。</td>
-    <td><b>The view from your résumé · 简历里的窗景</b><br>Rain streaks past the window. Beyond those same rooftops, Tokyo Tower glows against the night sky.<br>细雨掠过窗前。越过同一片屋顶，东京塔的暖光映在夜空里。</td>
+    <td><b>Tokyo in Blender · 东京街区白模</b><br>The buildings outside the window appear in white in this Blender model. Tokyo Tower keeps its orange steel frame, making it easy to find in the night view.<br>这是窗外街区的 Blender 模型。楼宇以白模呈现，东京塔保留了橙色钢架，方便你在夜景图里找到它。</td>
+    <td><b>Look out the window · 靠窗看夜景</b><br>Click the window to see Tokyo Tower on a rainy night. Drag to look around, then choose <b>Back to desk</b> to return.<br>点击窗户，靠近玻璃看雨夜里的东京塔。拖动可以环顾四周，点 <b>Back to desk</b> 回到书桌。</td>
   </tr>
   <tr>
     <td width="50%"><img src="docs/images/room-about-v3.jpg" alt="Close-up of the computer screen: a terminal menu and a short introduction"></td>
@@ -97,6 +97,8 @@ node scripts/serve.mjs
 ```
 
 Then open http://localhost:5173. `?room=1` forces the 3D version and `?plain=1` forces the text version. Everything is static files, so the folder can go straight to GitHub Pages, Vercel or Netlify.
+
+Click the window to move from the desk to the glass and look over the original Tokyo nightscape. Drag or use the arrow keys to look around. Choose **Back to desk** or press Escape to return. The window seat also has a direct link at `?room=1#window`.
 
 **Scope:** the repository contains the desk room, its front-end interactions, the Blender scripts that build it and a local static file server. There are no accounts, no database, no API for saving a résumé and no online editor. Three.js and the Draco decoder load from a CDN, so the first run needs a network connection.
 

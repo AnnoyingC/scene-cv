@@ -45,9 +45,9 @@ const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
 const angle = (a) => Math.atan2(Math.sin(a), Math.cos(a));
 const deg = THREE.MathUtils.degToRad;
-const ROUTES = ['about', 'papers', 'work', 'shelf', 'photos', 'online'];
+const ROUTES = ['about', 'papers', 'work', 'shelf', 'photos', 'online', 'window'];
 // 界面文字用英文（书架上的书是中文内容，书名、作者照旧）
-const HINTS = { about: 'Computer · About me', papers: 'Newspaper & papers · Papers', work: 'TV · Work', shelf: 'Bookshelf · Reading list', photos: 'Cork board · Photos', online: 'Notepad · Contact' };
+const HINTS = { about: 'Computer · About me', papers: 'Newspaper & papers · Papers', work: 'TV · Work', shelf: 'Bookshelf · Reading list', photos: 'Cork board · Photos', online: 'Notepad · Contact', window: 'Window · Look outside' };
 
 export async function start(content, { nav = null, music = null, achievements = null, personal = false } = {}) {
   const { tapes, books = [], links } = content;
@@ -55,7 +55,7 @@ export async function start(content, { nav = null, music = null, achievements = 
   $('room').hidden = false;
   const canvas = $('gl'), hintEl = $('hint'), backBtn = $('back'), panel = $('panel'), help = $('help');
   const baseTitle = content.name || document.title;
-  const TITLES = { home: baseTitle, about: `About · ${baseTitle}`, papers: `Papers · ${baseTitle}`, work: `Work · ${baseTitle}`, shelf: `Books · ${baseTitle}`, photos: `Photos · ${baseTitle}`, online: `Contact · ${baseTitle}`, credits: `Credits · ${baseTitle}` };
+  const TITLES = { home: baseTitle, about: `About · ${baseTitle}`, papers: `Papers · ${baseTitle}`, work: `Work · ${baseTitle}`, shelf: `Books · ${baseTitle}`, photos: `Photos · ${baseTitle}`, online: `Contact · ${baseTitle}`, credits: `Credits · ${baseTitle}`, window: `Window · ${baseTitle}` };
 
   // ---------- 渲染器 ----------
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
@@ -416,6 +416,9 @@ export async function start(content, { nav = null, music = null, achievements = 
   const C = M.camera;
   const center0 = new THREE.Vector3().fromArray(C.target), pcPos = new THREE.Vector3().fromArray(M.screens.pc.pos);
   const look = { yaw: C.yaw, pitch: C.pitch, dist: C.dist, yawT: C.yaw, pitchT: C.pitch, distT: C.dist };
+  const windowLook = { yaw: -.12, pitch: .035, dist: 1, yawT: -.12, pitchT: .035, distT: 1 };
+  const activeLook = () => view === 'window' ? windowLook : look;
+  const canLook = () => view === 'home' || view === 'window';
   // 往右转向唱机时镜头怎么跟着挪（见 homePose）：中心往右 33 厘米、往前 28 厘米、低 8 厘米，拉远 22 厘米，多低一点头
   // （在浏览器里比过几组，这组唱机整个露出来、挂钟和照片墙也还在画面里）；__room.turn 可以现场调
   // 往左转：中心往左挪 1.33 米、往前 95 厘米、高 5 厘米（转到头时正好落在左墙书柜的正中），稍微抬一点头——
@@ -444,6 +447,25 @@ export async function start(content, { nav = null, music = null, achievements = 
     out.pos.copy(t).addScaledVector(fwd, -dist);
     out.yaw = yaw;
     out.pitch = pitch;
+    return out;
+  }
+  function windowPose(out) {
+    const win = M.window, pano = data.view.pano;
+    // Stand just inside the glass, at eye level in the clear pane to the right of the centre mullion.
+    out.pos.set(win.x + win.w * .125, win.y + win.h * .075, win.z - win.depth * .46);
+    const halfV = Math.min(deg((camera.aspect < .8 ? 49 : 41) * windowLook.dist / 2),
+      Math.atan(Math.tan(deg(46)) / camera.aspect));
+    out.fov = THREE.MathUtils.radToDeg(2 * halfV);
+    // Keep all four corners inside the baked panorama, including at the steepest tilt and on ultrawide screens.
+    const margin = deg(3);
+    const low = deg(pano.lat[0]) + margin + halfV, high = deg(pano.lat[1]) - margin - halfV;
+    out.pitch = clamp(windowLook.pitch, low, high);
+    windowLook.pitchT = clamp(windowLook.pitchT, low, high);
+    const halfH = Math.atan2(camera.aspect * Math.tan(halfV),
+      Math.cos(out.pitch) - Math.abs(Math.sin(out.pitch)) * Math.tan(halfV));
+    const left = -deg(pano.lon[1]) + margin + halfH, right = -deg(pano.lon[0]) - margin - halfH;
+    out.yaw = clamp(windowLook.yaw, left, right);
+    windowLook.yawT = clamp(windowLook.yawT, left, right);
     return out;
   }
   function homePose(out) {
@@ -498,9 +520,10 @@ export async function start(content, { nav = null, music = null, achievements = 
   }
   function updateCamera(dt) {
     const a = 1 - Math.exp(-dt * 8);
-    look.yaw += (look.yawT - look.yaw) * a;
-    look.pitch += (look.pitchT - look.pitch) * a;
-    look.dist += (look.distT - look.dist) * a;
+    const current = activeLook();
+    current.yaw += (current.yawT - current.yaw) * a;
+    current.pitch += (current.pitchT - current.pitch) * a;
+    current.dist += (current.distT - current.dist) * a;
     par.lerp(parT, 1 - Math.exp(-dt * 3));
     goalPose(goal);
     if (fly) {
@@ -524,7 +547,8 @@ export async function start(content, { nav = null, music = null, achievements = 
     // 换目标时焦点慢慢跟过去，飞行途中就像摄影师在拉焦
     fwd.set(0, 0, -1).applyQuaternion(camera.quaternion);
     let fd;
-    if (view === 'papers' && papers?.shown) fd = 0.32; // 手里拿着纸：对焦在眼前三十厘米，屋子整个虚下去
+    if (view === 'window') fd = 35;
+    else if (view === 'papers' && papers?.shown) fd = 0.32; // 手里拿着纸：对焦在眼前三十厘米，屋子整个虚下去
     else {
       const fp = shelfBooks?.focus() || (orbiting() ? center : focusPt.fromArray(M.views[view].target));
       fd = Math.max(0.15, focusPt.subVectors(fp, camera.position).dot(fwd));
@@ -532,8 +556,15 @@ export async function start(content, { nav = null, music = null, achievements = 
     lens.focus = focusSnap || !Number.isFinite(lens.focus) ? fd : lens.focus + (fd - lens.focus) * (1 - Math.exp(-dt * 6));
     focusSnap = false;
   }
-  const zoom = (k) => { look.distT = clamp(look.distT * k, ...C.distRange); }; // k > 1 拉远，k < 1 拉近
-  function clampLook() {
+  function zoom(k) {
+    const current = activeLook();
+    current.distT = clamp(current.distT * k, ...(view === 'window' ? [.72, 1.12] : C.distRange));
+  }
+  function turnLook(dx, dy) {
+    const current = activeLook();
+    current.yawT -= dx;
+    current.pitchT -= dy;
+    if (view === 'window') return; // Window bounds depend on the current FOV and are applied in windowPose.
     look.yawT = clamp(look.yawT, ...C.yawRange);
     look.pitchT = clamp(look.pitchT, ...C.pitchRange);
   }
@@ -548,12 +579,19 @@ export async function start(content, { nav = null, music = null, achievements = 
     if (r[0] === 'resume') r[0] = 'papers'; // 旧地址：桌上那摞纸以前是简历
     return r;
   };
-  const hasView = (h) => (h === 'papers' ? !!papers : !!M.views?.[h]); // 桌上的纸没有镜头视角：纸拿到眼前来
+  function hasView(h) {
+    if (h === 'window') return !!windowView;
+    if (h === 'papers') return !!papers;
+    return !!M.views?.[h];
+  }
   if (/^#resume\b/.test(location.hash)) history.replaceState(null, '', '#papers'); // 旧地址：桌上那摞纸以前是简历
   const viewFromHash = () => { const [h] = hashParts(); return h === 'credits' || (ROUTES.includes(h) && hasView(h)) ? h : 'home'; };
   // 致谢只是开个面板、桌上的纸是拿起来看：镜头都还是开场那样绕着电脑，不凑过去
   const orbiting = () => view === 'home' || view === 'credits' || view === 'papers';
-  const goalPose = (out) => (orbiting() ? homePose(out) : focusPose(view, out));
+  function goalPose(out) {
+    if (view === 'window') return windowPose(out);
+    return orbiting() ? homePose(out) : focusPose(view, out);
+  }
   function go(name) {
     const url = name === 'home' ? location.pathname + location.search : '#' + name;
     if ((location.hash.slice(1) || 'home') !== name) history.pushState(null, '', url);
@@ -578,7 +616,13 @@ export async function start(content, { nav = null, music = null, achievements = 
     if (name === 'work' && loaded == null) insertTape(0, { animate: !instant });
     setHover(null);
     backBtn.hidden = name === 'home';
-    help.hidden = name !== 'home';
+    backBtn.textContent = name === 'window' ? '← Back to desk' : '← Back';
+    // The nearest glass surface is about a centimetre from the window seat.
+    camera.near = name === 'window' ? .004 : .02;
+    camera.updateProjectionMatrix();
+    help.hidden = !canLook();
+    $('desk-help').hidden = name !== 'home';
+    $('window-help').hidden = name !== 'window';
     document.title = TITLES[name];
     nav?.setActive(name === 'home' ? null : name);
     renderPanel();
@@ -610,6 +654,9 @@ export async function start(content, { nav = null, music = null, achievements = 
     else if (b?.dataset.cmd) cmd(b.dataset.cmd);
   });
   backBtn.addEventListener('click', () => go('home'));
+  const windowLink = $('window-link');
+  windowLink.hidden = !windowView;
+  windowLink.addEventListener('click', (e) => { e.preventDefault(); go('window'); });
   achievements?.setAvoid(() => (panel.hidden ? null : panel.getBoundingClientRect())); // 成就卡片让开右下角的面板
 
   // ---------- 素材致谢：内容是 index.html 里的 #credits（node scripts/credits_html.mjs 生成），纯文字版看到的也是这一份 ----------
@@ -625,14 +672,14 @@ export async function start(content, { nav = null, music = null, achievements = 
   creditLink.href = '#credits';
   creditLink.textContent = 'Credits';
   creditLink.addEventListener('click', (e) => { e.preventDefault(); go('credits'); });
-  help.append(' · ', creditLink);
+  $('desk-help').append(' · ', creditLink);
   // 声音开关：记在 localStorage（js/sfx.js）
   const soundLink = document.createElement('a');
   soundLink.href = '#';
   const soundText = (on) => { soundLink.textContent = on ? 'Sound on' : 'Sound off'; soundLink.setAttribute('aria-pressed', String(on)); };
   soundText(sfx.on);
   soundLink.addEventListener('click', (e) => { e.preventDefault(); soundText(sfx.toggle()); });
-  help.append(' · ', soundLink);
+  $('desk-help').append(' · ', soundLink);
 
   // ---------- 拾取：射线打到的第一个面 → 是录像带，还是在哪个热点盒子里 ----------
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
@@ -643,6 +690,7 @@ export async function start(content, { nav = null, music = null, achievements = 
   if (contactNote) pickables.push(contactNote);
   const shown = (o) => { for (; o; o = o.parent) if (!o.visible) return false; return true; };
   function pick(x, y) {
+    if (view === 'window') return null;
     const r = canvas.getBoundingClientRect();
     ndc.set(((x - r.left) / r.width) * 2 - 1, -((y - r.top) / r.height) * 2 + 1);
     camera.updateMatrixWorld(); // 镜头这一帧可能还没渲染过
@@ -650,6 +698,10 @@ export async function start(content, { nav = null, music = null, achievements = 
     const extra = shelfBooks?.rig ? [shelfBooks.rig] : [];
     for (const hit of ray.intersectObjects([...extra, ...pickables], true)) {
       if (!shown(hit.object)) continue;
+      const matName = hit.object.material?.name;
+      if (view === 'home' && windowView && (matName === 'window_glass' || matName?.startsWith('window.') || matName === 'sill')) {
+        return { kind: 'window', key: 'window' };
+      }
       if (hit.object === contactNote) {
         const f = contactNote.userData.frame, p = hit.point.clone().sub(f.center);
         const link = view === 'online' ? noteTex.image.linkAt(p.dot(f.right) / (2 * f.hw) + 0.5, p.dot(f.long) / (2 * f.hh) + 0.5) : null;
@@ -712,7 +764,7 @@ export async function start(content, { nav = null, music = null, achievements = 
       if (h?.kind === 'tape') { if (phys[h.i]?.state === 'rack') phys[h.i].pullT = 1; }
       else if (h?.kind === 'book' || h?.kind === 'page') { /* 书自己抽出来提亮，不画热点盒子 */ }
       else if (h) room.highlight(h.kind === 'papers' ? PAPERS_HOT : h.kind); // 移开时不清盒子，让高亮淡出
-      canvas.style.cursor = h ? 'pointer' : view === 'home' ? 'grab' : 'default';
+      canvas.style.cursor = h ? 'pointer' : canLook() ? 'grab' : 'default';
     }
     const text = h && x != null ? hintText(h) : ''; // 导航栏悬停时只高亮物件，不显示提示
     if (text) {
@@ -723,6 +775,7 @@ export async function start(content, { nav = null, music = null, achievements = 
     } else hintEl.classList.remove('show');
   }
   function click(x, y, mouse) {
+    if (view === 'window') return;
     const h = pick(x, y);
     if (h?.kind !== 'music') music?.closeCard?.(); // 点了唱机以外的地方：唱片卡片收起来（和别的面板一样）
     if (h?.kind === 'page') {
@@ -793,20 +846,18 @@ export async function start(content, { nav = null, music = null, achievements = 
       const before = Math.hypot(a.x - b.x, a.y - b.y);
       p.x = e.clientX; p.y = e.clientY;
       const after = Math.hypot(a.x - b.x, a.y - b.y);
-      if (pinch && view === 'home') zoom(Math.exp((before - after) * 0.005)); // 两指分开 = 拉近
+      if (pinch && canLook()) zoom(Math.exp((before - after) * 0.005)); // 两指分开 = 拉近
       pinch = 1;
       return;
     }
     if (down && !dragging && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6) {
       dragging = true;
       setHover(null);
-      if (view === 'home') canvas.style.cursor = 'grabbing';
+      if (canLook()) canvas.style.cursor = 'grabbing';
     }
-    if (dragging && view === 'home') {
+    if (dragging && canLook()) {
       const k = 0.006 * (mouse ? 1 : 1.4);
-      look.yawT -= (e.clientX - p.x) * k; // 像转桌上的模型：往左拖 = 镜头绕到右边，往下拖 = 镜头升高、往下看
-      look.pitchT -= (e.clientY - p.y) * k;
-      clampLook();
+      turnLook((e.clientX - p.x) * k, (e.clientY - p.y) * k);
     }
     p.x = e.clientX; p.y = e.clientY;
   });
@@ -817,7 +868,7 @@ export async function start(content, { nav = null, music = null, achievements = 
     if (ptrs.size < 2) pinch = 0;
     if (mine && e.type === 'pointerup' && down && !dragging && !ptrs.size) click(e.clientX, e.clientY, e.pointerType === 'mouse');
     if (!ptrs.size) { down = null; dragging = false; }
-    canvas.style.cursor = hover ? 'pointer' : view === 'home' ? 'grab' : 'default';
+    canvas.style.cursor = hover ? 'pointer' : canLook() ? 'grab' : 'default';
     if (e.pointerType !== 'mouse') hintEl.classList.remove('show');
   };
   canvas.addEventListener('pointerup', release);
@@ -830,7 +881,7 @@ export async function start(content, { nav = null, music = null, achievements = 
   let wheelAcc = 0;
   canvas.addEventListener('wheel', (e) => {
     e.preventDefault();
-    if (view === 'home') zoom(Math.exp(e.deltaY * (e.deltaMode === 1 ? 0.05 : 0.0015))); // 往下滚 = 拉远
+    if (canLook()) zoom(Math.exp(e.deltaY * (e.deltaMode === 1 ? 0.05 : 0.0015))); // 往下滚 = 拉远
     else if (view === 'about') {
       wheelAcc += e.deltaMode === 1 ? e.deltaY * 20 : e.deltaY; // 触控板一次滚动会来很多小事件，攒够一行再翻
       while (Math.abs(wheelAcc) >= 40) { pc.scrollBy(Math.sign(wheelAcc)); wheelAcc -= Math.sign(wheelAcc) * 40; }
@@ -848,6 +899,12 @@ export async function start(content, { nav = null, music = null, achievements = 
       return;
     }
     if (e.target.closest?.('button,a,input,textarea') && !e.target.closest('#topbar')) return; // 点过导航栏以后方向键照常换带
+    if (view === 'window' && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+      e.preventDefault();
+      turnLook((Number(e.key === 'ArrowRight') - Number(e.key === 'ArrowLeft')) * .07,
+        (Number(e.key === 'ArrowDown') - Number(e.key === 'ArrowUp')) * .07);
+      return;
+    }
     if (view === 'shelf' && shelfBooks?.current() != null && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) cmd(e.key === 'ArrowRight' ? 'read-next' : 'read-prev');
     else if (view === 'work' && e.key === 'ArrowRight') cmd('next');
     else if (view === 'work' && e.key === 'ArrowLeft') cmd('prev');
