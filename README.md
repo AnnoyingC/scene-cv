@@ -33,6 +33,14 @@ Inspired by the spatial personal site at felixrieseberg.com. The name, résumé,
 
 <table>
   <tr>
+    <td width="50%"><a href="docs/images/tokyo-window-blender.webp"><img src="docs/images/tokyo-window-blender.webp" alt="Blender's 3D viewport shows the white city model with Tokyo Tower in orange"></a></td>
+    <td width="50%"><a href="docs/images/tokyo-window-night.webp"><img src="docs/images/tokyo-window-night.webp" alt="The same skyline from the apartment window at night, with Tokyo Tower lit up on the right"></a></td>
+  </tr>
+  <tr>
+    <td><b>Before the lights come on · 灯亮之前</b><br>The orange frame of Tokyo Tower rises above a city of white rooftops in Blender.<br>在 Blender 的白模街区里，顺着层层屋顶望去，一眼就能认出东京塔的橙色钢架。</td>
+    <td><b>The view from your résumé · 简历里的窗景</b><br>Rain streaks past the window. Beyond those same rooftops, Tokyo Tower glows against the night sky.<br>细雨掠过窗前。越过同一片屋顶，东京塔的暖光映在夜空里。</td>
+  </tr>
+  <tr>
     <td width="50%"><img src="docs/images/room-about-v3.jpg" alt="Close-up of the computer screen: a terminal menu and a short introduction"></td>
     <td width="50%"><img src="docs/images/room-papers-v2.jpg" alt="A newspaper and two printed papers fanned out in front of the viewer"></td>
   </tr>
