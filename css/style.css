@@ -286,6 +286,13 @@ h2 { font-size: 14px; letter-spacing: 0.12em; color: var(--muted); font-weight: 
   color: rgba(240, 230, 210, 0.6); font-size: 13px; white-space: nowrap;
 }
 .help a { color: inherit; }
+.window-compare { width: max-content; max-width: 100%; margin: 0 auto 10px; padding: 4px; background: #24221df5; color: #ede6d8; border: 1px solid #655e50; border-radius: 9px; font: 13px var(--sans); }
+.window-compare [role="group"]:not([hidden]) { display: flex; gap: 2px; }
+.window-compare button { padding: 6px 12px; background: transparent; border: 0; border-radius: 5px; color: inherit; font: inherit; cursor: pointer; }
+.window-compare small { display: block; font: 12px var(--serif); }
+.window-compare button[aria-pressed="true"] { color: #211a10; background: #ecc68b; }
+.window-compare button:focus-visible { outline: 2px solid #fff1d1; outline-offset: -2px; }
+.window-compare [role="status"]:not(:empty) { display: block; padding: 6px 10px; }
 
 @media (max-width: 600px) {
   .panel { left: 16px; right: 16px; width: auto; max-height: 42vh; }

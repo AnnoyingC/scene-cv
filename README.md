@@ -80,6 +80,14 @@ Inspired by the spatial personal site at felixrieseberg.com. The name, résumé,
     <td><b>Answering machine · Messages</b><br>At the left end of the desk, the red light next to the MESSAGES key blinks once for every message you haven't heard. Click the machine and the messages play as subtitles, word by word, with who left them underneath. They are what other people say about you.</td>
     <td><b>Telephone · Leave a message</b><br>Pick up the rotary phone and the answering machine takes the call: visitors write in the same subtitle area, and Enter sends it to your email through a form service. In this template the line is a demo and nothing is sent.</td>
   </tr>
+  <tr>
+    <td><img src="docs/images/room-activity.jpg" alt="A wooden almanac on the wall beside the bookshelf: carved GitHub, Codex and Claude figures above twelve weeks of stained wooden day tiles"></td>
+    <td><img src="docs/images/room-mug.jpg" alt="Steam rising from a white mug on the desk, with Tokyo Tower outside the window"></td>
+  </tr>
+  <tr>
+    <td><b>Activity Almanac · Usage</b><br>A carved wooden calendar hangs beside the bookshelf. Each tile is a day over the last twelve weeks, stained darker the busier it was. Click a carving to switch between GitHub contributions and Codex or Claude tokens, and a tile to read that day. The template shows labelled sample data; a local script fills it with your own.</td>
+    <td><b>Mug · Steam</b><br>Steam curls up from the coffee mug on the desk and drifts with the air. Click the mug for a close-up.</td>
+  </tr>
 </table>
 
 ### Interface language and fonts
@@ -98,7 +106,7 @@ node scripts/serve.mjs
 
 Then open http://localhost:5173. `?room=1` forces the 3D version and `?plain=1` forces the text version. Everything is static files, so the folder can go straight to GitHub Pages, Vercel or Netlify.
 
-Click the window to move from the desk to the glass and look over the original Tokyo nightscape. Drag or use the arrow keys to look around. Choose **Back to desk** or press Escape to return. The window seat also has a direct link at `?room=1#window`.
+Click the window to move from the desk to the glass and look over the original Tokyo nightscape. Drag or use the arrow keys to look around. Choose **Back to desk** or press Escape to return. The window seat also has a direct link at `?room=1#window`. The optional lighting comparison is available at `?room=1&window=compare#window`.
 
 **Scope:** the repository contains the desk room, its front-end interactions, the Blender scripts that build it and a local static file server. There are no accounts, no database, no API for saving a résumé and no online editor. Three.js and the Draco decoder load from a CDN, so the first run needs a network connection.
 
@@ -146,6 +154,12 @@ All content lives in `index.html`: the 3D version reads it, and the text version
 - Music: the repository ships with two records, sides A and B of [The Open Goldberg Variations](https://opengoldbergvariations.org/) (Bach played by Kimiko Ishizaka, released under CC0; the files and how they were made are in `assets/records/`). To play your own music, put mp3 files in `assets/audio/` (ignored by Git, since most music is copyrighted) and replace or extend the list in `js/music-tracks.js` (`id`, title, artist, mp3 path, and the colour and text of the record label; the file has an example), and the record player works: the first record in the list starts on its own when the room has loaded, a track loops once it plays, the default volume is 50%, the chosen record and volume are remembered in the browser, and audio only loads when you press play. The vinyl sound softens the highs and adds a little hiss and sparse crackle in real time; the files themselves are untouched.
 - A new kind of TV picture: write a module in `js/tapes/` with the interface `mount({ ctx, width, height, tape }) → { frame(t, dt) }` and register it in `js/tapes/index.js`.
 
+### Activity Almanac
+
+Open `?room=1#activity` or click the wooden calendar beside the bookshelf. Select a carving to switch sources and a tile to read a day. Keys 1–3 select a source, and arrow keys select a day. The mug has its own close-up at `?room=1#mug`.
+
+The template includes a labelled 12-week sample. To see personal usage locally, run `python3 scripts/sync-activity.py` (days follow your computer's time zone; `--timezone Asia/Tokyo` picks another) with an authenticated GitHub CLI and Agent HUD running on macOS, then open `?room=1&usage#activity`. Rerun the command to refresh. GitHub supplies daily contributions. Agent HUD supplies locally indexed input plus output tokens. Gray tiles mark unavailable history. The ignored snapshot at `assets/activity-local/daily.json` contains daily counts and timestamps and is excluded from the Pages build.
+
 ## Code layout
 
 | File | Purpose |
@@ -168,6 +182,7 @@ All content lives in `index.html`: the 3D version reads it, and the text version
 | `js/deskcal.js` | The perpetual calendar on the desk: its cubes, weekday roller and month bars turn to today's date; click it to scramble them |
 | `js/answering.js` | The answering machine at the left end of the desk: the blinking message light, playback of `#messages` as captions, and the beeps and tape hiss (generated in the browser, no sound files) |
 | `js/phone.js` | The rotary phone: leave-a-message composer in the caption area, sending to the form address in `#messages`; a demo that sends nothing with the template's example address, and Contact when no address is set |
+| `js/activity/` | The Activity Almanac beside the bookshelf (`board.js`: the carved board, figures and day tiles; `calendar.js`: twelve weeks of sample data, or the local snapshot with `?usage`) and the steam over the mug (`steam.js`) |
 | `js/sfx.js` | Sound: rain outside the window, a quiet soundtrack while the TV plays a project, and short effects for books, papers, photos, switches, tapes, the calendar and the computer menu. It starts after the first click (browsers do not allow sound before that); the "Sound on / off" link at the bottom is remembered. The files and their CC0 sources are listed in [`assets/sfx/README.md`](assets/sfx/README.md) |
 | `js/paint.js` | The notepad page |
 | `blender/` | Python scripts that render the night view, build the room and bake its lighting; `age_photos.py` / `age_poster.py` age photos and the wall poster |
@@ -178,6 +193,7 @@ All content lives in `index.html`: the 3D version reads it, and the text version
 | `scripts/fetch_city.mjs` | Downloads the city data for the view outside (OpenStreetMap, PLATEAU, three night photos) into `vendor-src/` and builds the intermediate files |
 | `scripts/credits_html.mjs` | Generates the credits list in `index.html` from `credits.json` |
 | `scripts/render-papers.mjs` | Captures the first page of each document in `#papers` into `output/papers-tex/`, the textures of the paper stack on the desk (run before baking the room) |
+| `scripts/sync-activity.py` | Writes your own daily GitHub contributions and Codex / Claude token counts to `assets/activity-local/daily.json` (not in the repository) for the Activity Almanac |
 | `scripts/serve.mjs` | Local static file server (binds to localhost, serves only allowed file types) |
 
 ## Third-party assets
@@ -191,7 +207,7 @@ node scripts/fetch_assets.mjs
 node scripts/fetch_city.mjs      # the data for the view outside (about 1.5 GB, then a few minutes of processing)
 ```
 
-No coordinate in the room is hard-coded in JavaScript: every object's hotspot boxes, and where the camera looks and how much it frames when you click it, are computed by the bake script and written to `assets/baked/manifest.json` (`hotspots`, `views`, `tapes`, `books`, `photos`). Move an object in Blender and export again.
+The bake script stores hotspot boxes and camera framing for baked objects in `assets/baked/manifest.json` (`hotspots`, `views`, `tapes`, `books`, `photos`). The activity board follows the shelf bounds, and steam is anchored to the exported coffee surface. Move a baked object in Blender and export again.
 
 ## Baked lighting (Blender → browser)
 

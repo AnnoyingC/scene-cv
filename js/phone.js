@@ -25,7 +25,7 @@ function ringback(delay = 0) {
   sfx.tone(480, { dur: 0.9, gain: 0.07, delay });
 }
 
-export function createPhone({ form, owner = '', parent = document.body, before = null, answering = null, openContact = () => {} } = {}) {
+export function createPhone({ form, owner = '', parent = document.body, before = null, answering = null, openContact = () => {}, onHangUp = () => {} } = {}) {
   const endpoint = /^https?:\/\//i.test(form?.getAttribute('action') || '') ? form.action : '';
   const demo = /your-form-id/i.test(endpoint); // 模板里的示例地址：演示，不发
 
@@ -87,6 +87,7 @@ export function createPhone({ form, owner = '', parent = document.body, before =
     sfx.play('switch', { gain: 0.45, rate: 0.9 }); // 听筒放回去
     text.blur();
     from.blur();
+    onHangUp();
   }
 
   async function send() {
@@ -130,7 +131,7 @@ export function createPhone({ form, owner = '', parent = document.body, before =
     from.blur();
     head.textContent = title;
     hint.textContent = note;
-    later(ms, () => { if (state !== 'sent') return; state = 'idle'; sub.hidden = true; sfx.play('switch', { gain: 0.45, rate: 0.9 }); });
+    later(ms, () => { if (state === 'sent') hangUp(); });
   }
 
   // 演示：什么都不发。磁带停，灯灭，如实说没发出去；按了回车就算发过：字清空、草稿作废
@@ -153,6 +154,8 @@ export function createPhone({ form, owner = '', parent = document.body, before =
   }
 
   return {
+    canTakeMessages: !!endpoint,
+    get overlayHeight() { return sub.offsetHeight; },
     get open() { return state !== 'idle'; },
     hint() { return !endpoint ? 'Telephone · Contact' : state === 'idle' ? 'Telephone · Leave a message' : 'Telephone · Hang up'; },
     click() { if (state === 'idle') open(); else hangUp(); },

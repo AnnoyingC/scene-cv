@@ -28,6 +28,8 @@
   "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/postprocessing/UnrealBloomPass.js",
   "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/postprocessing/OutputPass.js",
   "js/tv.js",
+  "js/activity/board.js",
+  "js/activity/steam.js",
   "js/pc.js",
   "js/paint.js",
   "js/deskcal.js",
@@ -50,6 +52,9 @@
   "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/shaders/OutputShader.js",
   "js/tapes/index.js",
   "js/tapes/util.js",
+  "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/geometries/RoundedBoxGeometry.js",
+  "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/loaders/SVGLoader.js",
+  "js/activity/calendar.js",
   "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/loaders/GLTFLoader.js",
   "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/loaders/DRACOLoader.js",
   "js/tapes/bars.js",
@@ -847,7 +852,7 @@
   <section id="credits">
     <h2>Credits</h2>
     <!-- 下面的列表由 node scripts/credits_html.mjs 生成（来自 assets/vendor/credits.json），别手改 -->
-    <p class="intro">The models in the desk room come from Sketchfab and Poly Haven and are used under their own licences; each entry lists the author, the original, the licence and how it was changed. The walls, desk and the remaining small objects are built with Blender scripts, and the wood grain is procedural. The rainy night outside the window is the real neighbourhood around Tokyo Tower: buildings and terrain from MLIT's PLATEAU 3D city model, streets, shops and trees from OpenStreetMap, distant facades cut from CC0 night photos; Tokyo Tower itself, the street furniture and the shop fronts are modelled by script. The 3D runs on <a href="https://threejs.org/">three.js</a> (MIT). Fonts: Cinzel, EB Garamond, Playfair Display, UnifrakturMaguntia and Caveat (SIL Open Font License).</p>
+    <p class="intro">The models in the desk room come from Sketchfab and Poly Haven and are used under their own licences; each entry lists the author, the original, the licence and how it was changed. The walls, desk and the remaining small objects are built with Blender scripts, and the wall almanac uses <a href="https://polyhaven.com/a/wood_table_001">Wood Table 001</a> from Poly Haven (CC0) with the <a href="assets/activity/octicons-license.txt">GitHub Octicon</a> (MIT). The rainy night outside the window is the real neighbourhood around Tokyo Tower: buildings and terrain from MLIT's PLATEAU 3D city model, streets, shops and trees from OpenStreetMap, distant facades cut from CC0 night photos; Tokyo Tower itself, the street furniture and the shop fronts are modelled by script. The 3D runs on <a href="https://threejs.org/">three.js</a> (MIT). Fonts: Cinzel, EB Garamond, Playfair Display, UnifrakturMaguntia and Caveat (SIL Open Font License).</p>
     <p class="intro">The template features nine <a href="assets/photos-sample/SOURCES.txt">CC0 photographs of Tokyo</a> and six <a href="assets/posters-sample/SOURCES.txt">public-domain scientific prints</a>.</p>
     <!-- credits:begin -->
     <ul class="credit-list">
@@ -919,6 +924,7 @@
         <p>The copy bundled with Blender, used to letter the shop signs outside the window (blender/sign_atlas.py); the font itself is not redistributed.</p></li>
     </ul>
     <!-- credits:end -->
+    <p class="intro">For the optional Street lights view, SceneCV used aerial imagery and map data from the <a href="https://maps.gsi.go.jp/development/ichiran.html">Geospatial Information Authority of Japan</a> to place tree cover, trace distant roads and shape building footprints. The <a href="https://www.kensetsu.metro.tokyo.lg.jp/documents/d/kensetsu/080326kbetsumpshiba">Tokyo Metropolitan Government’s Shiba Park plan</a> guided the park layout. Brightness from <a href="https://science.nasa.gov/earth/earth-observatory/earth-at-night/maps/">NASA’s 2016 VIIRS night lights</a>, accessed through GIBS, guided the distant glow. SceneCV estimated the building heights and designed the lighting.</p>
     <p class="intro">The full record is in <a href="assets/vendor/credits.json">credits.json</a>.</p>
   </section>
 </main>
@@ -944,6 +950,13 @@
   <button id="back" class="back" type="button" hidden>← Back</button>
   <aside id="panel" class="panel" hidden></aside>
   <div id="help" class="help">
+    <div id="window-compare" class="window-compare" hidden>
+      <div role="group" aria-label="窗景 / Window lighting" hidden>
+        <button type="button" data-window="original" aria-pressed="true">原版 <small>Original</small></button>
+        <button type="button" data-window="street" aria-pressed="false">街区照明 A <small>Street lights</small></button>
+      </div>
+      <span role="status">正在加载街区照明… / Loading street lights…</span>
+    </div>
     <span id="desk-help"><span class="if-mouse">Click</span><span class="if-touch">Tap</span> things to explore · <a id="window-link" href="#window">Look out the window</a> · <a href="?plain=1">Text version</a></span>
     <span id="window-help" hidden>Drag to look around</span>
   </div>

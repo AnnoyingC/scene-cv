@@ -395,10 +395,11 @@ export async function createWindowView({ base, view, win, scene, camera, rendere
   let done = 0;
   const total = pano.layers.length * 2;
   const tick = (x) => { onProgress?.(++done / total); return x; };
-  const layers = await Promise.all(pano.layers.map(async (L) => {
-    const [map, data] = await Promise.all([load(L.file, true).then(tick), load(L.data, false).then(tick)]);
+  const loadLayers = (folder, progress) => Promise.all(pano.layers.map(async (L) => {
+    const [map, data] = await Promise.all([load(folder + L.file, true), load(folder + L.data, false)].map(p => p.then(progress)));
     return { L, map, data };
   }));
+  const layers = await loadLayers('', tick);
 
   const root = new THREE.Group();
   root.position.set(win.x, win.y, win.z);
@@ -437,6 +438,29 @@ export async function createWindowView({ base, view, win, scene, camera, rendere
   let time = 0;
   return {
     root, sky, rain, cars,
+    async streetComparison() {
+      const street = await loadLayers('street-a/', texture => texture);
+      return (useStreet) => {
+        const chosen = useStreet ? street : layers;
+        chosen.forEach(({ L, map, data }, i) => {
+          const u = mats[i].uniforms;
+          u.map.value = map;
+          u.dataMap.value = data;
+          u.texel.value.set(1 / data.image.width, 1 / data.image.height);
+          if (cars) {
+            const c = cars.material.uniforms;
+            if (L.dist < 20) {
+              c.nearMap.value = map;
+              c.nearData.value = data;
+              c.texN.value.copy(u.texel.value);
+            } else {
+              c.farData.value = data;
+              c.texF.value.copy(u.texel.value);
+            }
+          }
+        });
+      };
+    },
     update(dt) {
       time += dt;
       for (const m of mats) m.uniforms.time.value = time;

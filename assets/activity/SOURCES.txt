@@ -1,0 +1,8 @@
+Wood grain: Wood Table 001, Poly Haven (CC0), rotated and luminance-adjusted.
+https://polyhaven.com/a/wood_table_001
+GitHub mark: Primer Octicons (MIT), extruded in wood. See octicons-license.txt.
+https://github.com/primer/octicons
+Clawd motion reference: Agent HUD. Dot geometry follows the supplied icon reference.
+https://github.com/jazzenchen/agent-hud-open
+Steam shader reference:
+https://lab.tresjs.org/experiments/coffee-smoke/

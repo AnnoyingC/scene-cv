@@ -21,6 +21,8 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { TV } from './tv.js';
+import { makeBoard } from './activity/board.js';
+import { makeSteam } from './activity/steam.js';
 import { PCScreen } from './pc.js';
 import { paintNote } from './paint.js';
 import { createDeskCalendar } from './deskcal.js';
@@ -45,9 +47,9 @@ const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
 const angle = (a) => Math.atan2(Math.sin(a), Math.cos(a));
 const deg = THREE.MathUtils.degToRad;
-const ROUTES = ['about', 'papers', 'work', 'shelf', 'photos', 'online', 'window'];
+const ROUTES = ['about', 'papers', 'work', 'shelf', 'photos', 'online', 'phone', 'window', 'activity', 'mug'];
 // 界面文字用英文（书架上的书是中文内容，书名、作者照旧）
-const HINTS = { about: 'Computer · About me', papers: 'Newspaper & papers · Papers', work: 'TV · Work', shelf: 'Bookshelf · Reading list', photos: 'Cork board · Photos', online: 'Notepad · Contact', window: 'Window · Look outside' };
+const HINTS = { activity: 'Activity Almanac · Explore', mug: 'Mug · Watch the steam', about: 'Computer · About me', papers: 'Newspaper & papers · Papers', work: 'TV · Work', shelf: 'Bookshelf · Reading list', photos: 'Cork board · Photos', online: 'Notepad · Contact', window: 'Window · Look outside' };
 
 export async function start(content, { nav = null, music = null, achievements = null, personal = false } = {}) {
   const { tapes, books = [], links } = content;
@@ -55,7 +57,7 @@ export async function start(content, { nav = null, music = null, achievements = 
   $('room').hidden = false;
   const canvas = $('gl'), hintEl = $('hint'), backBtn = $('back'), panel = $('panel'), help = $('help');
   const baseTitle = content.name || document.title;
-  const TITLES = { home: baseTitle, about: `About · ${baseTitle}`, papers: `Papers · ${baseTitle}`, work: `Work · ${baseTitle}`, shelf: `Books · ${baseTitle}`, photos: `Photos · ${baseTitle}`, online: `Contact · ${baseTitle}`, credits: `Credits · ${baseTitle}`, window: `Window · ${baseTitle}` };
+  const TITLES = { activity: `Activity Almanac · ${baseTitle}`, mug: `Mug · ${baseTitle}`, home: baseTitle, about: `About · ${baseTitle}`, papers: `Papers · ${baseTitle}`, work: `Work · ${baseTitle}`, shelf: `Books · ${baseTitle}`, photos: `Photos · ${baseTitle}`, online: `Contact · ${baseTitle}`, phone: `Telephone · ${baseTitle}`, credits: `Credits · ${baseTitle}`, window: `Window · ${baseTitle}` };
 
   // ---------- 渲染器 ----------
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
@@ -79,6 +81,7 @@ export async function start(content, { nav = null, music = null, achievements = 
   const grade = new GradePass({ renderer, bloom, lens, streak, camera }); // 调色接在 OutputPass 后面（处理的是 sRGB 画面）
   composer.addPass(grade);
   const qs = new URLSearchParams(location.search);
+  const compareWindow = qs.get('window') === 'compare';
   grade.set(qs.get('look') || 'cinema');
   if (qs.has('looks')) lookPicker(grade, (k) => grade.set(k));
 
@@ -88,6 +91,12 @@ export async function start(content, { nav = null, music = null, achievements = 
   const data = await loadBaked(BASE, { prefetched: files });
   const room = new BakedRoom(data, { renderer, scene });
   const M = data.manifest;
+  const steam = makeSteam(scene, room.byMat.get('mug.0')?.[0]);
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  const activity = await makeBoard(scene, renderer, M.hotspots?.shelf?.[0], personal || qs.has('usage')).catch(err => {
+    console.warn('Activity board unavailable', err);
+    return null;
+  });
   // 左手边那面墙（画架和窗户之间）的海报和它下面几张打印的插图：烘焙时和墙一起打了光，贴图是空白的占位纸。
   // 两组海报共用模型、烘焙光照和四角胶带，清单按材质名 poster、poster_2… 指定贴图和悬停标题。
   const posterKeys = [...room.byMat.keys()].filter((k) => /^poster(_\d+)?$/.test(k));
@@ -169,7 +178,8 @@ export async function start(content, { nav = null, music = null, achievements = 
   const answering = createAnsweringMachine(room, content.messages || [], { parent: $('room'), before: backBtn });
   // 旁边的转盘电话：给主人留言，发到邮箱（#messages 里 form.leave-message 的 action）；没配地址就打开 Contact
   const phone = M.hotspots?.phone ? createPhone({ form: document.querySelector('#messages form.leave-message'), owner: content.name,
-    parent: $('room'), before: backBtn, answering, openContact: () => go('online') }) : null;
+    parent: $('room'), before: backBtn, answering, openContact: () => go('online'),
+    onHangUp: () => { if (view === 'phone') go(phoneReturnView); } }) : null;
 
   // ---------- 录像带：从房间里拆出来，可以单独移动 ----------
   // 录像机跟着电视推车绕 Y 轴转了 yaw：它的正前方是 vcrFwd，带子平躺以后也跟着转同样的角度
@@ -427,6 +437,14 @@ export async function start(content, { nav = null, music = null, achievements = 
   // 拖动在 yawRange / pitchRange 里转，滚轮 / 双指在 distRange 里拉近拉远；镜头出了 manifest.camera.box 就往中心拉近，不会钻进墙里。
   // 点进某个物件时，按 manifest.views 里的目标点、方向、要装下的大小算出镜头位置，并给面板让出地方。
   const C = M.camera;
+  const views = { ...M.views };
+  if (steam) views.mug = steam.view;
+  if (activity) views.activity = activity.view;
+  const handset = M.hotspots?.phone?.[0];
+  if (handset && phone.canTakeMessages) {
+    // Aim at the rotary dial from the visitor's side of the desk. Size the shot from the actual model.
+    views.phone = { target: handset.c, size: [1.35 * handset.h[0], handset.h[1] + handset.h[2]], dir: [0.18, 0.72, 0.67] };
+  }
   const center0 = new THREE.Vector3().fromArray(C.target), pcPos = new THREE.Vector3().fromArray(M.screens.pc.pos);
   const look = { yaw: C.yaw, pitch: C.pitch, dist: C.dist, yawT: C.yaw, pitchT: C.pitch, distT: C.dist };
   const windowLook = { yaw: -.12, pitch: .035, dist: 1, yawT: -.12, pitchT: .035, distT: 1 };
@@ -502,12 +520,13 @@ export async function start(content, { nav = null, music = null, achievements = 
   }
   function covered() { // 面板挡住了多少像素：宽屏在右边，窄屏在下面；top 是顶部导航栏
     const top = nav?.height() ?? 0;
+    if (view === 'phone') return { w: 0, h: phone.overlayHeight, top };
     if (panel.hidden) return { w: 0, h: 0, top };
     const r = panel.getBoundingClientRect();
     return innerWidth > 600 ? { w: innerWidth - r.left + 16, h: 0, top } : { w: 0, h: innerHeight - r.top + 12, top };
   }
   function focusPose(name, out) {
-    const v = M.views[name];
+    const v = views[name];
     const fov = camera.aspect < 0.8 ? 60 : 44;
     const tv_ = Math.tan(deg(fov / 2)), th = tv_ * camera.aspect;
     const cv = covered(), fw = Math.max(0.35, 1 - cv.w / innerWidth), fh = Math.max(0.35, 1 - (cv.h + cv.top) / innerHeight);
@@ -563,7 +582,7 @@ export async function start(content, { nav = null, music = null, achievements = 
     if (view === 'window') fd = 35;
     else if (view === 'papers' && papers?.shown) fd = 0.32; // 手里拿着纸：对焦在眼前三十厘米，屋子整个虚下去
     else {
-      const fp = shelfBooks?.focus() || (orbiting() ? center : focusPt.fromArray(M.views[view].target));
+      const fp = shelfBooks?.focus() || (orbiting() ? center : focusPt.fromArray(views[view].target));
       fd = Math.max(0.15, focusPt.subVectors(fp, camera.position).dot(fwd));
     }
     lens.focus = focusSnap || !Number.isFinite(lens.focus) ? fd : lens.focus + (fd - lens.focus) * (1 - Math.exp(-dt * 6));
@@ -583,7 +602,7 @@ export async function start(content, { nav = null, music = null, achievements = 
   }
 
   // ---------- 路由（URL hash ↔ 镜头） ----------
-  let view = null;
+  let view = null, phoneReturnView = 'home';
   const hashParts = () => {
     let h = location.hash.slice(1);
     try { h = decodeURIComponent(h); } catch { /* 保留原样 */ }
@@ -595,7 +614,7 @@ export async function start(content, { nav = null, music = null, achievements = 
   function hasView(h) {
     if (h === 'window') return !!windowView;
     if (h === 'papers') return !!papers;
-    return !!M.views?.[h];
+    return !!views[h];
   }
   if (/^#resume\b/.test(location.hash)) history.replaceState(null, '', '#papers'); // 旧地址：桌上那摞纸以前是简历
   const viewFromHash = () => { const [h] = hashParts(); return h === 'credits' || (ROUTES.includes(h) && hasView(h)) ? h : 'home'; };
@@ -615,7 +634,11 @@ export async function start(content, { nav = null, music = null, achievements = 
     const first = view === null, prev = view;
     view = name;
     music?.closeCard?.(); // 换了视角就不再是在摆弄唱机：唱片卡片收起来
-    if (name !== 'home') { answering?.stop(); phone?.hangUp(); } // 走开了：留言停下、电话挂上（字幕会和别处的字幕、面板叠在一起）
+    if (name !== 'home') answering?.stop();
+    if (name === 'phone') {
+      phoneReturnView = prev === 'online' ? 'online' : 'home';
+      phone.click();
+    } else if (prev === 'phone') phone.hangUp();
     if (name !== 'shelf') shelfBooks?.close();
     if (prev === 'papers' && papers) { // 放回桌上（从现在的镜头看过去的位置）：手里的纸开始淡出、快落到桌面时，桌上那摞纸接上
       const back = papers.close(deskRects());
@@ -623,7 +646,7 @@ export async function start(content, { nav = null, music = null, achievements = 
       back.then(() => { if (!papers.shown) showDeskPaper(true); });
     }
     // 从书架退回开场：镜头退回往左转到头的位置（正对书柜），不回到点书之前转到的半路（那里正对着墙角的画）。竖屏手机往左转不挪中心，不改
-    if (prev === 'shelf' && name === 'home' && camera.aspect >= 1.2) look.yaw = look.yawT = C.yawRange[1];
+    if ((prev === 'shelf' || prev === 'activity') && name === 'home' && camera.aspect >= 1.2) look.yaw = look.yawT = C.yawRange[1];
     papersReq.open = name === 'papers';
     pc.setActive(name === 'about');
     if (name === 'work' && loaded == null) insertTape(0, { animate: !instant });
@@ -661,7 +684,19 @@ export async function start(content, { nav = null, music = null, achievements = 
     panel.innerHTML = html;
     panel.hidden = !html;
   }
+  // Contact links still lead to the text form when opened in a new tab or without the 3D phone.
+  const messageUrl = new URL('?plain=1#leave-message', document.baseURI).href;
+  function openContactMessage(url) {
+    if (!views.phone || url !== messageUrl) return false;
+    go('phone');
+    return true;
+  }
   panel.addEventListener('click', (e) => {
+    const link = e.target.closest('a');
+    if (link && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && openContactMessage(link.href)) {
+      e.preventDefault();
+      return;
+    }
     const b = e.target.closest('button');
     if (b?.dataset.book != null) openBook(Number(b.dataset.book));
     else if (b?.dataset.cmd) cmd(b.dataset.cmd);
@@ -697,6 +732,7 @@ export async function start(content, { nav = null, music = null, achievements = 
   // ---------- 拾取：射线打到的第一个面 → 是录像带，还是在哪个热点盒子里 ----------
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
   const pickables = [room.root, ...screens, ...phys.filter(Boolean).map((t) => t.group), ...(shelfBooks?.groups || [])];
+  if (activity) pickables.push(activity.pickPlane);
   if (turntable) pickables.push(turntable.group);
   if (deskCal) pickables.push(...deskCal.groups);
   if (answering) pickables.push(...answering.groups);
@@ -711,7 +747,11 @@ export async function start(content, { nav = null, music = null, achievements = 
     const extra = shelfBooks?.rig ? [shelfBooks.rig] : [];
     for (const hit of ray.intersectObjects([...extra, ...pickables], true)) {
       if (!shown(hit.object)) continue;
+      if (hit.object === activity?.pickPlane) {
+        return view === 'activity' ? activity.hit(hit.point) : { kind: 'activity', key: 'activity' };
+      }
       const matName = hit.object.material?.name;
+      if (steam && (matName === 'mug.0' || matName === 'mug.1')) return { kind: 'mug', key: 'mug' };
       if (view === 'home' && windowView && (matName === 'window_glass' || matName?.startsWith('window.') || matName === 'sill')) {
         return { kind: 'window', key: 'window' };
       }
@@ -745,6 +785,7 @@ export async function start(content, { nav = null, music = null, achievements = 
     return null;
   }
   function hintText(h) {
+    if (h.kind === 'source' || h.kind === 'day') return h.label;
     if (h.kind === 'contact') return `${h.label} · ${h.handle || h.url}`;
     if (h.kind === 'music') return music?.cardOpen === false ? 'Record player · Pick a record' : music?.cardOpen ? 'Record player · Close' : music?.playing ? 'Record player · Pause' : 'Record player · Play';
     if (h.kind === 'tape') return `▶ ${tapes[h.i].title}`;
@@ -799,6 +840,7 @@ export async function start(content, { nav = null, music = null, achievements = 
     if (view === 'shelf' && h?.kind !== 'book' && closeBook()) return; // 书翻开着：点别处先合上书
     if (!h) { if (view !== 'home') go('home'); return; }
     if (h.kind === 'contact') {
+      if (openContactMessage(h.url)) return;
       const link = document.createElement('a');
       link.href = h.url;
       link.hidden = true;
@@ -807,12 +849,17 @@ export async function start(content, { nav = null, music = null, achievements = 
       link.click();
       link.remove();
     }
+    else if (h.kind === 'source') activity.choose(h.source);
+    else if (h.kind === 'day') activity.chooseDay(h.day);
     else if (h.kind === 'book') openBook(h.i);
     else if (h.kind === 'tape') { insertTape(h.i); go('work'); }
     else if (h.kind === 'music') { if (music?.toggleCard) music.toggleCard(); else music?.toggle(); } // 点唱机：打开 / 收起唱片卡片
     else if (h.kind === 'calendar') deskCal?.shuffle();
     else if (h.kind === 'messages') { phone?.hangUp(); answering?.press(); }
-    else if (h.kind === 'phone') phone?.click();
+    else if (h.kind === 'phone') {
+      if (views.phone && view !== 'phone') go('phone');
+      else phone?.click();
+    }
     else if (h.kind === 'art' || /^poster/.test(h.kind)) return;
     else if (h.kind === 'lamp') { light.lampT = light.lampT ? 0 : 1; sfx.play('switch'); }
     else if (h.kind === 'room') { light.roomT = light.roomT ? 0 : 1; sfx.play('switch', { rate: 0.85 }); }
@@ -901,6 +948,7 @@ export async function start(content, { nav = null, music = null, achievements = 
     }
   }, { passive: false });
   addEventListener('keydown', (e) => {
+    if (view === 'activity' && !e.metaKey && !e.ctrlKey && !e.altKey && activity.keyPress(e.key)) { e.preventDefault(); return; }
     if (view === 'about' && !e.metaKey && !e.ctrlKey && !e.altKey && pc.key(e)) { e.preventDefault(); return; } // 电脑菜单：方向键、回车、Esc 返回上一层、数字、L
     if (view === 'papers' && papers?.key(e)) { e.preventDefault(); return; } // 拿着纸：← → 翻，凑近读时 Esc 先拿远
     if (e.key === 'Escape') {
@@ -982,6 +1030,8 @@ export async function start(content, { nav = null, music = null, achievements = 
       if (tp.state === 'rack') { tp.group.position.copy(tp.home.pos); tp.group.position.y += tp.pull * 0.04; } // 悬停时整盒往上抽出一截
     }
     updateCamera(dt);
+    activity?.tick(reduceMotion.matches ? 1.5 : t, light.room);
+    steam?.tick(reduceMotion.matches ? 2 : t, camera);
     // 镜头回到开场的位置（从别的视角过来时要先飞回来）就把纸拿起来：起点按镜头到位时纸在屏幕上的样子算
     if (papersReq.open && view === 'papers' && (!fly || fly.t > 0.75)) {
       papersReq.open = false;
@@ -1014,6 +1064,29 @@ export async function start(content, { nav = null, music = null, achievements = 
   bootStage('compiling shaders');
   await new Promise((r) => requestAnimationFrame(() => setTimeout(r)));
   renderer.setAnimationLoop(frame);
+
+  if (compareWindow) {
+    const review = $('window-compare'), group = review.querySelector('[role="group"]');
+    const status = review.querySelector('[role="status"]');
+    review.hidden = false;
+    const enableComparison = async () => {
+      if (!windowView) throw new Error('Window panorama unavailable');
+      const select = await windowView.streetComparison();
+      const buttons = group.querySelectorAll('[data-window]');
+      const show = (variant) => {
+        select(variant === 'street');
+        for (const b of buttons) b.setAttribute('aria-pressed', String(b.dataset.window === variant));
+      };
+      for (const b of buttons) b.onclick = () => show(b.dataset.window);
+      show('original');
+      group.hidden = false;
+      status.textContent = '';
+    };
+    enableComparison().catch((err) => {
+      status.textContent = '窗景对比加载失败，请刷新重试。 / Reload to retry.';
+      console.warn('Window lighting comparison', err);
+    });
+  }
 
   // 唱片：房间出来就放（js/music.js 的 autoplay；浏览器要等访客第一次操作才让出声）。底部 Sound 关着就不放，关掉 Sound 唱片也停
   music?.autoplay?.({ allowed: () => sfx.on });
