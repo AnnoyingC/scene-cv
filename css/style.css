@@ -53,6 +53,18 @@ h2 { font-size: 14px; letter-spacing: 0.12em; color: var(--muted); font-weight: 
 .photos { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
 .photos img { display: block; width: 100%; height: auto; }
 .photos p { margin: 6px 0 0; color: var(--muted); font-size: 14px; }
+.messages { list-style: none; padding: 0; margin: 0; }
+.messages li { padding: 12px 0; border-top: 1px solid var(--line); }
+.messages blockquote { margin: 0; font-style: italic; }
+.messages blockquote::before { content: "\201C"; } .messages blockquote::after { content: "\201D"; }
+.messages .from { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+.messages .from b { color: var(--fg); font-weight: 600; }
+.leave-message:not([action^="http"]), .leave-message[action*="your-form-id"] { display: none; } /* 没填表单服务的地址、或者还是模板的示例地址：不显示 */
+.leave-message { display: grid; gap: 8px; margin-top: 20px; }
+.leave-message p { margin: 0; color: var(--muted); font-size: 14px; }
+.leave-message textarea, .leave-message input { font: inherit; font-size: 16px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: inherit; }
+.leave-message .lm-trap { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.leave-message button { justify-self: start; font: inherit; font-size: 15px; padding: 6px 16px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: inherit; cursor: pointer; }
 .links { list-style: none; padding: 0; margin: 0; }
 .links li { padding: 6px 0; }
 .links span { color: var(--muted); margin-left: 8px; font-size: 15px; }
@@ -723,3 +735,23 @@ main h1, main h2 { font-family: var(--display); letter-spacing: 0.04em; }
   /* 底部提示条放不下一行：换行、居中 */
   :root.js .help { width: calc(100% - 32px); white-space: normal; text-align: center; font-size: 14px; line-height: 1.5; }
 }
+
+/* 答录机放留言的字幕（js/answering.js）：底子和电视字幕一样，上面一行是答录机报的第几条、什么时候，下面一行是谁说的 */
+.amsub-head { margin: 0 0 6px; color: rgba(246, 239, 226, 0.62); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; text-shadow: 0 1px 3px #000; }
+.amsub { padding-bottom: max(46px, calc(env(safe-area-inset-bottom) + 36px)); } /* 停在底下那行操作提示（Text version · Credits · Sound）上面 */
+.amsub-text { margin: 0 auto; min-height: 1.55em; }
+.amsub-text span { transition: opacity 0.25s; }
+.amsub-from { margin: 8px 0 0; color: rgba(246, 239, 226, 0.72); font-size: 14px; font-style: italic; text-shadow: 0 1px 3px #000; }
+.amsub-from:empty { display: none; }
+@media (max-width: 600px) { .amsub-from { font-size: 13px; } }
+
+/* 拿起电话写留言（js/phone.js）：借用上面答录机字幕的样子（.tvsub / .amsub-head / .amsub-text 原样用），
+   中间那行字就是输入框，下面斜体一行写"你是谁、怎么找你"（数值照抄 .amsub-from，那条规则别动） */
+.phonesub { pointer-events: auto; }
+.phone-text, .phone-from { display: block; width: 100%; padding: 0; border: 0; background: none; outline: none; resize: none;
+  font-family: inherit; text-align: center; caret-color: #f6efe2; }
+.phone-text { overflow: hidden; padding-bottom: 4px; border-bottom: 1px solid rgba(246, 239, 226, 0.16); }
+.phone-from { max-width: 760px; margin: 8px auto 0; color: rgba(246, 239, 226, 0.72); font-size: 14px; font-style: italic; text-shadow: 0 1px 3px #000; }
+.phone-text::placeholder, .phone-from::placeholder { color: rgba(246, 239, 226, 0.4); font-style: italic; }
+.phone-hint { margin: 10px 0 0; color: rgba(246, 239, 226, 0.5); font-size: 12px; text-shadow: 0 1px 3px #000; }
+@media (max-width: 600px) { .phone-from { font-size: 13px; } .phone-hint { display: none; } }

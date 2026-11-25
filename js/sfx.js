@@ -88,6 +88,45 @@ export const sfx = {
     s.start(t);
     if (dur) s.stop(t + dur + 0.02);
   },
+  // 合成的声音，不用文件：答录机的"嘀"（freq 赫兹，dur 秒）
+  tone(freq = 1000, { dur = 0.35, gain = 0.2, delay = 0 } = {}) {
+    if (!ctx || !on || ctx.state !== 'running') return;
+    const o = ctx.createOscillator(), g = ctx.createGain(), t = ctx.currentTime + delay;
+    o.type = 'sine';
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(gain, t + 0.012);
+    g.gain.setValueAtTime(gain, t + Math.max(0.02, dur - 0.03));
+    g.gain.linearRampToValueAtTime(0, t + dur);
+    o.connect(g).connect(bus.sfx);
+    o.start(t);
+    o.stop(t + dur + 0.02);
+  },
+  // 磁带底噪：一直响到 stop()（淡出）。返回 { stop }；没开声音的时候也返回一个什么都不做的 stop
+  hiss({ gain = 0.045 } = {}) {
+    if (!ctx || !on || ctx.state !== 'running') return { stop() {} };
+    const len = ctx.sampleRate * 2, buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    const s = ctx.createBufferSource(), bp = ctx.createBiquadFilter(), g = ctx.createGain(), t = ctx.currentTime;
+    s.buffer = buf;
+    s.loop = true;
+    bp.type = 'bandpass';
+    bp.frequency.value = 4200;
+    bp.Q.value = 0.5;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(gain, t + 0.25);
+    s.connect(bp).connect(g).connect(bus.sfx);
+    s.start(t);
+    return {
+      stop() {
+        const t1 = ctx.currentTime;
+        g.gain.cancelScheduledValues(t1);
+        g.gain.setValueAtTime(g.gain.value, t1);
+        g.gain.linearRampToValueAtTime(0, t1 + 0.3);
+        s.stop(t1 + 0.35);
+      },
+    };
+  },
   // 每帧由 room.js 调：tv = 背景音乐要多大（0..1：点进电视看节目时 1，电视在后面自己轮播时小一点）；
   // 唱机放歌时背景音乐让开、雨声也小一点
   mix({ tv = 0, record = false } = {}) {

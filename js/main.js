@@ -23,6 +23,7 @@ function plain(reason) {
 // 只在本地的个人内容（这几个文件夹不进 Git，公开仓库里 index.html 是样例）：打开个人模式时有就换进内容层，没有就照样用样例。
 //   assets/papers/papers.html         真实的论文、报道（几个 article.pp-doc，写法和 index.html #papers 一样）→ #papers
 //                                     （3D 版每次拿起纸都从内容层复制，纯文字版直接显示）
+//   assets/messages/messages.html     真实留言的几个 <li>（写法和 index.html #messages 一样）→ #messages 的列表（答录机、纯文字版）
 //   assets/resume/contact.html        真实联系方式的几个 <li> → #online 的列表（记事本、联系面板、纯文字版）
 //   assets/books/books.html           真实书单的 <li>（和样例一样多、一样的顺序和尺寸：房间是按样例的尺寸烘焙的）→ #shelf 的列表
 //   assets/books/covers/covers.json   书名 → 真实封面的文件名 → #shelf 那本书的 data-cover
@@ -45,6 +46,14 @@ const personal = Promise.all([
     t.innerHTML = html;
     const docs = t.content.querySelectorAll('.pp-doc');
     if (docs.length) { list.replaceChildren(...docs); fitPages(); }
+  }),
+  local('../assets/messages/messages.html', 'text').then((html) => {
+    const list = document.querySelector('#messages .messages');
+    if (!html || !list) return;
+    const t = document.createElement('template');
+    t.innerHTML = html;
+    const items = t.content.querySelectorAll('li');
+    if (items.length) list.replaceChildren(...items);
   }),
   local('../assets/resume/contact.html', 'text').then((html) => {
     const list = document.querySelector('#online .links');

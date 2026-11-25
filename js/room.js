@@ -12,6 +12,8 @@
 //   - 点台灯 / 落地灯开关灯（切的是烘焙好的光照层的系数，不重新算光）
 //   - 悬停高亮：热点盒子来自 manifest，着色器把盒子里的像素提亮
 //   - 书桌上的木头万年历拨到今天的日期，点它会拨乱再拨回来（js/deskcal.js）
+//   - 桌子左头的答录机：有没听过的留言时小红灯闪，点它把 #messages 一条条像字幕一样放出来（js/answering.js）
+//   - 答录机前面的转盘电话：点它给主人写留言，发到邮箱（js/phone.js；没配表单地址就打开 Contact）
 //   - Bloom 辉光 + 整体滤镜（js/grade.js：默认"电影感"：暖色的晕、横向光丝、跟着镜头对焦的景深；?look=名字 选预设，?looks 显示切换按钮）；
 //     帧率太低先降分辨率，再不行就关掉辉光和景深
 import * as THREE from 'three';
@@ -22,6 +24,8 @@ import { TV } from './tv.js';
 import { PCScreen } from './pc.js';
 import { paintNote } from './paint.js';
 import { createDeskCalendar } from './deskcal.js';
+import { createAnsweringMachine } from './answering.js';
+import { createPhone } from './phone.js';
 import { BakedRoom, loadBaked, tvLight } from './baked.js';
 import { CameraPass, GradePass, StreakPass, lookPicker } from './grade.js';
 import { createTurntable } from './turntable.js';
@@ -148,6 +152,11 @@ export async function start(content, { nav = null, music = null, achievements = 
   const contactNote = room.decal('notepad', noteTex);
   // 书桌上的木头万年历：数字方块、星期滚筒、月份条拆出来，拨到今天（过了零点自己翻）
   const deskCal = createDeskCalendar(room);
+  // 桌子左头电话旁边的答录机：点它放留言（index.html #messages，别人对你的评价），镜头不动
+  const answering = createAnsweringMachine(room, content.messages || [], { parent: $('room'), before: backBtn });
+  // 旁边的转盘电话：给主人留言，发到邮箱（#messages 里 form.leave-message 的 action）；没配地址就打开 Contact
+  const phone = M.hotspots?.phone ? createPhone({ form: document.querySelector('#messages form.leave-message'), owner: content.name,
+    parent: $('room'), before: backBtn, answering, openContact: () => go('online') }) : null;
 
   // ---------- 录像带：从房间里拆出来，可以单独移动 ----------
   // 录像机跟着电视推车绕 Y 轴转了 yaw：它的正前方是 vcrFwd，带子平躺以后也跟着转同样的角度
@@ -555,6 +564,7 @@ export async function start(content, { nav = null, music = null, achievements = 
     const first = view === null, prev = view;
     view = name;
     music?.closeCard?.(); // 换了视角就不再是在摆弄唱机：唱片卡片收起来
+    if (name !== 'home') { answering?.stop(); phone?.hangUp(); } // 走开了：留言停下、电话挂上（字幕会和别处的字幕、面板叠在一起）
     if (name !== 'shelf') shelfBooks?.close();
     if (prev === 'papers' && papers) { // 放回桌上（从现在的镜头看过去的位置）：手里的纸开始淡出、快落到桌面时，桌上那摞纸接上
       const back = papers.close(deskRects());
@@ -629,6 +639,7 @@ export async function start(content, { nav = null, music = null, achievements = 
   const pickables = [room.root, ...screens, ...phys.filter(Boolean).map((t) => t.group), ...(shelfBooks?.groups || [])];
   if (turntable) pickables.push(turntable.group);
   if (deskCal) pickables.push(...deskCal.groups);
+  if (answering) pickables.push(...answering.groups);
   if (contactNote) pickables.push(contactNote);
   const shown = (o) => { for (; o; o = o.parent) if (!o.visible) return false; return true; };
   function pick(x, y) {
@@ -647,6 +658,7 @@ export async function start(content, { nav = null, music = null, achievements = 
       }
       if (music && hit.object.userData.recordPlayer) return { kind: 'music', key: 'music' };
       if (hit.object.userData.deskCal) return { kind: 'calendar', key: 'calendar' };
+      if (hit.object.userData.answering) return { kind: 'messages', key: 'messages' };
       const ti = hit.object.userData.tape;
       if (ti != null) return { kind: 'tape', key: 'tape' + ti, i: ti };
       if (shelfBooks?.isRig(hit.object)) {
@@ -679,6 +691,8 @@ export async function start(content, { nav = null, music = null, achievements = 
       return h.side === 'right' ? (pi.page < pi.pages ? 'Next page →' : '') : (pi.page > 1 ? '← Previous page' : '');
     }
     if (h.kind === 'calendar') return deskCal ? `Calendar · ${deskCal.label()}` : '';
+    if (h.kind === 'messages') return answering?.hint() || '';
+    if (h.kind === 'phone') return phone?.hint() || '';
     if (h.kind === 'art') return M.art?.title || ''; // 墙角画架上的画：只有提示（画名在 manifest.art），点了不跳转
     if (/^poster/.test(h.kind)) return posterTitles[h.kind] || ''; // 墙上的海报、插图（个人模式）：只有提示
     if (h.kind === 'lamp') return light.lampT ? 'Desk lamp · Turn off' : 'Desk lamp · Turn on';
@@ -731,6 +745,8 @@ export async function start(content, { nav = null, music = null, achievements = 
     else if (h.kind === 'tape') { insertTape(h.i); go('work'); }
     else if (h.kind === 'music') { if (music?.toggleCard) music.toggleCard(); else music?.toggle(); } // 点唱机：打开 / 收起唱片卡片
     else if (h.kind === 'calendar') deskCal?.shuffle();
+    else if (h.kind === 'messages') { phone?.hangUp(); answering?.press(); }
+    else if (h.kind === 'phone') phone?.click();
     else if (h.kind === 'art' || /^poster/.test(h.kind)) return;
     else if (h.kind === 'lamp') { light.lampT = light.lampT ? 0 : 1; sfx.play('switch'); }
     else if (h.kind === 'room') { light.roomT = light.roomT ? 0 : 1; sfx.play('switch', { rate: 0.85 }); }
@@ -826,6 +842,8 @@ export async function start(content, { nav = null, music = null, achievements = 
     if (e.key === 'Escape') {
       if (music?.cardOpen && music.closeCard) { music.closeCard(); return; } // 唱片卡片开着：Esc 先收起它
       if (closeBook()) return;
+      if (answering?.playing) { answering.stop(); return; } // 答录机在放留言：Esc 先停下
+      if (phone?.open) { phone.hangUp(); return; } // 电话拿着：Esc 挂断
       if (view !== 'home') go('home');
       return;
     }
@@ -879,6 +897,8 @@ export async function start(content, { nav = null, music = null, achievements = 
     turntable?.update(dt, music?.playing, music?.track);
     sfx.mix({ tv: !tv.run ? 0 : view === 'work' ? 1 : 0.35, record: !!music?.playing }); // 电视放节目：低低的背景音乐（点进电视时大一点）；唱机放歌时让开
     deskCal?.update(dt);
+    answering?.update(dt);
+    if ((hover?.kind === 'messages' || hover?.kind === 'phone') && hintEl.classList.contains('show')) { const text = hintText(hover); if (hintEl.textContent !== text) hintEl.textContent = text; }
     if (hover?.kind === 'music' && hintEl.classList.contains('show')) {
       const text = hintText(hover);
       if (hintEl.textContent !== text) hintEl.textContent = text;
@@ -931,7 +951,7 @@ export async function start(content, { nav = null, music = null, achievements = 
 
   // 调试入口（控制台里用）：__room.tick(dt) 手动推进一帧（后台标签页里动画会被浏览器降速）
   window.__room = {
-    go, insertTape, cmd, tick, pick, look, light, camera, renderer, composer, room, tv, pc, turntable, grade: (k) => grade.set(k), lens, streak, books: shelfBooks, openBook, windowView, turn: TURN, papers, paperRect, deskRects,
+    go, insertTape, cmd, tick, pick, look, light, camera, renderer, composer, room, tv, pc, turntable, answering, phone, grade: (k) => grade.set(k), lens, streak, books: shelfBooks, openBook, windowView, turn: TURN, papers, paperRect, deskRects,
     get photos() { return photoWall; },
     get view() { return view; }, get loaded() { return loaded; }, get hover() { return hover; },
     hoverAt: (x, y) => setHover(pick(x, y), x, y), clickAt: (x, y) => click(x, y, true),

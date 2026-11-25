@@ -31,6 +31,8 @@
   "js/pc.js",
   "js/paint.js",
   "js/deskcal.js",
+  "js/answering.js",
+  "js/phone.js",
   "js/baked.js",
   "js/grade.js",
   "js/turntable.js",
@@ -123,7 +125,7 @@
     <p>A second paragraph can cover what you are learning, what you are looking for, or what people should get in touch about.</p>
     <p>In the 3D room this text is typed out letter by letter on the old computer's screen.</p>
     <!--
-      书桌房间那台旧电脑上的菜单（js/pc.js）：放简历装不下的东西，和桌上的纸质简历、电视里的作品各管一摊。
+      书桌房间那台旧电脑上的菜单（js/pc.js）：放简历装不下的东西，和桌上那摞论文、报道，电视里的作品各管一摊。
       上面几段 p 是没有菜单时电脑上的字，菜单不影响它们。
         div.pc-menu        一种语言一份菜单：lang 是语言，data-label 是电脑上切换语言时显示的名字；电脑默认用和 <html lang> 一样的那份
         article            菜单里的一项：data-cmd 是电脑上显示的命令名，h3 是这一项的中文 / 英文名字
@@ -137,7 +139,7 @@
         <h3>自我介绍</h3>
         <p>用两三句话介绍自己：在哪里读书或工作，研究或关心什么方向。</p>
         <p>再写一段一路怎么走过来的：从哪个方向起步，后来转向了什么，为什么。</p>
-        <p>这台电脑里放的是简历装不下的东西：现在在做什么、一路怎么走过来、怎么想问题。纸质简历在桌上，点一下就能拿起来；做过的东西在右边的电视里。</p>
+        <p>这台电脑里放的是简历装不下的东西：现在在做什么、一路怎么走过来、怎么想问题。论文和一份剪报在桌上，点那摞纸就能拿起来；做过的东西在右边的电视里。</p>
       </article>
       <article data-cmd="NOW" data-updated="2026.11">
         <h3>最近</h3>
@@ -172,7 +174,7 @@
           <li><b>别人常问你的一个问题？</b>
             <p>你的回答。</p></li>
           <li><b>怎么联系你？</b>
-            <p>联系方式在桌上的记事本里；纸质简历也在桌上，点一下就能拿起来看。</p></li>
+            <p>联系方式在桌上的记事本里；论文也在桌上，点那摞纸就能拿起来看。</p></li>
         </ol>
       </article>
     </div>
@@ -789,6 +791,44 @@
     </ul>
   </section>
 
+  <section id="messages">
+    <h2>Messages</h2>
+    <!--
+      别人对你的评价，写成答录机里的留言。3D 版里是桌子左头电话旁边的答录机：MESSAGES 键旁边的小红灯：有没听过的留言就闪，几条闪几下；
+      点它就一条条放出来（屏幕下方像字幕一样出字，js/answering.js），镜头不动。纯文字版就是下面这张列表。
+      一个 li 是一条留言：
+        data-when      答录机报的时间（"Tuesday, 9:14 PM"），可以不写
+        data-audio     留言的录音（mp3，路径相对 index.html），可以不写；不写就只出字，底下垫一点磁带底噪
+        blockquote     对方说的话，口语一点，像在电话里留言
+        p.from         谁说的：b 里写名字，后面写身份
+      真实的留言也可以写在 assets/messages/messages.html（几个 li，这个文件夹不进 Git），个人模式加载时整份换进下面的列表。
+      一条都不写：红灯不亮，点它只"嘀"一声。
+    -->
+    <ol class="messages">
+      <li data-when="Tuesday, 9:14 PM"><blockquote>Hi, it's Advisor Name. I just finished your draft. The part where you counted every failure is the best thing in it. Whoever gets you next is lucky. Call me back.</blockquote>
+        <p class="from"><b>Advisor Name</b>, Professor, University Name</p></li>
+      <li data-when="Friday, 6:02 PM"><blockquote>Hey, it's Coauthor Name. The demo worked on the first try, in front of everyone. I owe you a coffee. Actually, two.</blockquote>
+        <p class="from"><b>Coauthor Name</b>, Research Scientist, Lab Name</p></li>
+      <li data-when="Monday, 8:30 AM"><blockquote>Morning, Manager Name here. Your write-up saved the team a week. I'm sending it to everyone. Talk soon.</blockquote>
+        <p class="from"><b>Manager Name</b>, Engineering Lead, Company Name</p></li>
+    </ol>
+    <!--
+      电话留言：访客在 3D 版里点桌上的转盘电话写一段话，发到你的邮箱（js/phone.js）。action 填表单服务给的地址：
+      比如在 formspree.io 建一个表单，把它给的 https://formspree.io/f/xxxxxxxx 填进来，它会把每条提交转成邮件发给你。
+      现在填的 https://formspree.io/f/your-form-id 是示例：电话照样能拿起来写，按回车时什么都不发，告诉访客这是演示（纯文字版不显示这张表）。
+      action 留空：电话就是联系方式，点它打开 Contact。
+      用这个模板做自己的网站时，记得换成你自己的地址，不然留言会发到别人的邮箱。
+      _gotcha 是给机器人的陷阱栏（人看不见、不会填）；表单服务要一个隐藏的 key 的话，照样加 <input type="hidden" name=… value=…>。
+    -->
+    <form class="leave-message" action="https://formspree.io/f/your-form-id" method="POST">
+      <p>Leave a message</p>
+      <textarea name="message" rows="3" maxlength="1200" required aria-label="Your message"></textarea>
+      <input name="from" maxlength="160" placeholder="Your name, and how to reach you (optional)" aria-label="Your name, and how to reach you">
+      <input class="lm-trap" type="text" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <button type="submit">Send</button>
+    </form>
+  </section>
+
   <section id="online" data-nav="Contact">
     <h2>Contact</h2>
     <!--
@@ -824,6 +864,10 @@
       <li><a href="https://sketchfab.com/3d-models/coffee-mug-school-project-5f5ccee1514c440887c072fae8e0d699">Coffee Mug (School Project)</a> <span class="by">Ole Gunnar Isager · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
         <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
       <li><a href="https://sketchfab.com/3d-models/wooden-perpetual-desk-calendar-8950bc735feb4e7e9a1260de2621ccd0">Wooden Perpetual Desk Calendar</a> <span class="by">3DLover89 · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+      <li><a href="https://sketchfab.com/3d-models/western-electric-500-vintage-rotary-telephone-4425a0d9629c420788cf6b0d072f4564">Western Electric 500 Vintage Rotary Telephone</a> <span class="by">Skyice · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+        <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+      <li><a href="https://sketchfab.com/3d-models/answering-machine-de06095a3b4d46f09b218cdb51b51a0f">Answering machine</a> <span class="by">aefj1032 · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
         <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
       <li><a href="https://sketchfab.com/3d-models/retro-crt-tv-6bc462b233ce4c78904dfcadf5123e29">Retro CRT TV</a> <span class="by">meipal · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
         <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>

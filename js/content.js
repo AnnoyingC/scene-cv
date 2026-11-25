@@ -89,6 +89,16 @@ export function readContent(doc = document) {
       // 板上用小一号的：名字.webp → 名字.board.webp（做旧脚本两份都会出）
       return { src, board: src.replace(/\.webp$/, '.board.webp'), alt: img?.alt || '', caption: text(li.querySelector('p')) };
     }),
+    // 答录机里的留言（js/answering.js）：时间、说的话、谁说的（名字 + 身份）、可选的录音
+    messages: [...doc.querySelectorAll('#messages li')].map((li) => {
+      const from = li.querySelector('.from');
+      const name = text(from?.querySelector('b'));
+      return {
+        when: li.dataset.when || '', text: text(li.querySelector('blockquote')), name,
+        role: text(from).slice(name.length).replace(/^[\s,，·—-]+/, ''),
+        audio: li.dataset.audio ? new URL(li.dataset.audio, doc.baseURI).href : '',
+      };
+    }).filter((m) => m.text),
     links: [...doc.querySelectorAll('#online li')].map((li) => {
       const a = li.querySelector('a');
       return { label: text(a), url: a?.href || '', handle: text(li.querySelector('span')) };

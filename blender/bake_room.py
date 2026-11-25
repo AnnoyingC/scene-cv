@@ -1165,6 +1165,55 @@ with hot('calendar', DCAL_YAW):
 for k_, pc_ in DESKCAL['pieces'].items():
     print(f"[deskcal] {k_}: " + ', '.join(f"{f['label']} n{tuple(round(c, 1) for c in f['n'])} up{tuple(round(c, 1) for c in f['up'])}" for f in pc_['faces']))
 
+# ---------- 桌子左头：电话 + 答录机 = Messages（热点 messages 只框答录机） ----------
+# 右手写字的人电话放左手边：黑色转盘电话（Sketchfab「Western Electric 500 Vintage Rotary Telephone」，Skyice，CC BY）
+# 在左前角，转盘朝人，听筒线从左边出来；米色答录机（Sketchfab「Answering machine」，aefj1032，CC BY，AT&T 实物扫描）
+# 在它右后方、万年历前面，按键那头朝人、往镜头这边斜一点。电话线：电话后面 → 答录机侧面，答录机后面 → 桌子后沿落到墙根。
+# MESSAGES 键旁边那条小灯在网页里闪（有没听过的留言），点答录机放留言（js/answering.js）；灯的位置写进 manifest.answering。
+PHONE = Asset('sketchfab/western-electric-500-vintage-rotary-telephone', 'phone', texsize=1024, drop=('Black_Object_*',),
+              decimate={'Coiled_Cord*': 0.12, 'Base_Feet*': 0.08, '*_Jack_*': 0.1, 'Handset_Western*': 0.3,
+                        'Main_Body*': 0.4, '*Finger_Wheel*': 0.3, 'Dial_Number_Plate*': 0.5, '*Center_Cap*': 0.3, 'Plug_*': 0.3})
+PHONE_S, PHONE_YAW = 1.08, 0.15        # 素材是真实大小；放大一点点，开场画面里认得出是电话
+PHONE_AT = (DESK_X - 0.88, -1.305)      # 机身中心（听筒线在左边，往外多出 17 厘米）；往桌子中间收，右边离那摞纸十几厘米
+_blo, _bhi = PHONE.bounds(['Main_Body*'])
+_lo, _hi = PHONE.bounds()
+_pivot = np.array([(_blo[0] + _bhi[0]) / 2, _lo[1], (_blo[2] + _bhi[2]) / 2])  # 机身的水平中心落在桌面上（不算听筒线）
+with hot('phone', PHONE_YAW):  # 点电话 = 给主人留言（js/phone.js）
+    _, T_phone = put(PHONE, G((PHONE_AT[0], TOP, PHONE_AT[1]), (0, PHONE_YAW, 0)), uvk=25,
+                     anchor=tuple((_pivot - _lo) / (_hi - _lo)), scale=PHONE_S)
+
+# 扫描表面一层层鼓包：用 blender/answering_prep.py 照着扫描搭的干净外壳（颜色从扫描烤过去），小灯位置也是它量好的
+_AMD = os.path.join(ROOT, 'vendor-src', 'sketchfab', 'answering-machine')
+if not os.path.exists(os.path.join(_AMD, 'answering-machine-clean.glb')):
+    raise SystemExit('[answering] 先跑 blender/answering_prep.py（从扫描做干净的外壳）')
+AM = Asset('sketchfab/answering-machine', 'answering', texsize=1024, glb=os.path.join(_AMD, 'answering-machine-clean.glb'))
+with open(os.path.join(_AMD, 'answering-machine-clean.json')) as _f:
+    AM_LED = json.load(_f)['led']
+AM_S = 0.16 / 0.786 * 1.1              # 扫描的单位是随便的：按宽 16 厘米（深 22、高 5.7）还原，再放大一成
+AM_YAW = math.pi / 2 + 0.25            # 素材里按键那头朝 -x：转 90° 朝人，再往镜头这边斜 0.25
+AM_AT = (DESK_X - 0.76, -1.62)          # 右边离会议论文 6 厘米、离随身听 3 厘米
+with hot('messages', AM_YAW):
+    _, T_am = put(AM, G((AM_AT[0], TOP, AM_AT[1]), (0, AM_YAW, 0)), uvk=25, scale=AM_S)
+# 小灯：MESSAGES 键旁边那条暗缝（素材坐标 three：中心、所在斜面的法线；长边沿素材 z）
+_R = T_am.to_3x3().normalized()
+_n = (_R @ Vector(AM_LED['n'])).normalized()
+_along = (_R @ Vector((0.0, 0.0, 1.0))).normalized()
+_r4 = lambda v: [round(float(c), 4) for c in v]  # noqa: E731（manifest 那段的 r3 在文件后面才定义）
+ANSWERING = dict(led=dict(c=_r4(at3(T_am, AM_LED['c']) + _n * 0.0006), n=_r4(_n), right=_r4(_along),
+                          up=_r4(_n.cross(_along)), w=round(AM_LED['w'] * AM_S, 4), h=round(AM_LED['h'] * AM_S, 4)))
+print(f"[answering] 灯 {ANSWERING['led']['c']}，{ANSWERING['led']['w'] * 1000:.1f} × {ANSWERING['led']['h'] * 1000:.1f} mm")
+# 电话线：电话后面的接口 → 答录机靠电话那侧；答录机后面 → 从万年历和随身听中间穿到桌子后沿，落到墙根（和台灯的线一样）
+_jack = at3(T_phone, (0.048, 0.012, -0.112))
+_side = at3(T_am, (-0.05, 0.03, -0.352))  # 线插在底座侧面、后面（底座比上壳往里收）
+_back = at3(T_am, (0.49, 0.03, 0.0))
+_y = TOP + 0.0025
+tube(spline([(_jack.x, _jack.y, _jack.z), (_jack.x + 0.01, _y, _jack.z - 0.04), ((_jack.x + _side.x) / 2 - 0.03, _y, (_jack.z + _side.z) / 2),
+             (_side.x - 0.02, _y, _side.z + 0.01), (_side.x, _side.y, _side.z)], 5), 0.0022, wire)
+_wx = DESK_X - 0.67  # 万年历右沿（约 -0.65）和随身听左沿（约 -0.57）中间
+tube(spline([(_back.x, _back.y, _back.z), (_back.x + 0.02, _y, _back.z - 0.03), (_wx, _y, _back.z - 0.07), (_wx, _y, DESK_BACK + 0.06), (_wx, _y, DESK_BACK + 0.006),
+             (_wx - 0.01, TOP - 0.02, DESK_BACK - 0.004), (_wx - 0.02, TOP - 0.07, BACK + 0.014), (_wx, 0.04, BACK + 0.012),
+             (_wx + 0.07, 0.004, BACK + 0.016)], 5), 0.0022, wire)
+
 # ---------- 桌上的杂物：让桌子看起来有人在用 ----------
 paper, ink = mat('mug', '#e8e2d4'), mat('rbtn', '#8a8580')
 
@@ -2385,6 +2434,7 @@ manifest.update({
     'cutout': CUTOUT,
     'tints': PAPER_TINT,  # 有贴图的材质在网页里再乘的颜色（桌上那摞纸在台灯底下，压暗一档）
     'deskcal': DESKCAL,
+    'answering': ANSWERING,  # 桌子左头的答录机：MESSAGES 键旁边那条小灯（中心、法线、长边方向、宽高），网页里画成会闪的红灯
     'art': {'title': ART_TITLE},  # 墙角那幅画的名字（鼠标停在画上时的提示）
     'glass': {'window_glass': 0.16, 'poster_tape_shadow': 0.22},  # 窗玻璃：淡淡一层，窗外隔着玻璃；海报胶带底下的影子
     'vendor': USED,

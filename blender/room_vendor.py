@@ -190,10 +190,11 @@ class Asset:
     """一个素材文件。pieces：子物件名 → 网格（Blender 坐标，素材自己的原点和单位）。"""
 
     def __init__(self, source, prefix, texsize=512, drop=(), decimate=None, cutout=(), by_parent=False,
-                 blend=None, pose=None, keep=(), drop_mats=()):
+                 blend=None, pose=None, keep=(), drop_mats=(), glb=None):
         """by_parent：子物件按上一层空物件的名字认（有的素材网格都叫 defaultMaterial，有意义的名字在父节点上）。
         blend：改从这份带骨骼的 blend 读；pose(物件列表) 在取网格之前改姿势。取网格时把修改器（骨骼、曲线）应用上。
-        keep：只留名字匹配的网格。drop_mats：这些材质上的面不要（灯泡换成自己的发光球）。"""
+        keep：只留名字匹配的网格。drop_mats：这些材质上的面不要（灯泡换成自己的发光球）。
+        glb：改读 vendor-src 里这份整理过的文件（比如答录机：blender/answering_prep.py 从扫描做出来的干净外壳）。"""
         self.source, self.prefix = source, prefix
         before, mats_before = set(bpy.data.objects), set(bpy.data.materials)
         imgs_before = set(bpy.data.images)
@@ -203,7 +204,10 @@ class Asset:
                 pose(new)
             bpy.context.view_layer.update()
         else:
-            bpy.ops.import_scene.gltf(filepath=asset_path(source))
+            path = glb or asset_path(source)
+            if not os.path.exists(path):
+                raise SystemExit(f'[vendor] {prefix}: 没有 {path}')
+            bpy.ops.import_scene.gltf(filepath=path)
             new = [o for o in bpy.data.objects if o not in before]
         self.pieces, self.alias = {}, {}  # alias：子物件 → 原来的材质名（有的素材子物件名字没意义，按材质名认）
         deps = bpy.context.evaluated_depsgraph_get() if blend else None

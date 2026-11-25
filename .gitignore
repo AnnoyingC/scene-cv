@@ -55,6 +55,8 @@ assets/posters/
 assets/resume/
 # 真实的论文、报道（js/main.js 在个人模式下换进 #papers）
 assets/papers/
+# 真实的留言（别人对你的评价、录音；js/main.js 在个人模式下换进 #messages）
+assets/messages/
 
 # 发布检查用的本地词表（scripts/audit_public.py 读，一行一个不该出现在公开文件里的词）
 .private-terms

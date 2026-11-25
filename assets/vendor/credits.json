@@ -331,6 +331,50 @@
       ]
     },
     {
+      "id": "sketchfab/answering-machine",
+      "source": "Sketchfab",
+      "title": "Answering machine",
+      "zh": "答录机（AT&T，照片扫描）",
+      "authors": [
+        "aefj1032"
+      ],
+      "authorUrl": "https://sketchfab.com/aefj1032",
+      "url": "https://sketchfab.com/3d-models/answering-machine-de06095a3b4d46f09b218cdb51b51a0f",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "de06095a3b4d46f09b218cdb51b51a0f",
+        "format": "glb",
+        "textureMaxResolution": 8192,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间书桌左头、电话旁边的答录机：扫描的表面一层层鼓包、底边破碎，照着扫描量出的尺寸重新搭了一个规整的外壳（上壳 + 往里收的底座、圆角、按键那头往前斜），用 Cycles 把扫描的颜色烤到新外壳上（blender/answering_prep.py）；按宽 16 厘米还原尺寸再放大 1.1 倍，按键那头朝人、往镜头斜一点；贴图缩到 1024 px；MESSAGES 键旁边的小灯在网页里画成会闪的红灯；接了两根自己画的电话线；烘焙进房间光照"
+      ]
+    },
+    {
+      "id": "sketchfab/western-electric-500-vintage-rotary-telephone",
+      "source": "Sketchfab",
+      "title": "Western Electric 500 Vintage Rotary Telephone",
+      "zh": "黑色转盘电话",
+      "authors": [
+        "Skyice"
+      ],
+      "authorUrl": "https://sketchfab.com/vicky12218",
+      "url": "https://sketchfab.com/3d-models/western-electric-500-vintage-rotary-telephone-4425a0d9629c420788cf6b0d072f4564",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "fetch": {
+        "sketchfab": "4425a0d9629c420788cf6b0d072f4564",
+        "format": "glb",
+        "textureMaxResolution": 4096,
+        "manual": true
+      },
+      "changes": [
+        "怀旧房间书桌左前角的电话：放大到 1.08 倍，转盘朝人、往镜头斜一点；去掉两片小贴片；网格减面（18 万 → 4.2 万个三角形，螺旋线、底脚、接口减得最多）；贴图缩到 1024 px、只保留底色贴图，转盘的透明塑料改成不透明；烘焙进房间光照"
+      ]
+    },
+    {
       "id": "sketchfab/cork-board",
       "source": "Sketchfab",
       "title": "Cork Board",

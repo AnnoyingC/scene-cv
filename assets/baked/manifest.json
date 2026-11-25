@@ -2,26 +2,26 @@
   "size": 2048,
   "samples": 1024,
   "blender": "5.2.3 LTS",
-  "built": "20261124-043020",
+  "built": "20261125-072852",
   "layers": {
     "ambient": {
       "file": "lm_ambient.jpg",
-      "scale": 0.617340087890625
+      "scale": 0.6049191355705261
     },
     "room": {
       "file": "lm_room.jpg",
-      "scale": 2.3405508995056152
+      "scale": 2.1968276500701904
     },
     "lamp": {
       "file": "lm_lamp.jpg",
-      "scale": 2.5887033939361572
+      "scale": 3.3261165618896484
     },
     "tv": {
       "file": "lm_tv.jpg",
-      "scale": 1.2720903158187866
+      "scale": 1.288826823234558
     }
   },
-  "seconds": 40,
+  "seconds": 50,
   "camera": {
     "target": [
       0.0706,
@@ -1051,6 +1051,32 @@
       1.0
     ]
   },
+  "answering": {
+    "led": {
+      "c": [
+        -0.6375,
+        0.8122,
+        -1.5528
+      ],
+      "n": [
+        0.0645,
+        0.9654,
+        0.2525
+      ],
+      "right": [
+        0.9689,
+        0.0,
+        -0.2474
+      ],
+      "up": [
+        -0.2389,
+        0.2606,
+        -0.9354
+      ],
+      "w": 0.0069,
+      "h": 0.0025
+    }
+  },
   "art": {
     "title": "Claude Monet · Impression, Sunrise, 1872"
   },
@@ -1070,6 +1096,8 @@
     "sketchfab/vhs",
     "sketchfab/coffee-mug-school-project",
     "sketchfab/wooden-perpetual-desk-calendar",
+    "sketchfab/western-electric-500-vintage-rotary-telephone",
+    "sketchfab/answering-machine",
     "sketchfab/retro-crt-tv",
     "sketchfab/wooden-bookcase",
     "sketchfab/elegan-old-book-pack",
@@ -1834,6 +1862,36 @@
           0.0571
         ],
         "r": 0.3
+      }
+    ],
+    "phone": [
+      {
+        "c": [
+          -0.8512,
+          0.8272,
+          -1.3006
+        ],
+        "h": [
+          0.1551,
+          0.0652,
+          0.1188
+        ],
+        "r": 0.15
+      }
+    ],
+    "messages": [
+      {
+        "c": [
+          -0.7,
+          0.7933,
+          -1.62
+        ],
+        "h": [
+          0.1238,
+          0.0313,
+          0.0916
+        ],
+        "r": 1.8208
       }
     ],
     "papers": [
