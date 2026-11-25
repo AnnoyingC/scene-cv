@@ -23,3 +23,6 @@ SOFTWARE.
 Third-party 3D assets (assets/vendor/credits.json) keep their own licences
 (CC BY 4.0 or CC0 1.0), and the fonts in assets/fonts keep the SIL Open Font
 License; neither is covered by the MIT licence above.
+
+The sample photographs and scientific prints have their own rights notices
+in assets/photos-sample/SOURCES.txt and assets/posters-sample/SOURCES.txt.

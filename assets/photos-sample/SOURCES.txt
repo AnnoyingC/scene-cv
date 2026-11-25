@@ -1,0 +1,43 @@
+Tokyo photographs for the SceneCV sample cork board
+
+All nine photographs are CC0 1.0 through the WordPress Photo Directory.
+https://wordpress.org/photos/license/
+https://creativecommons.org/publicdomain/zero/1.0/
+
+SceneCV crops and ages the photographs, adds print borders and saves two WebP sizes.
+
+record-shop.webp / Shinya B
+Faded lettering above a secondhand record shop in Tokyo.
+https://wordpress.org/photos/photo/993640d9ea/
+
+cherry-stream.webp / sysbird
+Cherry trees in bloom over a narrow Tokyo stream.
+https://wordpress.org/photos/photo/7776411cfd/
+
+night-train.webp / Masaki Endo
+A passing train leaves a streak of light across a Tokyo railway bridge.
+https://wordpress.org/photos/photo/950685956e/
+
+asakusa-lanterns.webp / Tetsuya Yoshida
+Red paper lanterns above a street in Asakusa.
+https://wordpress.org/photos/photo/90163560bf/
+
+setagaya-tram.webp / 渡邉厚夫(たいちょ渡邉)
+The green front of an old Setagaya Line train.
+https://wordpress.org/photos/photo/213640d96d/
+
+tokyo-station.webp / Masaki Endo
+The Marunouchi facade of Tokyo Station lit up at dusk.
+https://wordpress.org/photos/photo/8056856541/
+
+shibuya-stairs.webp / Jhimross Olinares
+Stairs cross between pedestrian walkways in Shibuya.
+https://wordpress.org/photos/photo/433678a654/
+
+shinjuku-garden.webp / Arata Takami
+A pine and stone lantern beside a pond in Shinjuku Gyoen.
+https://wordpress.org/photos/photo/596910230f/
+
+river-skytree.webp / Jhimross Olinares
+A boat on the river in front of Tokyo Skytree.
+https://wordpress.org/photos/photo/17267895af/

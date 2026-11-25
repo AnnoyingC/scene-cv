@@ -2,12 +2,12 @@
 # 用 Blender 自带的 Python 跑（要 numpy，系统的 python3 没装）：
 #
 #   /Applications/Blender.app/Contents/MacOS/Blender -b --factory-startup --python blender/age_photos.py -- --src photos-src --out assets/photos
-#   /Applications/Blender.app/Contents/MacOS/Blender -b --factory-startup --python blender/age_photos.py -- --demo 1 --out assets/photos-sample
+#   /Applications/Blender.app/Contents/MacOS/Blender -b --factory-startup --python blender/age_photos.py -- --demo 1 --out output/blank-photos
 #
 # --src：原图文件夹（jpg / png / webp / heic，heic 等格式先用 macOS 自带的 sips 转成 jpg）；--demo 1：不读原图，生成几张空白的旧照片当样例。
 # 产物：每张照片两份 webp —— 名字.webp（长边 1600）和 名字.board.webp（钉在软木板上，长边 1024），
 # 重新编码保存，原图里的 EXIF（拍摄时间、GPS 位置、相机型号）一律不带过去。真实照片还会写一份 photos.json（照片列表），
-# 网页有这个文件就把这些照片钉到软木板上，没有就用 index.html 里的占位照片。
+# 网页有这个文件就把这些照片钉到软木板上，没有就用 index.html 里的样片。
 # 做旧的步骤（顺序有讲究，后一步作用在前一步的结果上）：
 #   裁成最接近的冲印比例（3:2、4:3、5:4、1:1、16:9）→ 整体只轻轻旧一点（黑位稍抬、略偏暖、降一点饱和）→ 轻微柔焦 → 暗角
 #   → 越靠边越旧：边上褪色发黄、斑驳（褪白的块 + 浅褐色污渍）、最外一圈发褐、霉点只长在边上 —— 画面中间保持看得清
@@ -219,7 +219,7 @@ def age(rgb, seed):
     return np.clip(out, 0, 1)
 
 
-# ---------- 样例（公开仓库用的空白旧照片；真实照片放 photos-src/，不进 Git） ----------
+# ---------- 样例（可选的空白相纸测试图；真实照片放 photos-src/，不进 Git） ----------
 def demo_images():
     """空白的旧照片：没有画面，只有一层很淡的底色（横的、竖的、方的各几张），做旧以后像褪了色的相纸。"""
     shapes = ((1500, 1000), (1000, 1400), (1500, 1000), (1200, 1200), (1000, 1400), (1500, 1000))

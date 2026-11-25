@@ -89,11 +89,23 @@ export async function start(content, { nav = null, music = null, achievements = 
   const room = new BakedRoom(data, { renderer, scene });
   const M = data.manifest;
   // 左手边那面墙（画架和窗户之间）的海报和它下面几张打印的插图：烘焙时和墙一起打了光，贴图是空白的占位纸。
-  // 材质名 poster、poster_2… 就是 assets/posters/posters.json 里的键（blender/bake_room.py 的 POSTERS）。
-  // 公开版全部藏起来（墙和没贴东西时一样，热点也去掉）；个人模式下本地有 posters.json（不进 Git：封面、插图有版权）
-  // 就把做旧过的图（blender/age_poster.py）一张张换上去，鼠标停在上面显示它的名字
+  // 两组海报共用模型、烘焙光照和四角胶带，清单按材质名 poster、poster_2… 指定贴图和悬停标题。
   const posterKeys = [...room.byMat.keys()].filter((k) => /^poster(_\d+)?$/.test(k));
   const tapeMeshes = [...(room.byMat.get('poster_tape') || []), ...(room.byMat.get('poster_tape_shadow') || [])]; // 四角的白胶带和它的影子
+  // 小胶带在光照图上有的只占几个像素。沿着后墙法线取胶带正下方的墙面光照，保留撕边和独立的投影。
+  const wallMeshes = room.byMat.get('wall') || [];
+  const tapeRay = new THREE.Raycaster(undefined, new THREE.Vector3(0, 0, -1), 0, 0.05);
+  for (const tape of room.byMat.get('poster_tape') || []) {
+    const { position, uv1 } = tape.geometry.attributes;
+    if (!uv1) continue;
+    for (let i = 0; i < position.count; i++) {
+      tape.localToWorld(tapeRay.ray.origin.fromBufferAttribute(position, i));
+      const hit = tapeRay.intersectObjects(wallMeshes, false)[0];
+      const uv = hit?.uv1 || hit?.uv;
+      if (uv) uv1.setXY(i, uv.x, uv.y);
+    }
+    uv1.needsUpdate = true;
+  }
   const posterHot = {}, posterTitles = {};
   for (const k of posterKeys) {
     for (const m of room.byMat.get(k)) m.visible = false;
@@ -101,14 +113,15 @@ export async function start(content, { nav = null, music = null, achievements = 
     delete room.hotspots[k];
   }
   for (const m of tapeMeshes) m.visible = false;
-  if (personal && posterKeys.length) {
-    fetch(new URL('../assets/posters/posters.json', import.meta.url), { cache: 'no-cache' })
+  if (posterKeys.length) {
+    const manifestUrl = new URL(personal ? '../assets/posters/posters.json' : '../assets/posters-sample/posters.json', import.meta.url);
+    fetch(manifestUrl, { cache: 'no-cache' })
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => {
         for (const k of posterKeys) {
           const p = j?.[k];
           if (!p?.file) continue;
-          new THREE.TextureLoader().load(new URL('../assets/posters/' + p.file, import.meta.url).href, (tex) => {
+          new THREE.TextureLoader().load(new URL(p.file, manifestUrl).href, (tex) => {
             tex.flipY = false; // 和 glTF 的贴图一样（UV 的 v 是倒过来的）
             tex.colorSpace = THREE.SRGBColorSpace;
             tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
@@ -300,7 +313,7 @@ export async function start(content, { nav = null, music = null, achievements = 
   }
 
   // ---------- 照片墙（js/photos.js）----------
-  // 照片墙：个人模式（见 main.js）下本地有做旧过的真实照片（assets/photos/photos.json，不进 Git）就用它们，没有就用 index.html 里的占位照片
+  // 照片墙：个人模式（见 main.js）下本地有做旧过的真实照片（assets/photos/photos.json，不进 Git）就用它们，没有就用 index.html 里的样片
   let photoWall = null;
   (personal ? fetch(new URL('../assets/photos/photos.json', import.meta.url), { cache: 'no-cache' })
     .then((r) => (r.ok ? r.json() : null)).catch(() => null) : Promise.resolve(null))
@@ -746,7 +759,7 @@ export async function start(content, { nav = null, music = null, achievements = 
     if (h.kind === 'messages') return answering?.hint() || '';
     if (h.kind === 'phone') return phone?.hint() || '';
     if (h.kind === 'art') return M.art?.title || ''; // 墙角画架上的画：只有提示（画名在 manifest.art），点了不跳转
-    if (/^poster/.test(h.kind)) return posterTitles[h.kind] || ''; // 墙上的海报、插图（个人模式）：只有提示
+    if (/^poster/.test(h.kind)) return posterTitles[h.kind] || ''; // 墙上的海报、插图：只有提示
     if (h.kind === 'lamp') return light.lampT ? 'Desk lamp · Turn off' : 'Desk lamp · Turn on';
     if (h.kind === 'room') return light.roomT ? 'Room light · Turn off' : 'Room light · Turn on';
     if (h.kind === 'about' && view === 'about') return pc.hintAt(h.uv);

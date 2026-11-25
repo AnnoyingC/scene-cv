@@ -1,0 +1,40 @@
+Scientific prints for the SceneCV sample wall
+
+The Metropolitan Museum of Art releases its Open Access images under CC0 1.0.
+https://www.metmuseum.org/policies/image-resources
+https://creativecommons.org/publicdomain/zero/1.0/
+
+The Science History Institute marks the three plates below as public domain.
+https://creativecommons.org/publicdomain/mark/1.0/
+
+SceneCV crops the scans, frames them on aged paper and re-encodes them as WebP.
+
+decomposition-of-light.webp
+Decomposition of Light · Structure of the Solar Rays
+Science History Institute / Public Domain Mark
+https://digital.sciencehistory.org/works/hnx0bj9
+
+algae-cyanotype.webp
+Anna Atkins · Cystoseira fæniculacea · c. 1853
+The Metropolitan Museum of Art / CC0
+https://www.metmuseum.org/art/collection/search/291506
+
+metal-spectra.webp
+Spectra of the Metals of the Alkalies & Alkaline Earths
+Science History Institute / Public Domain Mark
+https://digital.sciencehistory.org/works/1g05fc50d
+
+full-moons.webp
+Lewis Morris Rutherfurd · Two full moons · 1871
+The Metropolitan Museum of Art / CC0
+https://www.metmuseum.org/art/collection/search/813902
+
+compound-spectroscope.webp
+The Compound Spectroscope
+Science History Institute / Public Domain Mark
+https://digital.sciencehistory.org/works/wm117p851
+
+horse-in-motion.webp
+Eadweard Muybridge · Attitudes of Animals in Motion
+The Metropolitan Museum of Art / CC0
+https://www.metmuseum.org/art/collection/search/700109

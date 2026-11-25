@@ -775,19 +775,22 @@
   <section id="photos" data-nav="Photos">
     <h2>Photos</h2>
     <!--
-      3D 版里钉在挂钟下面的软木板上：点软木板，镜头凑近，照片散着钉在板上（互相压着、角卷起来），可以拖着换位置。
+      3D 版里钉在挂钟下面的软木板上：点软木板，镜头凑近，照片散着钉在板上（错落两排、角卷起来），可以拖着换位置。
       照片先用 blender/age_photos.py 做旧：原图放 photos-src/，跑完得到 assets/photos/名字.webp 和 名字.board.webp，
       还有一份 assets/photos/photos.json（照片列表）；有这份列表，3D 版就钉这些照片。这两个文件夹都不进 Git。
-      下面是样例：几张空白的做旧照片（assets/photos-sample/，--demo 1 生成的），本地没有真实照片时用。p 是一行说明，可以不写。
+      下面是公开样片：九张东京照片，来源和许可见 assets/photos-sample/SOURCES.txt。p 是一行说明，可以不写。
       img 的 width / height 写图片的像素尺寸：图还没下完时先按这个比例占好位置，点导航跳到后面几节才不会跳偏。
     -->
     <ul class="photos">
-      <li><img src="assets/photos-sample/blank-1.webp" alt="一张空白的旧照片" width="1600" height="1181" loading="lazy"> <p>一行说明，可以不写。</p></li>
-      <li><img src="assets/photos-sample/blank-2.webp" alt="一张空白的旧照片" width="1181" height="1600" loading="lazy"> <p>照片换成自己的：原图放 photos-src/，用 blender/age_photos.py 做旧。</p></li>
-      <li><img src="assets/photos-sample/blank-3.webp" alt="一张空白的旧照片" width="1600" height="1181" loading="lazy"></li>
-      <li><img src="assets/photos-sample/blank-4.webp" alt="一张空白的旧照片" width="1529" height="1600" loading="lazy"></li>
-      <li><img src="assets/photos-sample/blank-5.webp" alt="一张空白的旧照片" width="1181" height="1600" loading="lazy"></li>
-      <li><img src="assets/photos-sample/blank-6.webp" alt="一张空白的旧照片" width="1600" height="1181" loading="lazy"></li>
+      <li><img src="assets/photos-sample/record-shop.webp" alt="Faded lettering above a secondhand record shop in Tokyo." width="1600" height="1180" loading="lazy"></li>
+      <li><img src="assets/photos-sample/cherry-stream.webp" alt="Cherry trees in bloom over a narrow Tokyo stream." width="1600" height="1181" loading="lazy"></li>
+      <li><img src="assets/photos-sample/night-train.webp" alt="A passing train leaves a streak of light across a Tokyo railway bridge." width="1600" height="1181" loading="lazy"></li>
+      <li><img src="assets/photos-sample/asakusa-lanterns.webp" alt="Red paper lanterns above a street in Asakusa." width="1600" height="1026" loading="lazy"></li>
+      <li><img src="assets/photos-sample/setagaya-tram.webp" alt="The green front of an old Setagaya Line train." width="1600" height="1304" loading="lazy"></li>
+      <li><img src="assets/photos-sample/tokyo-station.webp" alt="The Marunouchi facade of Tokyo Station lit up at dusk." width="1600" height="1181" loading="lazy"></li>
+      <li><img src="assets/photos-sample/shibuya-stairs.webp" alt="Stairs cross between pedestrian walkways in Shibuya." width="1600" height="1304" loading="lazy"></li>
+      <li><img src="assets/photos-sample/shinjuku-garden.webp" alt="A pine and stone lantern beside a pond in Shinjuku Gyoen." width="1600" height="1026" loading="lazy"></li>
+      <li><img src="assets/photos-sample/river-skytree.webp" alt="A boat on the river in front of Tokyo Skytree." width="1600" height="1304" loading="lazy"></li>
     </ul>
   </section>
 
@@ -845,6 +848,7 @@
     <h2>Credits</h2>
     <!-- 下面的列表由 node scripts/credits_html.mjs 生成（来自 assets/vendor/credits.json），别手改 -->
     <p class="intro">The models in the desk room come from Sketchfab and Poly Haven and are used under their own licences; each entry lists the author, the original, the licence and how it was changed. The walls, desk and the remaining small objects are built with Blender scripts, and the wood grain is procedural. The rainy night outside the window is the real neighbourhood around Tokyo Tower: buildings and terrain from MLIT's PLATEAU 3D city model, streets, shops and trees from OpenStreetMap, distant facades cut from CC0 night photos; Tokyo Tower itself, the street furniture and the shop fronts are modelled by script. The 3D runs on <a href="https://threejs.org/">three.js</a> (MIT). Fonts: Cinzel, EB Garamond, Playfair Display, UnifrakturMaguntia and Caveat (SIL Open Font License).</p>
+    <p class="intro">The template features nine <a href="assets/photos-sample/SOURCES.txt">CC0 photographs of Tokyo</a> and six <a href="assets/posters-sample/SOURCES.txt">public-domain scientific prints</a>.</p>
     <!-- credits:begin -->
     <ul class="credit-list">
       <li><a href="https://sketchfab.com/3d-models/persian-rug-fe13eecfc9b8405dab1fe76c5dd28a4c">Persian Rug</a> <span class="by">Nicholas Record · Sketchfab</span> <a class="lic" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>

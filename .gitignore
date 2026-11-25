@@ -47,6 +47,7 @@ assets/audio/
 
 # 个人内容：书的真实封面（出版社的版权）、个人照片、真实简历和联系方式（电话、邮箱、照片、PDF）。
 # 公开的 index.html 里放样例，这些只在本地用（见 README 的"改内容"）
+personal/
 assets/books/covers/
 assets/books/books.html
 photos-src/

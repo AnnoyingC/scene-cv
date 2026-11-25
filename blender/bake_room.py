@@ -1744,9 +1744,9 @@ if CORNER == 'studio':
             d.uv = (1 - vn, un) if _wide else (un, vn)                    # 画框横放（转了 90°）：画也跟着转回正
         print(f'[art] 画布换成莫奈：{ob.name}')
 # ---------- 左手边那面墙（墙角画架和窗户之间）：海报和几张论文插图 ----------
-# 公开版：这里只放几块占位的旧纸，网页里藏起来（墙和现在一样）；个人模式：网页把做旧过的真实海报、插图（assets/posters/，不进 Git）换上来。
+# 海报的纸面和胶带共用同一套几何：网页按模式加载公开样图或个人海报的贴图。
 # 它们和墙一起烘焙光照（窗外的城市、台灯、房间灯开关都跟着变），但对阴影、反弹的光线是透明的（见下面烘焙前的 poster* 材质）：
-# 墙上不会烘出它们的影子，公开版藏起来以后墙是干净的。
+# 墙上不会烘出它们的影子。
 # 每张：key（材质名、热点名，也是 assets/posters/posters.json 里的键）、宽、高（米）、中心 x、离地 y、在墙面里转几度。
 # 大海报右边离窗洞 8 厘米；下面一小片墙（画架的画框右边、窗台左头上面）错落着贴几张打印的插图和一张杂志封面
 _A5 = 1.414
@@ -2364,7 +2364,7 @@ def save_encoded(img, path):
 
 _poster_restore = []
 # 桌上那摞纸（材质名以 paper 开头）：网页里拿起来时藏起来，桌面上不能留它的影子
-for _pmn in [m.name for m in me.materials if m.name.startswith('poster') or m.name.startswith('paper')]:  # 海报、胶带不挡光、不反光：墙上不留影子（公开版网页里把它们藏起来，墙还是干净的）
+for _pmn in [m.name for m in me.materials if m.name.startswith('poster') or m.name.startswith('paper')]:  # 海报、胶带不挡光、不反光：墙上不留影子
     _nt = me.materials[_pmn].node_tree
     _out = next(n for n in _nt.nodes if n.type == 'OUTPUT_MATERIAL')
     _bsdf = next(n for n in _nt.nodes if n.type == 'BSDF_PRINCIPLED')

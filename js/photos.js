@@ -1,6 +1,6 @@
 // 照片墙：挂钟下面的软木板（js/room.js 用）。点软木板，镜头凑到板前（#photos），照片就钉在板上看，不另外弹相册。
 //   - 板面先盖一层程序画的软木（盖住素材自带的那几张照片），再把照片（blender/age_photos.py 做旧过的）散着钉上去：
-//     微微歪着、互相压着一点、各有一颗图钉、底下一点投影；角是卷起来的（网格真的翘起来，翘起来的地方明暗跟着变）
+//     微微歪着、各有一颗图钉、底下一点投影；角是卷起来的（网格真的翘起来，翘起来的地方明暗跟着变）
 //   - 凑近看的时候可以拖动照片：按住的那张提起来、放到最上面，松手落下。摆好的位置记在这个浏览器里（localStorage），
 //     下次来还是这样；面板里"摆回原样"清掉
 //   - 板面的中心、大小、朝向来自 manifest.photos（烘焙脚本量的）。这些是后加的面片，没有烘焙光照：亮度跟着屋里的灯走
@@ -104,22 +104,27 @@ export function createPhotos({ room, scene, photos = [] }) {
   group.add(cork);
   const UW = bw - inset - 0.07, UH = bh - inset - 0.05; // 照片中心能放的范围
 
-  // 默认摆法：两排，互相压着一点，微微歪着；位置和角度由照片的文件名定（换顺序不乱）
+  // 上排少一张时让两排各自铺开；每张保留一点不齐的高度和倾斜。
   const list = photos.slice(0, 12), n = list.length;
-  const rows = n <= 4 ? 1 : 2, cols = Math.ceil(n / rows), step = (UW * 0.88) / cols; // 往中间收一点，留出一圈软木
-  const L = Math.min(0.19, step * 1.35); // 照片长边：比间距大一截，相邻的照片互相压住一点
+  const rows = n <= 4 ? 1 : 2;
+  const topCount = rows === 1 ? n : Math.floor(n / 2);
   function home(i, src) {
-    // 照片列表里写了位置（x、y 是板面上的米，rot 弧度，order 越大越靠上）就照它摆
     const p = list[i];
-    if (p && Number.isFinite(p.x) && Number.isFinite(p.y)) return { x: p.x, y: p.y, rot: p.rot || 0, order: p.order ?? i };
+    if (Number.isFinite(p.x) && Number.isFinite(p.y)) {
+      // 手动排过的照片沿用原冲印尺寸，保留作者选好的间距。
+      const longEdge = Math.min(0.19, UW * 0.88 / Math.ceil(n / rows) * 1.35);
+      return { x: p.x, y: p.y, rot: p.rot || 0, order: p.order ?? i, longEdge };
+    }
+    const top = i < topCount, count = top ? topCount : n - topCount;
+    const col = top ? i : i - topCount;
+    const step = (bw - inset) * 0.97 / count;
     const r = rnd(hash(src));
-    const row = Math.floor(i / cols), col = i - row * cols, inRow = row === rows - 1 ? n - row * cols : cols;
-    const x0 = (col - (inRow - 1) / 2) * step;
     return {
-      x: x0 + (r() - 0.5) * step * 0.25,
-      y: (rows === 1 ? 0 : (row === 0 ? 1 : -1) * UH * 0.22) + (r() - 0.5) * UH * 0.12,
-      rot: (r() - 0.5) * 0.24,
+      x: (col - (count - 1) / 2 + (r() - 0.5) * 0.035) * step,
+      y: (rows === 1 ? 0 : top ? 1 : -1) * UH * 0.26 + (r() - 0.5) * UH * 0.045,
+      rot: (r() - 0.5) * 0.12,
       order: i,
+      longEdge: Math.min(0.19, step * 0.92),
     };
   }
   let saved = {};
@@ -133,7 +138,8 @@ export function createPhotos({ room, scene, photos = [] }) {
   const items = [];
   list.forEach((p, i) => {
     const src = p.board || p.src;
-    const it = { src, ...home(i, src), ...(saved[src] || {}), lift: 0, liftT: 0, w: L, h: L / 1.3 };
+    const layout = home(i, src), L = layout.longEdge;
+    const it = { src, ...layout, ...(saved[src] || {}), lift: 0, liftT: 0, w: L, h: L / 1.3 };
     const r = rnd(hash(src) + 7);
     it.curls = [{ cx: r() < 0.5 ? -1 : 1, cy: -1, lift: 0.009 + r() * 0.012, r: 0.4 + r() * 0.2 }];
     if (r() < 0.5) it.curls.push({ cx: it.curls[0].cx * -1, cy: r() < 0.6 ? -1 : 1, lift: 0.005 + r() * 0.008, r: 0.3 + r() * 0.15 });
