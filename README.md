@@ -78,7 +78,7 @@ Inspired by the spatial personal site at felixrieseberg.com. The name, résumé,
   </tr>
   <tr>
     <td><b>Answering machine · Messages</b><br>At the left end of the desk, the red light next to the MESSAGES key blinks once for every message you haven't heard. Click the machine and the messages play as subtitles, word by word, with who left them underneath. They are what other people say about you.</td>
-    <td><b>Telephone · Leave a message</b><br>Pick up the rotary phone and the answering machine takes the call: visitors write in the same subtitle area, and Enter sends it to your email through a form service. In this template the line is a demo and nothing is sent.</td>
+    <td><b>Telephone · Leave a message</b><br>Pick up the rotary phone: after the dial tone the dial turns for three digits and ticks its way back, it rings once and the answering machine takes the call: visitors write in the same subtitle area, and Enter sends it to your email through a form service. In this template the line is a demo and nothing is sent.</td>
   </tr>
   <tr>
     <td><img src="docs/images/room-activity.jpg" alt="A wooden almanac on the wall beside the bookshelf: carved GitHub, Codex and Claude figures above twelve weeks of stained wooden day tiles"></td>
@@ -182,6 +182,7 @@ The template includes a labelled 12-week sample. To see personal usage locally, 
 | `js/deskcal.js` | The perpetual calendar on the desk: its cubes, weekday roller and month bars turn to today's date; click it to scramble them |
 | `js/answering.js` | The answering machine at the left end of the desk: the blinking message light, playback of `#messages` as captions, and the beeps and tape hiss (generated in the browser, no sound files) |
 | `js/phone.js` | The rotary phone: leave-a-message composer in the caption area, sending to the form address in `#messages`; a demo that sends nothing with the template's example address, and Contact when no address is set |
+| `js/dial.js` | The phone's finger wheel (split out in `blender/bake_room.py`, `manifest.phone.wheel`): dialling a digit winds it clockwise to the finger stop and lets it return at ten steps a second, one tick per step, like a real governor |
 | `js/activity/` | The Activity Almanac beside the bookshelf (`board.js`: the carved board, figures and day tiles; `calendar.js`: twelve weeks of sample data, or the local snapshot with `?usage`) and the steam over the mug (`steam.js`) |
 | `js/sfx.js` | Sound: rain outside the window, a quiet soundtrack while the TV plays a project, and short effects for books, papers, photos, switches, tapes, the calendar and the computer menu. It starts after the first click (browsers do not allow sound before that); the "Sound on / off" link at the bottom is remembered. The files and their CC0 sources are listed in [`assets/sfx/README.md`](assets/sfx/README.md) |
 | `js/paint.js` | The notepad page |

@@ -60,6 +60,10 @@ h2 { font-size: 14px; letter-spacing: 0.12em; color: var(--muted); font-weight: 
 .messages .from { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
 .messages .from b { color: var(--fg); font-weight: 600; }
 .leave-message:not([action^="http"]), .leave-message[action*="your-form-id"] { display: none; } /* 没填表单服务的地址、或者还是模板的示例地址：不显示 */
+.message-line-note { display: none; }
+.leave-message[action*="your-form-id"] + .message-line-note,
+.leave-message:not([action^="http"]) + .message-line-note { display: block; }
+.leave-message:not([action^="http"]) + .message-line-note a { display: none; }
 .leave-message { display: grid; gap: 8px; margin-top: 20px; }
 .leave-message p { margin: 0; color: var(--muted); font-size: 14px; }
 .leave-message textarea, .leave-message input { font: inherit; font-size: 16px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: inherit; }

@@ -28,6 +28,7 @@ import { paintNote } from './paint.js';
 import { createDeskCalendar } from './deskcal.js';
 import { createAnsweringMachine } from './answering.js';
 import { createPhone } from './phone.js';
+import { createDial } from './dial.js';
 import { BakedRoom, loadBaked, tvLight } from './baked.js';
 import { CameraPass, GradePass, StreakPass, lookPicker } from './grade.js';
 import { createTurntable } from './turntable.js';
@@ -176,8 +177,15 @@ export async function start(content, { nav = null, music = null, achievements = 
   const deskCal = createDeskCalendar(room);
   // 桌子左头电话旁边的答录机：点它放留言（index.html #messages，别人对你的评价），镜头不动
   const answering = createAnsweringMachine(room, content.messages || [], { parent: $('room'), before: backBtn });
+  // 悬停高亮打折的两件：和电脑、录像带看着一样轻（对比过 0.35 … 1 的截图）
+  //   答录机：米白外壳正好在台灯底下，本来就亮，照常提亮会越过辉光的门槛，整台泛白发光、刺眼
+  //   电话：黑色大件，高亮叠的那层暖色会把整台变成一块平平的灰板子，奶白的拨号盘还冒光
+  const HI_SCALE = { 'answering.0': 0.6, 'phone.0': 0.5, 'phone.1': 0.5, phone_wheel: 0.5 };
+  for (const [mat, k] of Object.entries(HI_SCALE)) for (const m of room.byMat.get(mat) || []) m.material.uniforms.hiS.value = k;
   // 旁边的转盘电话：给主人留言，发到邮箱（#messages 里 form.leave-message 的 action）；没配地址就打开 Contact
-  const phone = M.hotspots?.phone ? createPhone({ form: document.querySelector('#messages form.leave-message'), owner: content.name,
+  // 电话转盘拆出来单独转：留言之前先拨几位号码（js/dial.js）
+  const dial = createDial(room);
+  const phone = M.hotspots?.phone ? createPhone({ form: document.querySelector('#messages form.leave-message'), owner: content.name, dial,
     parent: $('room'), before: backBtn, answering, openContact: () => go('online'),
     onHangUp: () => { if (view === 'phone') go(phoneReturnView); } }) : null;
 
@@ -736,6 +744,7 @@ export async function start(content, { nav = null, music = null, achievements = 
   if (turntable) pickables.push(turntable.group);
   if (deskCal) pickables.push(...deskCal.groups);
   if (answering) pickables.push(...answering.groups);
+  if (dial) pickables.push(dial.group);
   if (contactNote) pickables.push(contactNote);
   const shown = (o) => { for (; o; o = o.parent) if (!o.visible) return false; return true; };
   function pick(x, y) {
@@ -1016,6 +1025,7 @@ export async function start(content, { nav = null, music = null, achievements = 
     sfx.mix({ tv: !tv.run ? 0 : view === 'work' ? 1 : 0.35, record: !!music?.playing }); // 电视放节目：低低的背景音乐（点进电视时大一点）；唱机放歌时让开
     deskCal?.update(dt);
     answering?.update(dt);
+    dial?.update(dt);
     if ((hover?.kind === 'messages' || hover?.kind === 'phone') && hintEl.classList.contains('show')) { const text = hintText(hover); if (hintEl.textContent !== text) hintEl.textContent = text; }
     if (hover?.kind === 'music' && hintEl.classList.contains('show')) {
       const text = hintText(hover);
@@ -1094,7 +1104,7 @@ export async function start(content, { nav = null, music = null, achievements = 
 
   // 调试入口（控制台里用）：__room.tick(dt) 手动推进一帧（后台标签页里动画会被浏览器降速）
   window.__room = {
-    go, insertTape, cmd, tick, pick, look, light, camera, renderer, composer, room, tv, pc, turntable, answering, phone, grade: (k) => grade.set(k), lens, streak, books: shelfBooks, openBook, windowView, turn: TURN, papers, paperRect, deskRects,
+    go, insertTape, cmd, tick, pick, look, light, camera, renderer, composer, room, tv, pc, turntable, answering, phone, dial, grade: (k) => grade.set(k), lens, streak, books: shelfBooks, openBook, windowView, turn: TURN, papers, paperRect, deskRects,
     get photos() { return photoWall; },
     get view() { return view; }, get loaded() { return loaded; }, get hover() { return hover; },
     hoverAt: (x, y) => setHover(pick(x, y), x, y), clickAt: (x, y) => click(x, y, true),

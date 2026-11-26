@@ -1,8 +1,9 @@
 import { sfx } from './sfx.js';
+import { someDigits } from './dial.js';
 
 // 桌子左前角的转盘电话 = 给主人留言（热点 phone，bake_room.py 里摆的）。留言发到主人的邮箱：
 // index.html #messages 里那张 form.leave-message 的 action 是表单服务的地址（Formspree 之类，它们把提交转成邮件）。
-//   - 点电话：提起听筒"咔"，响一声回铃，答录机接起来（磁带"咔哒"、小红灯常亮 = 在录），"嘀"——
+//   - 点电话：提起听筒"咔"，拨号音，转盘拨三位（js/dial.js，"嗒嗒嗒"），响一声回铃，答录机接起来（磁带"咔哒"、小红灯常亮 = 在录），"嘀"——
 //     屏幕下方出一块写留言的地方，用的就是答录机放留言的那套字幕样式（.tvsub / .amsub，别改）：
 //     上面一行小号大写的提示，中间居中的衬线正文（就是输入框），下面斜体一行写"你是谁、怎么找你"。
 //   - 回车发出（Shift+回车换行）：发出去的字立刻清空，不留草稿。没发就挂断（Esc、再点一下电话、去别的地方），
@@ -25,7 +26,7 @@ function ringback(delay = 0) {
   sfx.tone(480, { dur: 0.9, gain: 0.07, delay });
 }
 
-export function createPhone({ form, owner = '', parent = document.body, before = null, answering = null, openContact = () => {}, onHangUp = () => {} } = {}) {
+export function createPhone({ form, owner = '', parent = document.body, before = null, answering = null, dial = null, openContact = () => {}, onHangUp = () => {} } = {}) {
   const endpoint = /^https?:\/\//i.test(form?.getAttribute('action') || '') ? form.action : '';
   const demo = /your-form-id/i.test(endpoint); // 模板里的示例地址：演示，不发
 
@@ -64,20 +65,27 @@ export function createPhone({ form, owner = '', parent = document.body, before =
     fit();
     text.focus({ preventScroll: true });
     sfx.play('switch', { gain: 0.5, rate: 0.7 }); // 提起听筒
-    ringback(0.25);
-    answering?.recording(true);
-    later(1300, () => { // 答录机接起来
+    const dialing = dial?.start(someDigits()) || 0; // 先拨号：转盘转三位（js/dial.js），不想看动画的系统设置下直接打过去
+    if (dialing) head.textContent = 'Dialing…';
+    later(dialing * 1000, () => { // 拨完了：对面响铃
       if (state !== 'open') return;
-      sfx.play('tape-latch', { gain: 0.35, rate: 1.25 });
-      sfx.tone(1000, { dur: 0.45, delay: 0.35 });
-      hissing = sfx.hiss({ gain: 0.03 });
-      later(350, () => { if (state === 'open') head.textContent = 'Leave a message after the beep'; });
+      head.textContent = 'Calling…';
+      ringback(0.25);
+      answering?.recording(true);
+      later(1300, () => { // 答录机接起来
+        if (state !== 'open') return;
+        sfx.play('tape-latch', { gain: 0.35, rate: 1.25 });
+        sfx.tone(1000, { dur: 0.45, delay: 0.35 });
+        hissing = sfx.hiss({ gain: 0.03 });
+        later(350, () => { if (state === 'open') head.textContent = 'Leave a message after the beep'; });
+      });
     });
   }
 
   function hangUp() {
     if (state === 'idle') return;
     clearTimers();
+    dial?.stop(); // 拨到一半挂了：松手，转盘自己转回去
     if (state === 'open' || state === 'sending') saveDraft(); // 正在发的也存一份：发成功了会把它清掉
     state = 'idle';
     sub.hidden = true;
@@ -122,6 +130,7 @@ export function createPhone({ form, owner = '', parent = document.body, before =
   // 发完（真发出去、或者演示）：输入框立刻清空，提示留一会儿，再放下听筒
   function finished(title, note, ms) {
     state = 'sent';
+    dial?.stop();
     text.value = '';
     from.value = '';
     text.placeholder = '';

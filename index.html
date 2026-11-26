@@ -35,6 +35,7 @@
   "js/deskcal.js",
   "js/answering.js",
   "js/phone.js",
+  "js/dial.js",
   "js/baked.js",
   "js/grade.js",
   "js/turntable.js",
@@ -828,13 +829,16 @@
       用这个模板做自己的网站时，记得换成你自己的地址，不然留言会发到别人的邮箱。
       _gotcha 是给机器人的陷阱栏（人看不见、不会填）；表单服务要一个隐藏的 key 的话，照样加 <input type="hidden" name=… value=…>。
     -->
-    <form class="leave-message" action="https://formspree.io/f/your-form-id" method="POST">
-      <p>Leave a message</p>
-      <textarea name="message" rows="3" maxlength="1200" required aria-label="Your message"></textarea>
-      <input name="from" maxlength="160" placeholder="Your name, and how to reach you (optional)" aria-label="Your name, and how to reach you">
-      <input class="lm-trap" type="text" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true">
-      <button type="submit">Send</button>
-    </form>
+    <div id="leave-message">
+      <form class="leave-message" action="https://formspree.io/f/your-form-id" method="POST">
+        <p>Leave a message</p>
+        <textarea name="message" rows="3" maxlength="1200" required aria-label="Your message"></textarea>
+        <input name="from" maxlength="160" placeholder="Your name, and how to reach you (optional)" aria-label="Your name, and how to reach you">
+        <input class="lm-trap" type="text" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <button type="submit">Send</button>
+      </form>
+      <p class="message-line-note">This template has no connected inbox. <a href="?room=1#phone">Try the desk phone demo</a></p>
+    </div>
   </section>
 
   <section id="online" data-nav="Contact">
@@ -846,6 +850,10 @@
     <ul class="links">
       <li><a href="https://github.com/your-name">GitHub</a> <span>@your-name</span></li>
       <li><a href="https://example.com">Website</a> <span>example.com</span></li>
+      <li><a href="https://scholar.google.com/citations?view_op=search_authors&amp;hl=en">Google Scholar</a> <span>Find an author</span></li>
+      <li><a href="https://orcid.org/orcid-search/search">ORCID</a> <span>Find an iD</span></li>
+      <li><a href="https://dblp.org/pers/">DBLP</a> <span>Author index</span></li>
+      <li><a href="?plain=1#leave-message">Leave me a message</a> <span>Desk phone</span></li>
     </ul>
   </section>
 

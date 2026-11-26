@@ -22,6 +22,7 @@
 import json
 import math
 from contextlib import contextmanager
+import fnmatch
 import os
 import sys
 import time
@@ -380,13 +381,15 @@ AABB = []    # (名字, lo, hi) 世界坐标，预览前查有没有叠在一起
 CUTOUT = []  # 镂空的材质名（叶片），写进 manifest.cutout
 
 
-def put(asset, at, uvk=10, **kw):
-    """摆一个素材（参数见 Asset.place）。返回 (物件列表, T)，T：素材坐标 → 世界坐标（three）。"""
+def put(asset, at, uvk=10, hot_skip=(), **kw):
+    """摆一个素材（参数见 Asset.place）。返回 (物件列表, T)，T：素材坐标 → 世界坐标（three）。
+    hot_skip：这些零件（名字通配）不算进热点盒子，比如甩在外面的电话线：盒子框大了，悬停时会把空桌面也照亮成一块长方形"""
     obs, Tm = asset.place(at, **kw)
     PLACED.extend((ob, uvk) for ob in obs)
     pts = world_points(obs)
     if HOT_ID:
-        HOT_PTS.setdefault(HOT_ID, []).extend(map(tuple, pts))
+        keep = [ob for ob in obs if not any(fnmatch.fnmatch(ob.name.split(':', 1)[-1], p) for p in hot_skip)]
+        HOT_PTS.setdefault(HOT_ID, []).extend(map(tuple, world_points(keep) if hot_skip else pts))
     lo, hi = pts.min(0), pts.max(0)
     AABB.append((asset.prefix, lo.copy(), hi.copy()))
     print(f'[put] {asset.prefix:10s} x {lo[0]:+.2f}..{hi[0]:+.2f}  y {lo[1]:.2f}..{hi[1]:.2f}  z {lo[2]:+.2f}..{hi[2]:+.2f}')
@@ -469,8 +472,11 @@ SILL = wy0 + 0.03
 HAW = Asset('polyhaven/potted_plant_04', 'haworthia', texsize=512, decimate={'*': 0.3})
 put(HAW, G((WIN['x'] - 0.32, SILL, BACK - 0.045), (0, 0.6, 0)), uvk=12, height=0.15)
 g = G((WIN['x'] + 0.6, SILL, BACK - 0.035), (0, 0.1, 0))
+# 两本书只有两三厘米厚：lightmap 精度给足。图集里的岛一多（加了电话以后），K=10 的书侧面缩到落不进一个像素中心，烘出来是黑的
+K = 30
 box(g, 0.2, 0.03, 0.1, mat('book_a', '#3b5a7a'), 0, 0.015, 0)
 box(g, 0.18, 0.025, 0.09, mat('book_b', '#8a3b30'), 0.01, 0.0425, 0, (0, 0.12, 0))
+K = 10
 SNAKE = Asset('sketchfab/snake-plant-scan-lowpoly', 'snake', texsize=512)
 put(SNAKE, G((WIN['x'] + 0.36, SILL, BACK - 0.06), (0, 0.4, 0)), uvk=12, height=0.4)
 
@@ -1072,7 +1078,8 @@ with hot('work'):
                 m2 = m_.copy()
                 m2.name = f'tape{i}'
                 ob.data.materials[k_] = m2
-        obs, _ = put(VHS, gi @ STAND, uvk=15, pieces=['Plane008_default_0'], anchor=(0.5, 0.5, 0.5),
+        # 纸盒：书脊只有 3 厘米宽，精度给足（15 的时候 Project C 的书脊缩到落不进像素中心，烘成了黑的）
+        obs, _ = put(VHS, gi @ STAND, uvk=35, pieces=['Plane008_default_0'], anchor=(0.5, 0.5, 0.5),
                      material=plain_material(f'sleeve{i}', c))
         for ob in obs:
             sleeve_uv(ob, gi)
@@ -1179,8 +1186,28 @@ _blo, _bhi = PHONE.bounds(['Main_Body*'])
 _lo, _hi = PHONE.bounds()
 _pivot = np.array([(_blo[0] + _bhi[0]) / 2, _lo[1], (_blo[2] + _bhi[2]) / 2])  # 机身的水平中心落在桌面上（不算听筒线）
 with hot('phone', PHONE_YAW):  # 点电话 = 给主人留言（js/phone.js）
-    _, T_phone = put(PHONE, G((PHONE_AT[0], TOP, PHONE_AT[1]), (0, PHONE_YAW, 0)), uvk=25,
-                     anchor=tuple((_pivot - _lo) / (_hi - _lo)), scale=PHONE_S)
+    _phone_obs, T_phone = put(PHONE, G((PHONE_AT[0], TOP, PHONE_AT[1]), (0, PHONE_YAW, 0)), uvk=12,  # 黑的，光照细节看不出来；岛又多（两千多个），别占太多图集
+                     anchor=tuple((_pivot - _lo) / (_hi - _lo)), scale=PHONE_S,
+                     hot_skip=('Coiled_Cord*', 'Plug_*', '*_Jack_*'))  # 盒子只框机身和听筒，和别的物件一样贴着东西
+# 转盘（带十个指孔的那一圈）单独一个材质 phone_wheel：留言之前网页拨几位号码，转的就是它（js/dial.js）。
+# 底下印数字的盘、中间的盖子、挡手指的金属片不动。转轴 = 转盘平面的法线（朝外），过转盘的圆心
+_wheel = [ob for ob in _phone_obs if fnmatch.fnmatch(ob.name.split(':', 1)[-1], '*Finger_Wheel*')]
+_wmat = {}
+for ob in _wheel:
+    for k_, m_ in enumerate(ob.data.materials):
+        if m_.name not in _wmat:
+            _wmat[m_.name] = m_.copy()
+            _wmat[m_.name].name = 'phone_wheel' if len(_wmat) == 1 else f'phone_wheel_{len(_wmat)}'
+        ob.data.materials[k_] = _wmat[m_.name]
+_wp = world_points(_wheel)
+_wc0 = _wp.mean(0)
+_wax = np.linalg.svd(_wp - _wc0, full_matrices=False)[2]  # 前两个是转盘平面里的方向，最后一个是法线
+_wn = _wax[2] if _wax[2][1] > 0 else -_wax[2]                # 转盘朝上斜着：法线取朝上的那一头
+_wu, _wv = (_wp - _wc0) @ _wax[0], (_wp - _wc0) @ _wax[1]
+_wcen = _wc0 + _wax[0] * (_wu.min() + _wu.max()) / 2 + _wax[1] * (_wv.min() + _wv.max()) / 2  # 指孔只占大半圈：圆心按外沿算，不按平均
+PHONE_DIAL = dict(mats=[m.name for m in _wmat.values()], c=[round(float(c), 5) for c in _wcen],
+                  n=[round(float(c), 5) for c in _wn], r=round(float(max(_wu.max() - _wu.min(), _wv.max() - _wv.min()) / 2), 4))
+print(f'[phone] 转盘 {len(_wheel)} 块，材质 {PHONE_DIAL["mats"]}，圆心 {PHONE_DIAL["c"]}，法线 {PHONE_DIAL["n"]}，半径 {PHONE_DIAL["r"]}')
 
 # 扫描表面一层层鼓包：用 blender/answering_prep.py 照着扫描搭的干净外壳（颜色从扫描烤过去），小灯位置也是它量好的
 _AMD = os.path.join(ROOT, 'vendor-src', 'sketchfab', 'answering-machine')
@@ -2434,6 +2461,7 @@ manifest.update({
     'cutout': CUTOUT,
     'tints': PAPER_TINT,  # 有贴图的材质在网页里再乘的颜色（桌上那摞纸在台灯底下，压暗一档）
     'deskcal': DESKCAL,
+    'phone': {'wheel': PHONE_DIAL},  # 电话转盘：材质、圆心、法线（朝外）、半径，网页拨号时绕法线转（js/dial.js）
     'answering': ANSWERING,  # 桌子左头的答录机：MESSAGES 键旁边那条小灯（中心、法线、长边方向、宽高），网页里画成会闪的红灯
     'art': {'title': ART_TITLE},  # 墙角那幅画的名字（鼠标停在画上时的提示）
     'glass': {'window_glass': 0.16, 'poster_tape_shadow': 0.22},  # 窗玻璃：淡淡一层，窗外隔着玻璃；海报胶带底下的影子

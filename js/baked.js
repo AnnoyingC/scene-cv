@@ -113,7 +113,7 @@ function shaders(layers) {
   const frag = /* glsl */`
   uniform vec3 albedo, emissive, ${layers.map((k) => 'k_' + k).join(', ')};
   uniform sampler2D ${layers.map((k) => 'm_' + k).join(', ')};
-  uniform float useAlbedo, hi, hiK, opacity;
+  uniform float useAlbedo, hi, hiK, hiS, opacity;
   uniform vec3 hiC[${MAX_BOXES}], hiH[${MAX_BOXES}];
   uniform float hiR[${MAX_BOXES}];
   uniform int hiN;
@@ -137,13 +137,15 @@ function shaders(layers) {
     vec3 q = vPos - hiC[i];
     float c = cos(hiR[i]), s = sin(hiR[i]);
     vec3 l = abs(vec3(c * q.x - s * q.z, q.y, s * q.x + c * q.z)) - hiH[i];
+    // 往下不留过渡：盒子底边只比桌面 / 地板高 2 毫米，过渡会把底下那块桌面也照亮，看着是一块长方形（盒子比东西大的时候最明显）
+    if (q.y < 0.0) l.y *= 12.0;
     return 1.0 - smoothstep(0.0, 0.006, max(l.x, max(l.y, l.z)));
   }
   void main() {
     vec3 light = ${layers.map((k) => (k === 'tv' ? `tvSoft(dec(m_${k}) * k_${k})` : `dec(m_${k}) * k_${k}`)).join(' + ')};
     float hb = 0.0;
     for (int i = 0; i < ${MAX_BOXES}; i++) { if (i >= hiN) break; hb = max(hb, inBox(i)); }
-    float h = max(hi, hb * hiK); // hi：单个物件自己的高亮（录像带）；hb：热点盒子
+    float h = max(hi, hb * hiK * hiS); // hi：单个物件自己的高亮（录像带）；hb：热点盒子；hiS：这个材质的盒子高亮打几折（默认 1）
     vec3 base = mix(vec3(0.75), albedo, useAlbedo);
     #ifdef USE_ALBEDO_MAP
       vec4 tex = texture2D(albedoMap, vMapUv);
@@ -246,7 +248,7 @@ export class BakedRoom {
     return new THREE.ShaderMaterial({
       side: cutout ? THREE.DoubleSide : THREE.FrontSide,
       uniforms: {
-        ...this.U, albedo: { value: color.clone() }, hi: { value: 0 }, opacity: { value: 1 }, emissive: { value: new THREE.Color(0) },
+        ...this.U, albedo: { value: color.clone() }, hi: { value: 0 }, hiS: { value: 1 }, opacity: { value: 1 }, emissive: { value: new THREE.Color(0) },
         ...(decal ? { decal: { value: decal } } : {}), ...(map ? { albedoMap: { value: map } } : {}),
       },
       vertexShader: this.sh.vert, fragmentShader: this.sh.frag, defines,

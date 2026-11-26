@@ -601,7 +601,7 @@ class OpenBook {
     this.pages = new THREE.Mesh(sheet, first);
     // 合着的时候这张纸压平、藏在书芯面下面（不然鼓起来的地方会顶穿薄薄的平装封面）；封面翻开了它才松开、鼓起来
     this.sheetX = [t / 2 - bt - 0.0004, t / 2 - bt + 0.0006];
-    this.pages.position.set(this.sheetX[0], 0, (o - bt) / 2);
+    this.pages.position.z = (o - bt) / 2;
     this.group.add(this.pages);
     this.bulge = (u) => -0.0045 * Math.exp(-u / 0.06) + 0.0018 * Math.sin(Math.PI * Math.min(1, u * 1.15)); // 和上面那张纸一样的弯法
 
@@ -650,11 +650,13 @@ class OpenBook {
     this.front = front;
     this.hinge.add(front);
     this.group.add(this.hinge);
+    this.openness = 0; // 抽书时就使用合上的姿态，和合书放回时一致。
     this.group.visible = false;
   }
   set openness(k) {
     this.hinge.rotation.y = -Math.PI * 0.985 * k;
     const s = smooth01(0.12, 0.6, k); // 封面让开了，第一页才松开、鼓起来
+    this.pages.visible = k > 0; // 两个书模型在途中交叉淡化，合着时不画被封面挡住的内页。
     this.pages.scale.x = Math.max(0.02, s);
     this.pages.position.x = this.sheetX[0] + (this.sheetX[1] - this.sheetX[0]) * s;
   }
