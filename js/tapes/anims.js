@@ -11,7 +11,7 @@ const W = 512, H = 384;
 const clamp01 = (k) => Math.min(1, Math.max(0, k));
 const out = (k) => 1 - Math.pow(1 - clamp01(k), 3);
 
-// 例子：柱子一根根长出来，最后一根用带子的颜色。c.bars 是数字（0–100），c.labels 是柱子下面的字
+// 例子：柱子一根根长出来，最后一根用带子的颜色。c.bars 是数字（0–100），c.labels 是柱子下面的字，barAt 可逐根指定开始的秒数
 function sampleChart(ctx, t, dur, { tape, c, tr }) {
   ctx.fillStyle = '#0f1416';
   ctx.fillRect(0, 0, W, H);
@@ -22,7 +22,8 @@ function sampleChart(ctx, t, dur, { tape, c, tr }) {
   const bars = c.bars || [30, 45, 60, 85], labels = (c.labels || []).map(tr);
   const gap = 18, bw = (W - 64 - gap * (bars.length - 1)) / bars.length, base = 318;
   bars.forEach((v, i) => {
-    const k = out((t - 0.4 - i * 0.35) / 1.2), h = (base - 96) * (v / 100) * k, x = 32 + i * (bw + gap);
+    const start = c.barAt?.[i] ?? (0.4 + i * 0.35);
+    const k = out((t - start) / 1.2), h = (base - 96) * (v / 100) * k, x = 32 + i * (bw + gap);
     ctx.fillStyle = i === bars.length - 1 ? tape.color || '#e8b04a' : 'rgba(232,238,242,0.28)';
     ctx.fillRect(x, base - h, bw, h);
     ctx.fillStyle = '#e8eef2';

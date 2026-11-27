@@ -5,9 +5,9 @@
 //            cover 是封面的底纹：一张图的路径，或者 { "anim": 动画名, "t": 第几秒 }（拿那段动画的一帧）；压暗以后垫在彩条和字下面。图缺了就是纯黑底。
 //            { "logo": 图的路径 }：不当底纹，原样放在右上角（公司 logo 这类）
 //   anim     代码画的动画，anim 是名字（见 js/tapes/anims.js）；rate 是快放几倍（dur 写实际放的秒数）
-//   number   数字卡：items = [{ value: "85%+", label }]，数字从 0 数上去；写了 from（"18.6%"）就从 from 数到 value
+//   number   数字卡：items = [{ value: "85%+", label }]，数字从 0 数上去；from 是起始值，at 是从章首到这项出现的秒数
 //   image    一张图，慢慢推近：src，label 是左上角的小字
-//   wipe     前后对比：一条竖线从左扫到右，扫过的地方换成 after：before / after，labels = [前, 后]
+//   wipe     前后对比：一条竖线从左扫到右，扫过的地方换成 after：before / after，labels = [前, 后]；reveal 秒开始扫，sweep 秒扫完
 //   split    左右分屏：left / right（各是 { src, label }，src 可以是图或视频）
 //   video    一段视频：src 写一个或几个（mp4 / webm），静音循环；label 是左上角的小字（真机实拍写清楚），speed 是快放了几倍（标在旁边），
 //            fit: "contain" 时整个画面放进来、上下留黑边（宽银幕的素材），默认铺满裁掉
@@ -16,11 +16,13 @@
 //   end      片尾卡：line 是一行总结；也可以有 cover
 // anim 章节也可以带 media（一组图 / 视频的路径），画的时候按顺序交给动画；hold: true 时视频放完停在最后一帧（compare 默认这样）。
 // 一章用到的图 / 视频加载失败（比如只在本地的素材，公开仓库里没有）：这一章直接跳过。
-// 每章 dur 是秒数；sub 是这一章的字幕（js/room.js 显示在电视下面）；tag: true 时左下角标"示意动画"。
+// 每章 dur 是秒数；sub 是这一章的字幕（js/room.js 显示在电视下面），写成一组句子时一句一句地出；tag: true 时左下角标"示意动画"。
+// 节目单可带 narration（整盘旁白的音频路径）。每章的 cues 是逐句字幕相对章首的秒数，中英文共用。
 // 写给人看的字段都可以写成 { "zh": …, "en": … }，按 <html lang> 选。图、视频的路径相对节目单。
 // 画面按 512 × 384 排版，别的尺寸整体缩放。
 import { FONT, MONO, wrap } from './util.js';
 import ANIMS from './anims.js';
+import { sfx } from '../sfx.js';
 
 const LW = 512, LH = 384;
 const EXPOSURE = '#dedede'; // sRGB 0.87 ≈ 线性 0.73，低于辉光门槛 0.78（白平衡把红色再乘 1.02 也还在下面）
@@ -39,6 +41,7 @@ function load(url) {
       return r.json();
     }).then((s) => {
       const abs = (p) => (p ? new URL(p, url).href : '');
+      s.narration = abs(s.narration);
       const srcs = (v) => (Array.isArray(v) ? v : [v]).filter(Boolean).map(abs);
       s.chapters = (s.chapters || []).filter((c) => c.dur > 0).map((c) => ({
         ...c,
@@ -108,6 +111,7 @@ function label(ctx, text, x, y, align = 'left') { // 角上的小标签
   ctx.fillStyle = 'rgba(8,8,10,0.72)';
   ctx.fillRect(X, y, w, 20);
   ctx.fillStyle = '#f2e9d6';
+  ctx.textAlign = 'left'; // 不能沿用前面画的东西留下的对齐方式（动画里常设成 center，标签就会被切掉一半）
   ctx.textBaseline = 'middle';
   ctx.fillText(text, X + 7, y + 10.5);
 }
@@ -193,14 +197,15 @@ function numberCard(ctx, c, t, tape) {
   ctx.fillRect(0, 0, LW, LH);
   const items = (c.items || []).slice(0, 2), n = items.length;
   items.forEach((it, i) => {
-    const p = parseNum(tr(it.value)), f = it.from != null ? parseNum(tr(it.from)) : null, k = ease((t - 0.2 - i * 0.35) / 1.6);
+    const start = it.at ?? (i * 0.35);
+    const p = parseNum(tr(it.value)), f = it.from != null ? parseNum(tr(it.from)) : null, k = ease((t - start - 0.2) / 1.6);
     let s = tr(it.value);
     if (p) {
       const v = (f ? f[1] : 0) + (p[1] - (f ? f[1] : 0)) * k;
       s = p[0] + (p[3] ? v.toLocaleString('en-US', { minimumFractionDigits: p[4], maximumFractionDigits: p[4] }) : v.toFixed(p[4])) + (k >= 1 ? p[2] : '');
     }
     const cy = n === 1 ? 190 : 120 + i * 150;
-    ctx.globalAlpha = clamp01((t - i * 0.35) / 0.4);
+    ctx.globalAlpha = clamp01((t - start) / 0.4);
     ctx.textAlign = 'center';
     ctx.fillStyle = i === 0 ? tape.color || '#f2c230' : '#f2e9d6';
     fitFont(ctx, tr(it.value), LW - 40, n === 1 ? 104 : 82, 900, SERIF); // 按最终的字算一次字号，数的时候不跳
@@ -217,8 +222,11 @@ function numberCard(ctx, c, t, tape) {
 export default {
   mount({ ctx, width, height, tape }) {
     const st = { show: null, err: null, clock: 0, ch: -1, media: new Map(), starts: [], total: 0, bad: new Set(), passes: 0 };
+    let narration = null, stopped = false;
     load(tape.show).then((s) => {
+      if (stopped) return;
       st.show = s;
+      if (s.narration) narration = sfx.narration(s.narration);
       let acc = 0;
       st.starts = s.chapters.map((c) => { const a = acc; acc += c.dur; return a; });
       st.total = acc;
@@ -302,7 +310,8 @@ export default {
           break;
         }
         case 'wipe': {
-          const b = media(i, 'before'), a = media(i, 'after'), k = ease((t - 0.6) / Math.max(1, c.dur * 0.55)), x = LW * k;
+          const b = media(i, 'before'), a = media(i, 'after');
+          const k = ease((t - (c.reveal ?? 0.6)) / (c.sweep ?? Math.max(1, c.dur * 0.55))), x = LW * k;
           if (!cover(ctx, b, 0, 0, LW, LH)) { tracking(ctx, t); break; }
           ctx.save();
           ctx.beginPath();
@@ -376,13 +385,15 @@ export default {
     }
 
     return {
-      frame(t, dt) {
+      frame(t, dt, audible) {
         ctx.setTransform(width / LW, 0, 0, height / LH, 0, 0);
         if (!st.show || !st.total) { tracking(ctx, t); return; }
-        if (st.clock + dt >= st.total) st.passes++; // 放完了一遍（room.js 看到就换下一盘）
-        st.clock = (st.clock + dt) % st.total;
+        const next = narration ? narration.time(st.clock, dt, audible) : st.clock + dt;
+        if (next >= st.total) { st.passes++; narration?.stop(); } // room.js 看到就换下一盘
+        st.clock = next % st.total;
         let [i, lt] = at();
         for (let k = 0; st.bad.has(i) && k < st.starts.length; k++) { // 素材缺了的章节：跳到下一章
+          narration?.stop();
           st.clock = st.starts[(i + 1) % st.starts.length];
           [i, lt] = at();
         }
@@ -395,22 +406,39 @@ export default {
         ctx.fillRect(0, 0, LW, LH);
         ctx.globalCompositeOperation = 'source-over';
       },
-      stop() { st.media.forEach((m) => { if (m instanceof HTMLVideoElement) m.pause(); }); },
+      stop() {
+        stopped = true;
+        narration?.stop();
+        st.media.forEach((m) => { if (m instanceof HTMLVideoElement) m.pause(); });
+      },
+      silence() { narration?.stop(); },
+      get narrating() { return !!narration?.playing; },
       get passes() { return st.passes; }, // 整档节目放完了几遍
       // 跳章（room.js：↑↓、点电视、点字幕下面的点）
       jump(i) {
         if (!st.total) return;
         const n = st.starts.length;
+        narration?.stop();
         st.clock = st.starts[((i % n) + n) % n];
       },
       seek(d) { if (st.total) this.jump(at()[0] + d); },
       // 调试用（控制台里 __room.tv.run.media()）：这盘带子里每个视频的状态
       media() { return [...st.media].map(([id, m]) => ({ id, src: m?.currentSrc?.split('/').pop(), ready: m?.readyState, paused: m?.paused, time: m?.currentTime })); },
-      // 字幕：这一章的字、第几章、一共几章
+      // 字幕：这一章的字、第几章、一共几章。sub 写成一组句子（["…", "…"]）时一句一句地出，
+      // 配音节目用录音的时间点，未标时间的节目按字数分。
       caption() {
         if (!st.total) return null;
-        const [i] = at();
-        return { text: tr(st.show.chapters[i].sub), i, n: st.starts.length };
+        const [i, t] = at(), c = st.show.chapters[i], sub = tr(c.sub), n = st.starts.length;
+        if (!Array.isArray(sub)) return { text: sub, i, n };
+        if (c.cues?.length === sub.length) {
+          let k = 0;
+          while (k + 1 < c.cues.length && t >= c.cues[k + 1]) k++;
+          return { text: sub[k] || '', i, n };
+        }
+        const lens = sub.map((x) => x.length + 12), sum = lens.reduce((a, b) => a + b, 0) || 1;
+        let k = 0, end = (lens[0] / sum) * c.dur;
+        while (k < sub.length - 1 && t >= end) end += (lens[++k] / sum) * c.dur;
+        return { text: sub[k] || '', i, n };
       },
     };
   },

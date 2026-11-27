@@ -49,7 +49,7 @@ export function createPhone({ form, owner = '', parent = document.body, before =
   const saveDraft = () => store.set(DRAFT, JSON.stringify({ text: text.value, from: from.value }));
 
   function open() {
-    if (!endpoint) { sfx.play('switch', { gain: 0.5, rate: 0.7 }); openContact(); return; }
+    if (!endpoint) { sfx.play('switch', { gain: 0.42, rate: 0.7 }); openContact(); return; }
     answering?.stop();
     clearTimers();
     state = 'open';
@@ -64,7 +64,7 @@ export function createPhone({ form, owner = '', parent = document.body, before =
     sub.hidden = false;
     fit();
     text.focus({ preventScroll: true });
-    sfx.play('switch', { gain: 0.5, rate: 0.7 }); // 提起听筒
+    sfx.play('switch', { gain: 0.42, rate: 0.7 }); // 提起听筒
     const dialing = dial?.start(someDigits()) || 0; // 先拨号：转盘转三位（js/dial.js），不想看动画的系统设置下直接打过去
     if (dialing) head.textContent = 'Dialing…';
     later(dialing * 1000, () => { // 拨完了：对面响铃
@@ -74,9 +74,9 @@ export function createPhone({ form, owner = '', parent = document.body, before =
       answering?.recording(true);
       later(1300, () => { // 答录机接起来
         if (state !== 'open') return;
-        sfx.play('tape-latch', { gain: 0.35, rate: 1.25 });
+        sfx.play('tape-latch', { gain: 0.9, rate: 1.25, lp: 4000 });
         sfx.tone(1000, { dur: 0.45, delay: 0.35 });
-        hissing = sfx.hiss({ gain: 0.03 });
+        hissing = sfx.hiss({ gain: 0.011 }); // 电话那头的答录机：比在桌上放留言再远一点
         later(350, () => { if (state === 'open') head.textContent = 'Leave a message after the beep'; });
       });
     });
@@ -92,7 +92,7 @@ export function createPhone({ form, owner = '', parent = document.body, before =
     hissing?.stop();
     hissing = null;
     answering?.recording(false);
-    sfx.play('switch', { gain: 0.45, rate: 0.9 }); // 听筒放回去
+    sfx.play('switch', { gain: 0.4, rate: 0.9 }); // 听筒放回去
     text.blur();
     from.blur();
     onHangUp();
@@ -122,7 +122,7 @@ export function createPhone({ form, owner = '', parent = document.body, before =
     if (!ok) { state = 'open'; head.textContent = 'Couldn’t send · press Enter to try again'; return; }
     hissing?.stop();
     hissing = null;
-    sfx.play('tape-latch', { gain: 0.35, rate: 1.1 }); // 磁带停
+    sfx.play('tape-latch', { gain: 0.9, rate: 1.1, lp: 4000 }); // 磁带停
     answering?.recording(false, { blinks: 2 });
     finished('Message sent · thank you', '', 2600);
   }
@@ -148,7 +148,7 @@ export function createPhone({ form, owner = '', parent = document.body, before =
     store.set(DRAFT, null);
     hissing?.stop();
     hissing = null;
-    sfx.play('tape-latch', { gain: 0.35, rate: 1.1 });
+    sfx.play('tape-latch', { gain: 0.9, rate: 1.1, lp: 4000 });
     answering?.recording(false);
     finished('Demo line · nothing was sent', 'This copy of the template isn’t connected to an inbox yet: put a form address in #messages to get these by email', 4200);
   }

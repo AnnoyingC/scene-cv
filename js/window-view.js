@@ -371,7 +371,9 @@ function rainMesh(count) {
 
 // base：assets/baked/ 的地址；view：view.json；win：manifest.window（窗户中心）；moon：月亮方向（three 坐标）
 // blob：js/boot.js 已经在下的文件（文件名 → Promise<Blob>，没有就返回 null），有就不再自己下
-export async function createWindowView({ base, view, win, scene, camera, renderer = null, moon = [-0.33, 0.28, -1.0], onProgress, blob = null }) {
+// view.turn（度）：整座城市绕窗户中心往左转多少（全景 0° 的方向落在屋里的右手边 turn 度）——
+// 换窗户朝向不用重渲全景；view.moon 覆盖默认的月亮方向。屏保（scripts/make_screensaver.py）也读这两个，窗外和屏幕上是同一片景
+export async function createWindowView({ base, view, win, scene, camera, renderer = null, moon = view?.moon || [-0.33, 0.28, -1.0], onProgress, blob = null }) {
   const pano = view?.pano;
   if (!pano) return null;
   const loader = new THREE.TextureLoader();
@@ -404,6 +406,9 @@ export async function createWindowView({ base, view, win, scene, camera, rendere
   const root = new THREE.Group();
   root.position.set(win.x, win.y, win.z);
   scene.add(root);
+  const city = new THREE.Group(); // 城市和车流（雨不转：它就在窗外这一块）
+  city.rotation.y = (view.turn || 0) * D2R;
+  root.add(city);
   const mats = [];
   layers.forEach(({ L, map, data }, i) => {
     const near = L.dist < 20;
@@ -412,7 +417,7 @@ export async function createWindowView({ base, view, win, scene, camera, rendere
     const mesh = new THREE.Mesh(panoGeometry(L.dist, pano), m);
     mesh.renderOrder = 2 + i; // 远的先画，近的叠上去（透明物体按 renderOrder 排）
     mesh.frustumCulled = false;
-    root.add(mesh);
+    city.add(mesh);
   });
 
   // 天空：以镜头为中心（无穷远，镜头平移它不动），画在房间之后、城市之前
@@ -428,7 +433,7 @@ export async function createWindowView({ base, view, win, scene, camera, rendere
   // 车流：近景那层和远景那层的数据图都要用（远处的车可能被近处的东西挡住）
   const nearL = layers.find((l) => l.L.dist < 20), farL = layers.find((l) => l.L.dist >= 20);
   const cars = nearL && farL && pano.lanes?.length ? carsMesh(pano, nearL.map, nearL.data, farL.data) : null;
-  if (cars) { cars.renderOrder = 4; root.add(cars); }
+  if (cars) { cars.renderOrder = 4; city.add(cars); }
 
   // 雨：窗外的一个盒子里（窗户中心的坐标系）
   const rain = rainMesh(2600);
@@ -437,7 +442,7 @@ export async function createWindowView({ base, view, win, scene, camera, rendere
 
   let time = 0;
   return {
-    root, sky, rain, cars,
+    root, city, sky, rain, cars,
     async streetComparison() {
       const street = await loadLayers('street-a/', texture => texture);
       return (useStreet) => {

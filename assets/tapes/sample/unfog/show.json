@@ -1,0 +1,88 @@
+{
+  "note": "示例项目 Unfog（虚构的）：一个把老照片上的雾擦掉的小工具。六章各配三句英文旁白，由 Kokoro 的 Onyx 音色朗读 sub.en，cues 是每句字幕相对章首的时间（秒），两种语言共用。三张图由 scripts/make_sample_tape.py 生成。音频、图和视频的路径都相对节目单。",
+  "narration": "onyx-en.mp3",
+  "chapters": [
+    {
+      "type": "title",
+      "dur": 13.5,
+      "cues": [0, 4.549, 7.777],
+      "kicker": { "zh": "示例项目 · 第 1 盘", "en": "SAMPLE PROJECT · TAPE 1" },
+      "line": { "zh": "一个把老照片上的雾擦掉的小工具", "en": "A small tool that takes the fog out of old photographs" },
+      "cover": "before.webp",
+      "sub": {
+        "zh": ["在某个抽屉里，躺着一些老照片。", "大多数都蒙着一层雾。", "这档节目讲的，是一个想把雾擦掉的小工具。"],
+        "en": ["In a drawer, somewhere, there are old photographs.", "Most of them are covered in fog.", "This is a programme about a small tool that tries to take it away."]
+      }
+    },
+    {
+      "type": "anim",
+      "anim": "sample-chart",
+      "dur": 11,
+      "cues": [0, 2.983, 5.718],
+      "tag": true,
+      "heading": { "zh": "每一版的清晰度评分", "en": "Clarity score, version by version" },
+      "bars": [40, 26, 34, 61, 88],
+      "barAt": [0, 0.58, 2.983, 4.55, 5.718],
+      "labels": [
+        { "zh": "原图", "en": "before" },
+        { "zh": "第一版", "en": "v1" },
+        { "zh": "第二版", "en": "v2" },
+        { "zh": "第三版", "en": "v3" },
+        { "zh": "第四版", "en": "v4" }
+      ],
+      "sub": {
+        "zh": ["第一版让照片更糟了。", "第二版，糟得少了一点。", "到第四版，照片才开始像人们记忆里的样子。"],
+        "en": ["The first version made things worse.", "The second, slightly less worse.", "By the fourth, the photographs began to look like what people remembered."]
+      }
+    },
+    {
+      "type": "image",
+      "src": "screen.webp",
+      "label": { "zh": "界面", "en": "THE APP" },
+      "dur": 10,
+      "cues": [0, 2.653, 5.85],
+      "sub": {
+        "zh": ["它住在一个朴素的窗口里。", "把照片拖进去，然后等。", "事实证明，等待就是体验的大部分。"],
+        "en": ["It lives in a plain window.", "You drop a photograph in, and wait.", "Waiting, it turns out, is most of the experience."]
+      }
+    },
+    {
+      "type": "wipe",
+      "before": "before.webp",
+      "after": "after.webp",
+      "labels": [{ "zh": "之前", "en": "BEFORE" }, { "zh": "之后", "en": "AFTER" }],
+      "dur": 12.5,
+      "cues": [0, 3.562, 7.796],
+      "reveal": 3.562,
+      "sweep": 3.65,
+      "sub": {
+        "zh": ["这是一张照片的之前和之后。", "一条线扫过去，黄昏就回来了。", "它当年是不是真有这么美，没人说得清。"],
+        "en": ["Here is one photograph, before and after.", "A line moves across it, and the evening comes back.", "Whether it was ever really this beautiful, no one can say."]
+      }
+    },
+    {
+      "type": "number",
+      "dur": 10.5,
+      "cues": [0, 3.217, 6.434],
+      "items": [
+        { "value": "88%", "from": "32%", "label": { "zh": "的照片被留了下来（一开始只有 32%）", "en": "of photographs kept (32% at first)" } },
+        { "at": 3.217, "value": "1,200+", "label": { "zh": "人试过它", "en": "people tried it" } }
+      ],
+      "sub": {
+        "zh": ["将近九成的照片被留了下来。", "一千两百多人试过它，", "看样子，大多是在找他们的祖父母。"],
+        "en": ["Nearly nine in ten photographs were kept.", "More than twelve hundred people tried it,", "most of them, it seems, looking for their grandparents."]
+      }
+    },
+    {
+      "type": "end",
+      "dur": 12,
+      "cues": [0, 3.732, 7.463],
+      "line": { "zh": "老照片，雾少了一点", "en": "Old photographs, a little less foggy" },
+      "cover": "after.webp",
+      "sub": {
+        "zh": ["雾总会回来的，它一向如此。", "但此刻，照片是清楚的，", "那个小工具就在它的窗口里，等着下一张。"],
+        "en": ["The fog will return, as it always does.", "But for now, the photographs are clear,", "and the tool waits in its window for the next one."]
+      }
+    }
+  ]
+}

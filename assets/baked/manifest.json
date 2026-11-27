@@ -2,26 +2,26 @@
   "size": 2048,
   "samples": 1024,
   "blender": "5.2.3 LTS",
-  "built": "20261125-220359",
+  "built": "20261126-001510",
   "layers": {
     "ambient": {
       "file": "lm_ambient.jpg",
-      "scale": 0.6066892147064209
+      "scale": 0.5813289880752563
     },
     "room": {
       "file": "lm_room.jpg",
-      "scale": 2.564068078994751
+      "scale": 2.2275304794311523
     },
     "lamp": {
       "file": "lm_lamp.jpg",
-      "scale": 2.414038896560669
+      "scale": 1.772111177444458
     },
     "tv": {
       "file": "lm_tv.jpg",
-      "scale": 1.2528789043426514
+      "scale": 1.1884812116622925
     }
   },
-  "seconds": 36,
+  "seconds": 45,
   "camera": {
     "target": [
       0.0706,
@@ -1107,6 +1107,7 @@
     "sketchfab/classic-window",
     "polyhaven/potted_plant_04",
     "sketchfab/snake-plant-scan-lowpoly",
+    "innerscene/curtain-pair-open",
     "sketchfab/old-pc",
     "polyhaven/desk_lamp_arm_01",
     "sketchfab/sony-walkman",

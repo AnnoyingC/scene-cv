@@ -29,6 +29,21 @@ const ease = (k) => (k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2);
 const clamp01 = (k) => Math.min(1, Math.max(0, k));
 const smooth01 = (a, b, x) => { const k = clamp01((x - a) / (b - a)); return k * k * (3 - 2 * k); };
 const rnd = (seed) => () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+const lerp = (a, b, k) => a + (b - a) * k;
+
+// ---------- 书的声音跟着书的分量走 ----------
+// 分量：按体积估纸重（约 0.7 g/cm³，精装封板再加 15%），0 = 一百来克的薄平装，1 = 一公斤以上的厚书
+const heftOf = ([w, h, t], hard) => clamp01(Math.log((w * h * t * 700 * (hard ? 1.15 : 1)) / 0.13) / Math.log(10));
+// 同一个录音，书越轻：音高越高、越短，"咚"的低频越少（高通），也越小声（最轻的比最厚的小 9 dB）
+function bookSfx(e, name, { gain = 1, delay = 0 } = {}) {
+  const k = e.heft ?? 0.5, hp = lerp(420, 0, Math.min(1, k * 1.4));
+  sfx.play(name, { gain: gain * Math.pow(10, lerp(-9, 0, k) / 20), rate: lerp(1.38, 0.94, k), hp: hp > 60 ? hp : 0, delay });
+}
+// 薄书合上 / 翻开时，纸页扇一下的声音（厚书几乎没有）
+function pagesFan(e, delay = 0) {
+  const k = e.heft ?? 0.5;
+  if (k < 0.65) sfx.play('book-flip', { gain: 0.35 * (1 - k / 0.65) + 0.1, rate: lerp(1.3, 1.05, k), dur: 0.22, delay });
+}
 
 // ---------- canvas 小工具 ----------
 function canvas(w, h) {
@@ -709,6 +724,7 @@ export function createBooks({ room, scene, camera, books, frame = () => ({ w: 0,
     if (!b || !taken) return;
     const e = { kind: 'book', i: entries.length, mat: `realbook${it.i}`, b, dims: it.size, real: [...it.size], hard: it.kind === 'hard', ...taken };
     if (b.size?.length === 3) e.real = b.size; // 翻开的书照真实尺寸（书架上的模型可能为了放进那一层截过）
+    e.heft = heftOf(e.real, e.hard);
     e.jacket = tex(paintJacket(b, e.dims));
     e.jacket.flipY = false; // glTF 的 UV 约定
     setJacket(e, e.jacket);
@@ -786,7 +802,7 @@ export function createBooks({ room, scene, camera, books, frame = () => ({ w: 0,
   }
 
   function startOpen(e) {
-    sfx.play('book-place', { gain: 0.45, rate: 1.1 }); // 从书架上抽出来
+    bookSfx(e, 'book-place', { gain: 0.5 }); // 从书架上抽出来：书蹭着书滑出来，比放回去轻
     cur = e;
     e.state = 'out';
     e.t = 0;
@@ -824,7 +840,7 @@ export function createBooks({ room, scene, camera, books, frame = () => ({ w: 0,
   // 往前翻：倒过来，翻页纸从左边翻回右边。翻完把左页 / 右页的贴图换好，收起翻页纸
   const FLIP = 0.8;
   function startFlip(e, d) {
-    sfx.play('book-flip', { gain: 0.8 });
+    sfx.play('book-flip', { gain: 0.6, rate: lerp(1.12, 0.96, e.heft ?? 0.5) }); // 翻页：纸越薄越脆
     const s = e.spread, to = s + d;
     if (d > 0) {
       rig.leafF.map = pageTex(2 * s + 1);
@@ -915,7 +931,7 @@ export function createBooks({ room, scene, camera, books, frame = () => ({ w: 0,
         follow(e);
         placeLight();
         fade(e, smooth(0.12, 0.45, k));
-        if (k >= 1) { e.state = 'open'; e.t = 0; sfx.play('book-open'); }
+        if (k >= 1) { e.state = 'open'; e.t = 0; bookSfx(e, 'book-open', { gain: 0.65 }); pagesFan(e, 0.08); }
         break;
       }
       case 'open':
@@ -953,7 +969,7 @@ export function createBooks({ room, scene, camera, books, frame = () => ({ w: 0,
         e.group.quaternion.identity();
         if (k >= 1) {
           e.state = 'shelf'; e.pull = 0; e.pullT = 0;
-          sfx.play('book-place', { gain: 0.8 });
+          bookSfx(e, 'book-place', { gain: 0.8 }); // 放回书架
           cur = null;
           const q = queued;
           queued = null;
@@ -1000,7 +1016,8 @@ export function createBooks({ room, scene, camera, books, frame = () => ({ w: 0,
         if (e.flip) finishFlip(e);
         e.flipQueue = 0;
         e.closeFrom = e.openK || 0; e.state = 'close'; e.t = 0;
-        sfx.play('book-close', { delay: 0.35 });
+        bookSfx(e, 'book-close', { gain: 0.9, delay: 0.35 }); // 合上：厚精装"啪"，薄平装只是轻轻一拍
+        pagesFan(e, 0.27);
       }
     },
     step(d) {

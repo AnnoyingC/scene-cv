@@ -56,7 +56,7 @@ for (const a of assets) {
     manual.push(`${have ? '✓' : '·'} ${a.title}（${a.authors.join(', ')}）\n    ${a.url}\n    解压到 vendor-src/${a.id}/`);
     continue;
   }
-  const list = await polyhavenFiles(a.fetch);
+  const list = a.fetch.files ?? await polyhavenFiles(a.fetch);
   const size = list.reduce((s, f) => s + f.size, 0);
   total += size;
   console.log(`${a.id}  ${list.length} 个文件  ${mb(size)}`);

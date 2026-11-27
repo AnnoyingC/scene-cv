@@ -218,7 +218,7 @@ export function createPhotos({ room, scene, photos = [] }) {
       const it = pickOne(ray), p = it && local(ray);
       if (!p) return false;
       held = { it, dx: it.x - p.x, dy: it.y - p.y };
-      sfx.play('paper', { gain: 0.4, rate: 1.2, dur: 0.35 });
+      sfx.play('paper', { gain: 0.47, rate: 1.2, dur: 0.35 });
       it.order = items.length;
       it.liftT = 1;
       restack();
@@ -234,7 +234,7 @@ export function createPhotos({ room, scene, photos = [] }) {
     },
     drop() {
       if (!held) return;
-      sfx.play('photo-pin');
+      sfx.play('photo-pin', { gain: 0.56 }); // 照片按在软木上：轻轻一下，不是砸
       held.it.liftT = 0;
       held = null;
       save();

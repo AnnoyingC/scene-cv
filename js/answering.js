@@ -149,13 +149,13 @@ export function createAnsweringMachine(room, messages = [], { parent = document.
     },
     // 点答录机 = 按 MESSAGES 键
     press() {
-      sfx.play('key', { gain: 0.7, rate: 0.8 });
+      sfx.play('key', { gain: 0.4, rate: 0.8 });
       if (!n) { sfx.tone(1000, { dur: 0.5, delay: 0.15 }); return; }
       if (run && run.phase !== 'end') {
         if (run.i + 1 < n) next(); else stop();
         return;
       }
-      sfx.play('tape-latch', { gain: 0.35, rate: 1.25, delay: 0.05 }); // 磁带转起来
+      sfx.play('tape-latch', { gain: 0.9, rate: 1.25, delay: 0.05, lp: 4000 }); // 磁带转起来
       if (!heard) {
         heard = true;
         try { localStorage.setItem(STORE, sig); } catch { /* 存不了就只在这一次里记着 */ }

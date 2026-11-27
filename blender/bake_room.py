@@ -454,6 +454,7 @@ put(RUG, G((0.0, 0.002, -0.45), (0, math.pi / 2, 0)), uvk=8, scale=0.0045)
 # 城市的光、月光照常进屋。窗台是一块浅色石板（比桌面高一点），上面摆着小盆栽和书
 K = 12
 WINDOW = Asset('sketchfab/classic-window', 'window', texsize=512)
+win_frame = bpy.data.materials[WINDOW.mat['metal_blanco']]
 win_glass = plain_material('window_glass', '#9fb0b8')
 _wb = next(n for n in win_glass.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
 _wb.inputs['Alpha'].default_value = 0.0                                      # 烘焙时透光
@@ -461,7 +462,15 @@ WIN_SIDE = 47.17 * 0.0254                                                    # �
 _wh = WIN['h'] - 0.03                                                        # 窗台石板上面那一截
 at = G((WIN['x'], wy0 + 0.03 + _wh / 2, BACK - dep + 0.06)) @ Matrix.Diagonal((WIN['w'] / WIN_SIDE, _wh / WIN_SIDE, 1.0, 1.0)) @ M(rot=(0, 1.061, 0))
 win_obs, _ = put(WINDOW, at, uvk=12, scale=0.0254, anchor=(0.5, 0.5, 0.5))
-for ob in win_obs:                                                           # 素材的玻璃材质换成我们的
+for ob in win_obs:
+    if win_frame.name in ob.data.materials:
+        # SketchUp 给框的每个面叠了一层反向三角形。焊回单层外壳，避免烘焙时被自己的背面遮光。
+        bm = bmesh.new()
+        bm.from_mesh(ob.data)
+        bmesh.ops.remove_doubles(bm, verts=list(bm.verts), dist=1e-6)
+        bmesh.ops.recalc_face_normals(bm, faces=list(bm.faces))
+        bm.to_mesh(ob.data)
+        bm.free()
     for k_, m_ in enumerate(ob.data.materials):
         if m_ and m_.name == WINDOW.mat.get('Glass_Crystal'):
             ob.data.materials[k_] = win_glass
@@ -480,32 +489,66 @@ K = 10
 SNAKE = Asset('sketchfab/snake-plant-scan-lowpoly', 'snake', texsize=512)
 put(SNAKE, G((WIN['x'] + 0.36, SILL, BACK - 0.06), (0, 0.4, 0)), uvk=12, height=0.4)
 
-# 窗右边一幅拉开、收成一束的窗帘（土黄色的布，褶子越往下越松），挂在窗上方的黄铜杆上；从窗边收到右墙
+# 窗右边一幅拉开、收成一束的窗帘（灰橄榄绿亚麻布），挂在窗上方的黄铜杆上；从窗边收到右墙
 CUR_Y, CUR_Z = RH - 0.14, BACK + 0.075   # 杆子挂在石膏线下面、窗顶前面
 brass = mat('brass', '#b8945a')
 rod((wx0 - 0.07, CUR_Y, CUR_Z), (x1 - 0.025, CUR_Y, CUR_Z), 0.011, brass, 12)
 ball((wx0 - 0.085, CUR_Y, CUR_Z), 0.02, brass, 1)
 for bx in (wx0 - 0.02, x1 - 0.11):
     box(I, 0.014, 0.03, CUR_Z - BACK, brass, bx, CUR_Y, (BACK + CUR_Z) / 2)
-cm = mat('curtain', '#a8823f')
-NX, NY, PLEATS = 72, 12, 6  # 一个褶子 12 个面：褶子是圆的，不是一块块平板
-CURTAIN_UVK = 20             # 窗帘正面的 lightmap 精度：一格 1.5 厘米左右，褶子的明暗烘得出来（正面按网格整块展开，见下面 Lightmap 那段）
-# t（0 = 顶，1 = 底）→ 左沿、右沿。靠窗那条边往下稍微往窗里收，靠墙那条边稍微往外散
-SIDES = [lambda t: (wx1 - 0.03 - 0.025 * t, x1 - 0.035 + 0.01 * t)]
-for side, back in [(sd, bk) for sd in SIDES for bk in (False, True)]:  # 正面带褶子；后面一层平的衬布（侧面看过去褶子的缝里不会露出墙）
-    K = 4 if back else CURTAIN_UVK
-    grid = []
-    for j in range(NY + 1):
-        t = j / NY
-        xa, xb = side(t)
-        amp = 0.02 + 0.012 * t
-        row = []
-        for i in range(NX + 1):
-            s = i / NX
-            z = CUR_Z - amp - 0.004 if back else CUR_Z + amp * math.sin(2 * math.pi * PLEATS * s + math.pi / 2)
-            row.append(T.bm.verts.new(tb((xa + (xb - xa) * s, CUR_Y - 0.01 - t * (CUR_Y - 0.025), z))))
-        grid.append(row)
-    T.tag([T.bm.faces.new((grid[j][i], grid[j + 1][i], grid[j + 1][i + 1], grid[j][i + 1])) for j in range(NY) for i in range(NX)], cm)
+# Fit the open right panel and its hardware to our rod. Keep the source folds at
+# the top and hem, and bring them together at the height of the leather tie.
+curtain_id = 'innerscene/curtain-pair-open'
+curtain = Asset(curtain_id, 'drape', glb=os.path.join(ROOT, 'vendor-src', curtain_id, 'model.glb'))
+USED.append(curtain_id)
+cloth = mat('curtain', '#869887')
+tieback = mat('curtain_tieback', '#70563a')
+cloth_u = T.bm.verts.layers.float.new('curtain_across')
+cloth_v = T.bm.verts.layers.float.new('curtain_height')
+CLOTH_UVK = 32
+
+
+def fit_curtain(point, across):
+    height = point.z / 2.1495  # height of the source rod, in metres
+    waist = 0.96 / 2.1495
+    above_tie = height >= waist
+    span = 1 - waist if above_tie else waist
+    t = min(1, abs(height - waist) / span)  # 0 at the tie, 1 at the rod or hem
+    width = 0.15 + (0.46 * (0.40*t + 0.60*t*t) if above_tie else 0.33 * (0.70*t + 0.30*t*t))
+    arch = math.sin(math.pi * t)
+    free_edge = 1 - across
+    x = 1.445 - 0.020*(1-t) - free_edge*width + 0.020*arch*math.sin(math.pi*across)*math.sin(6*across + 2*t)
+    y = 0.03 + (CUR_Y - 0.03)*height - arch*free_edge*(0.080 if above_tie else 0.025)
+    z = CUR_Z - point.y*(0.58 + 1.1*t) + free_edge*(0.012 + arch*(0.075 if above_tie else 0.038)) - 0.008*t
+    return tb((x, y, z))
+
+
+for name, piece in sorted(curtain.pieces.items()):
+    if sum(v.co.x for v in piece.vertices) / len(piece.vertices) < 0.45:
+        continue  # left panel and original rod
+    panel = 'Original pleated' in name
+    material = tieback if 'tieback' in name else brass if 'ring' in name else cloth
+    K = CLOTH_UVK if panel else 28
+    welded = {}
+    for polygon in piece.polygons:
+        points = [piece.vertices[i].co for i in polygon.vertices]
+        # The source cloth has two almost coincident surfaces. Use the room-facing
+        # surface and weld the seams so each fold gets continuous shading.
+        if panel and (points[1] - points[0]).cross(points[2] - points[0]).y >= -1e-9:
+            continue
+        verts = []
+        for point in points:
+            key = tuple(round(c, 6) for c in point)
+            if key not in welded:
+                across = (point.x - 0.56) / 0.42  # across the original panel before gathering
+                v = welded[key] = T.bm.verts.new(fit_curtain(point, across))
+                v[cloth_u], v[cloth_v] = across * 1.12, point.z * 1.18
+            verts.append(welded[key])
+        if len(set(verts)) < 3 or T.bm.faces.get(verts):
+            continue
+        face = T.bm.faces.new(verts)
+        face.smooth = panel
+        T.tag([face], material)
 K = 10
 
 # ---------- 书桌：窗下；左头和窗台石板的左头齐平，右头和电脑都没动，电脑正对窗户中间 ----------
@@ -1723,6 +1766,8 @@ box(g, 0.21, 0.006, 0.28, mat('mag1', '#8f3a2e'), 0.012, y + 0.003, 0.02, (0, -0
 # 左后墙角放什么（试摆用的开关，定下来以后去掉）：studio = 画室画架 + 莫奈，easel = 自己搭的窄画架 + 莫奈，globe = 落地地球仪
 CORNER = os.environ.get('CORNER', 'studio')
 ART_TITLE = ''
+# 金框的内沿和雕花很窄，普通精度下整段斜面会漏掉光照采样。
+ART_FRAME_UVK = 55
 if CORNER == 'studio':
     # 画室画架（Sketchfab「Easel | Мольберт | Easel with painting」里中间那个空画架，Every_3D，CC BY），托板上放金框的莫奈。
     # 只管镜头看到的样子：画架横向压到 0.72、前后压到 0.6（腿收窄、站得浅，托板右头不伸进开场画面），左前腿脚底戳进书柜背面一点（那一面镜头看不到）。
@@ -1749,7 +1794,7 @@ if CORNER == 'studio':
     _fc = _fb + _up * (_fh / 2)
     _st = G((-1.6, 0, -1.6), (0, ST_YAW, 0))                                  # 不带缩放的画架坐标
     with hot('art', ST_YAW):
-        art_obs, _ = put(ART, _st @ M(tuple(_fc), (-_tilt, 0, 0)) @ M(rot=(0, 0, math.pi / 2 if _wide else 0)), uvk=15, scale=ART_S,
+        art_obs, _ = put(ART, _st @ M(tuple(_fc), (-_tilt, 0, 0)) @ M(rot=(0, 0, math.pi / 2 if _wide else 0)), uvk=ART_FRAME_UVK, scale=ART_S,
                          anchor=(0.5, 0.5, 0.5))
     monet = bpy.data.images.load(os.path.join(ROOT, 'vendor-src', 'commons', _pic, _pic + '.jpg'))
     monet.scale(*((1024, 794) if _wide else (820, 1024)))
@@ -1876,7 +1921,7 @@ if CORNER == 'easel':
     _up = Vector((0, math.cos(EASEL_TILT), -math.sin(EASEL_TILT)))               # 画框顺着前腿往后仰
     _fc = Vector((0, LEDGE_Y + 0.03, _lz + 0.08)) + _up * (_fh / 2)            # 画框背面贴着前腿的前面
     with hot('art', 0.83):
-        art_obs, _ = put(ART, EASEL_AT @ M(tuple(_fc), (-EASEL_TILT, 0, 0)), uvk=15, scale=ART_S, anchor=(0.5, 0.5, 0.5))
+        art_obs, _ = put(ART, EASEL_AT @ M(tuple(_fc), (-EASEL_TILT, 0, 0)), uvk=ART_FRAME_UVK, scale=ART_S, anchor=(0.5, 0.5, 0.5))
     monet = bpy.data.images.load(os.path.join(ROOT, 'vendor-src', 'commons', 'monet-woman-with-a-parasol', 'monet-woman-with-a-parasol.jpg'))
     monet.scale(820, 1024)
     art_mat = plain_material('art_monet', '#ffffff')
@@ -2026,7 +2071,7 @@ def join(target, others):
 
 # 墙纸、窗帘：Poly Haven 的布料照片（CC0）只取底色贴图，去色后按目标颜色重新上色、压低对比；按真实大小平铺（UV 单位：米 / 一格多大）
 WALLPAPER = dict(src='polyhaven/hessian_380', color='#ddd6c8', contrast=0.3, tile=0.27)   # 暖白色麻布墙纸（细细的编织纹）
-CURTAIN = dict(src='polyhaven/rough_linen', color='#cdbfa5', contrast=0.6, tile=0.27)     # 燕麦色亚麻窗帘
+CURTAIN = dict(src='polyhaven/rough_linen', color='#869887', contrast=0.52, tile=0.27)     # 灰橄榄绿亚麻窗帘
 
 
 def tile_uv(mesh_wrap, name, tile, axis=None):
@@ -2101,6 +2146,8 @@ for name, spec in (('wall', WALLPAPER), ('curtain', CURTAIN)):
     nt.links.new(tex.outputs['Color'], bsdf.inputs['Base Color'])
     mt.diffuse_color = (*srgb(spec['color']), 1)
 for ob, uvk in PLACED:
+    if win_frame.name in ob.data.materials:
+        uvk = 36  # 窗棂的窄斜面在默认精度下不足一个光照像素，会整段烘黑。
     a = ob.data.attributes.new('uvk', 'INT', 'FACE')
     a.data.foreach_set('value', [uvk] * len(ob.data.polygons))
 join(room, [ob for ob, _ in PLACED])
@@ -2201,31 +2248,24 @@ bpy.ops.mesh.select_all(action='SELECT')
 bpy.ops.uv.smart_project(angle_limit=math.radians(60), island_margin=0.002, area_weight=0.0, correct_aspect=True, scale_to_bounds=False)
 bpy.ops.object.mode_set(mode='OBJECT')
 # 窗帘正面：smart_project 按法线把褶子切成一条条竖的小岛，一条只有几毫米宽，里面落不进一个像素中心，烘出来是一道道黑条。
-# 改成按网格整块展开：u = 沿着褶子量的弧长，v = 往下量的高度，米 → UV 的比例和别的岛一样（之后照常乘 uvk、一起 pack）。
-# 正面 / 衬布按 uvk 分（衬布是 4）
+# Use the panel coordinates from before gathering to keep the cloth in one lightmap island.
 _bm = bmesh.new()
 _bm.from_mesh(me)
 _uvl, _kl = _bm.loops.layers.uv['Lightmap'], _bm.faces.layers.int['uvk']
 _ci = next(i for i, m in enumerate(me.materials) if m and m.name == 'curtain')
 _uva = lambda f: abs(sum(a[_uvl].uv.x * b[_uvl].uv.y - b[_uvl].uv.x * a[_uvl].uv.y for a, b in zip(f.loops, list(f.loops)[1:] + [f.loops[0]]))) / 2
 _d = math.sqrt(sum(_uva(f) for f in _bm.faces) / sum(f.calc_area() for f in _bm.faces))  # 平均每米多少 UV
-_front = [f for f in _bm.faces if f.material_index == _ci and f[_kl] != 4]
-_rows = {}
-for v in {v for f in _front for v in f.verts}:
-    _rows.setdefault(round(v.co.z, 4), []).append(v)
-_top, _s = max(_rows), {}
-for z, vs in _rows.items():
-    vs.sort(key=lambda v: v.co.x)
-    acc = 0.0
-    for k, v in enumerate(vs):
-        acc += (v.co - vs[k - 1].co).length if k else 0.0
-        _s[v] = acc
+_front = [f for f in _bm.faces if f.material_index == _ci and f[_kl] == CLOTH_UVK]
+_across = _bm.verts.layers.float['curtain_across']
+_height = _bm.verts.layers.float['curtain_height']
 for f in _front:
-    for l in f.loops:
-        l[_uvl].uv = (_s[l.vert] * _d, (_top - l.vert.co.z) * _d)
+    for loop in f.loops:
+        loop[_uvl].uv = (loop.vert[_across] * _d, loop.vert[_height] * _d)
+_bm.verts.layers.float.remove(_across)
+_bm.verts.layers.float.remove(_bm.verts.layers.float['curtain_height'])
 _bm.to_mesh(me)
 _bm.free()
-print(f'[curtain] 正面 {len(_front)} 个面按网格展开，{len(_rows)} 行')
+print(f'[curtain] 正面 {len(_front)} 个面展开')
 lm = me.uv_layers['Lightmap']  # 进出编辑模式以后网格数据重建过，之前拿到的 UV 层引用会失效，按名字重新取
 npoly = len(me.polygons)
 k = np.empty(npoly, dtype=np.int32)

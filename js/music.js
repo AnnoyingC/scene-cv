@@ -23,7 +23,8 @@ export function createMusicPlayer({ host = document.getElementById('room'), viny
   const audio = document.createElement('audio');
   audio.preload = 'none';
   audio.loop = true;
-  let volume = 0.5; // 默认音量 50%（访客调过就用调过的）
+  let volume = 0.3; // 默认音量 30%（访客调过就用调过的）
+  let scene = 1; // 房间给的场景音量（setScene），乘在 volume 上，不改滑块
   let track = MUSIC_TRACKS[0];
   let auto = true;
   const effectKey = 'scenecv.music.vinyl';
@@ -148,7 +149,8 @@ export function createMusicPlayer({ host = document.getElementById('room'), viny
     try {
       if (!graph) {
         graph = createVinylAudio(audio, volume, vinyl);
-        if (!graph) { effect.disabled = true; effect.textContent = T.plain; effect.setAttribute('aria-pressed', 'false'); }
+        graph?.setScene(scene, true);
+        if (!graph) { audio.volume = volume * scene; effect.disabled = true; effect.textContent = T.plain; effect.setAttribute('aria-pressed', 'false'); }
       }
       // 两个调用都在点击手势里发起，兼容移动浏览器的音频解锁。
       await Promise.all([graph?.resume(), audio.play()]);
@@ -234,7 +236,7 @@ export function createMusicPlayer({ host = document.getElementById('room'), viny
   slider.addEventListener('input', () => {
     volume = Number(slider.value) / 100;
     if (graph) graph.setVolume(volume);
-    else audio.volume = volume;
+    else audio.volume = volume * scene;
     level.value = `${slider.value}%`;
     try { localStorage.setItem(VOLUME_KEY, String(volume)); } catch { /* 可不保存。 */ }
   });
@@ -256,6 +258,13 @@ export function createMusicPlayer({ host = document.getElementById('room'), viny
     selectTrack,
     autoplay,
     mute,
+    // 房间按镜头在看哪里调的音量（0..1）：看电视、站到窗前时让开一些，慢慢过渡；滑块上的数不变
+    setScene(k) {
+      if (destroyed || k === scene) return;
+      scene = k;
+      if (graph) graph.setScene(k);
+      else audio.volume = volume * k;
+    },
     openCard: () => setCard(true),
     closeCard: () => setCard(false),
     toggleCard: () => setCard(!cardOpen),

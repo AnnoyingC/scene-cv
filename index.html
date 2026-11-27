@@ -56,8 +56,11 @@
   "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/geometries/RoundedBoxGeometry.js",
   "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/loaders/SVGLoader.js",
   "js/activity/calendar.js",
+  "js/screensaver.js",
+  "js/pc-pixel.js",
   "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/loaders/GLTFLoader.js",
   "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/loaders/DRACOLoader.js",
+  "js/sfx-synth.js",
   "js/tapes/bars.js",
   "js/tapes/synth.js",
   "js/tapes/bounce.js",
@@ -157,7 +160,7 @@
         <ol>
           <li data-when="2023.09"><b>进入某某大学 · 某某专业</b>
             <p>点开以后的一两句话：这一步是什么、有什么收获。</p></li>
-          <li data-when="2024" data-tape="Project A"><b>第一个项目</b>
+          <li data-when="2024" data-tape="Unfog"><b>第一个项目</b>
             <p>写了 data-tape 的条目，点开以后最后一行是"在电视上播放"，会换上作品里名字带这个词的那盘带子。</p></li>
           <li data-when="2025" data-tape="Project B"><b>一段实习</b>
             <p>在哪里、做什么、带来了什么结果。</p></li>
@@ -201,7 +204,7 @@
         <ol>
           <li data-when="2023.09"><b>Your University · Your Major</b>
             <p>A sentence or two that opens when clicked: what this step was and what you took from it.</p></li>
-          <li data-when="2024" data-tape="Project A"><b>A first project</b>
+          <li data-when="2024" data-tape="Unfog"><b>A first project</b>
             <p>Entries with data-tape end with "Play on the TV", which loads the tape whose name contains that word.</p></li>
           <li data-when="2025" data-tape="Project B"><b>An internship</b>
             <p>Where, what you did, and what changed because of it.</p></li>
@@ -595,12 +598,13 @@
       电视下面显示每一章的字幕，↑↓ 或点电视换章节。节目放完一遍，电视自动换下一盘，打开网站以后几盘轮流放。
       a 的文字 = 带子的名字（印在纸盒的书脊和封面上；电脑屏幕菜单里 data-tape 的词按这个名字找带子）。
       没有链接就不写 href。p 是一两句简介（第一句写身份或出处）。桌上的架子放得下 4 盘。
-      下面四盘都是样例，共用 assets/tapes/sample/show.json 这一份节目单；换成自己的项目时每盘写一份。
+      下面四盘都是样例：第一盘 Unfog 是一个虚构的示例项目，配了完整的旁白（assets/tapes/sample/unfog/show.json）；
+      后面三盘共用 assets/tapes/sample/show.json 这份占位节目单，字幕讲每一项写什么。换成自己的项目时每盘写一份。
     -->
     <ol class="tapes">
-      <li data-tape="show" data-show="assets/tapes/sample/show.json" data-color="#e8b04a">
-        <a href="https://example.com/project-a">Project A</a> <span class="years">2026</span>
-        <p>Your role, then one line on what the project is and what you did in it.</p>
+      <li data-tape="show" data-show="assets/tapes/sample/unfog/show.json" data-color="#e8b04a">
+        <a href="https://example.com/unfog">Unfog</a> <span class="years">2026</span>
+        <p>A sample project, made up: a small tool that takes the fog out of old photographs. Its tape is a narrated programme, the way a finished one looks.</p>
       </li>
       <li data-tape="show" data-show="assets/tapes/sample/show.json" data-color="#e0577a">
         <a href="https://example.com/project-b">Project B</a> <span class="years">2025</span>
@@ -912,6 +916,8 @@
         <p>Source: MLIT 3D City Model (Project PLATEAU), Minato City (FY2023). Modified: buildings (LOD2 roof shapes, heights, uses, storeys) and terrain converted, relit as a rainy night and rendered into the view outside the window.</p></li>
       <li><a href="https://polyhaven.com/a/potted_plant_04">Potted Plant 04</a> <span class="by">James Ray Cock · Poly Haven</span> <a class="lic" href="https://creativecommons.org/publicdomain/zero/1.0/">CC0 1.0</a>
         <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
+      <li><a href="https://www.innerscene.com/tools/library/3d-parts/curtain-pair-open-original-interior-furnishing-8c8dbd3d">Curtain pair open - Original Interior Furnishing</a> <span class="by">Innerscene · Innerscene 3D Parts Library</span> <a class="lic" href="https://creativecommons.org/publicdomain/zero/1.0/">CC0 1.0</a>
+        <p>Right panel fitted to the existing brass rod, gathered at the tieback and retextured with grey-olive linen.</p></li>
       <li><a href="https://polyhaven.com/a/desk_lamp_arm_01">Desk Lamp Arm 01</a> <span class="by">Kuutti Siitonen, Yann Kervran · Poly Haven</span> <a class="lic" href="https://creativecommons.org/publicdomain/zero/1.0/">CC0 1.0</a>
         <p>Modified for this room: rescaled, retextured and baked into the room lighting (details in credits.json).</p></li>
       <li><a href="https://polyhaven.com/a/fancy_picture_frame_02">Fancy Picture Frame 02</a> <span class="by">Rob Tuytel, Rico Cilliers · Poly Haven</span> <a class="lic" href="https://creativecommons.org/publicdomain/zero/1.0/">CC0 1.0</a>

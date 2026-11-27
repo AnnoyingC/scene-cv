@@ -243,7 +243,7 @@ export function createPapersViewer({ docs: getDocs, top = () => 0, onClose, onTu
       const j = D.page, L = D.leaves[j], below = D.leaves[j + 1], curly = !!L.fold;
       L.style.transition = 'none';
       L.style.zIndex = '100';
-      sfx.play('book-flip', { gain: 0.45, rate: curly ? 1.1 : 0.9 });
+      sfx.play('book-flip', { gain: 0.5, rate: curly ? 1.1 : 0.9 });
       // 订书钉：一共 0.9 秒，前四成抬角；第三成起整张开始立起来（和抬角叠着，中间不停顿），角跟着放平
       const total = curly ? 900 : 620, rise = curly ? 0.3 : 0, flat = lerp(A_LIFT, A0, 0.7);
       const turning = lean(L, L.style.transform, UP, total * (1 - rise), 'cubic-bezier(.4,0,.72,.4)', total * rise);
@@ -263,7 +263,7 @@ export function createPapersViewer({ docs: getDocs, top = () => 0, onClose, onTu
     } else {
       const j = D.page - 1, L = D.leaves[j];
       L.style.transition = 'none';
-      sfx.play('book-flip', { gain: 0.4, rate: 0.95 });
+      sfx.play('book-flip', { gain: 0.45, rate: 0.95 });
       L.style.zIndex = '100'; // 从后面直接拿到最上面：立着、侧着只剩一条线，再平平地落下来
       D.page--;
       layoutLeaves(D, L);
@@ -284,12 +284,12 @@ export function createPapersViewer({ docs: getDocs, top = () => 0, onClose, onTu
       try { await x.finished; } finally { clip.style.transform = b; x.cancel(); }
     };
     const wait = (ms) => new Promise((r) => setTimeout(r, reduce ? 0 : ms));
-    sfx.play('tick', { gain: 0.5, rate: 1.35 });
+    sfx.play('tick', { gain: 0.33, rate: 1.35 });
     await slide(clip.style.transform || CLIP_ON, CLIP_OFF, 240, EASE.out);
     if (ep !== epoch) return;
     D.loose = true;
     layoutLeaves(D);
-    sfx.play('paper', { gain: 0.35, rate: 1.25 });
+    sfx.play('paper', { gain: 0.42, rate: 1.25 });
     const j = dir > 0 ? D.page : D.page - 1, L = D.leaves[j];
     L.style.transition = 'none';
     L.style.zIndex = dir > 0 ? '100' : '0';
@@ -306,7 +306,7 @@ export function createPapersViewer({ docs: getDocs, top = () => 0, onClose, onTu
     const back = slide(CLIP_OFF, CLIP_ON, 300, 'cubic-bezier(.3,1.35,.55,1)'); // 回形针跟着夹回去
     await Promise.all([home, back]);
     if (ep !== epoch) return;
-    sfx.play('tick', { gain: 0.55, rate: 1.1 });
+    sfx.play('tick', { gain: 0.37, rate: 1.1 });
     L.style.transition = '';
     L.style.zIndex = dir > 0 ? String(1 + j) : '60';
     layoutLeaves(D);
@@ -502,7 +502,7 @@ export function createPapersViewer({ docs: getDocs, top = () => 0, onClose, onTu
   function open(at = 0, rects = []) {
     build();
     if (!docs.length) return false;
-    sfx.play('paper');
+    sfx.play('paper', { gain: 0.75 });
     stopAll();
     closing = null;
     shown = true;

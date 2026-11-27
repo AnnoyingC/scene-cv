@@ -258,14 +258,15 @@ export async function start(content, { nav = null, music = null, achievements = 
     loaded = i;
     tv.stop();
     phys.forEach((t, k) => { if (t && k !== prev && k !== i && t.state !== 'rack') settle(k); }); // 连点好几盘时，半路的都先归位
-    const play = () => { if (loaded === i) { sfx.play('tv-static', { gain: 0.35, dur: 0.4 }); tv.play(tapes[i]); renderPanel(); } }; // 开机一下雪花
+    const near = view === 'work' ? 1 : 0.5; // 没在看电视（后面自己轮播换带）：机器声小一半
+    const play = () => { if (loaded === i) { if (view === 'work') sfx.play('tv-static', { gain: 0.43, dur: 0.4 }); tv.play(tapes[i]); renderPanel(); } }; // 开机一下雪花：电视的杂音、配音只在点进电视以后才有，屋里别处安安静静
     const load = () => {
       const t = phys[i];
       if (!t || t.state === 'in') return play(); // 架子上放不下的作品：没有实物，直接播
       if (!animate) { inside(i); return play(); }
       settle(i);
       t.state = 'flying';
-      tween(t, 1.25, (k) => placeTape(t, k), () => { inside(i); sfx.play('tape-latch'); play(); }); // 塞进录像机：咔
+      tween(t, 1.25, (k) => placeTape(t, k), () => { inside(i); sfx.play('vcr', { gain: 0.8 * near }); play(); }); // 塞进录像机：带仓"咔哒"落下，马达转一下穿带
     };
     const p = prev != null && prev !== i ? phys[prev] : null;
     if (p && p.state === 'in' && animate) {
@@ -455,7 +456,9 @@ export async function start(content, { nav = null, music = null, achievements = 
   }
   const center0 = new THREE.Vector3().fromArray(C.target), pcPos = new THREE.Vector3().fromArray(M.screens.pc.pos);
   const look = { yaw: C.yaw, pitch: C.pitch, dist: C.dist, yawT: C.yaw, pitchT: C.pitch, distT: C.dist };
-  const windowLook = { yaw: -.12, pitch: .035, dist: 1, yawT: -.12, pitchT: .035, distT: 1 };
+  // 站到窗前：东京塔在画面正中稍偏左，左边那栋超高层刚好出画；城市转了 view.turn 度，镜头也跟着转
+  const viewTurn = deg(data.view?.turn || 0), winYaw0 = -.19 + viewTurn;
+  const windowLook = { yaw: winYaw0, pitch: .035, dist: 1, yawT: winYaw0, pitchT: .035, distT: 1 };
   const activeLook = () => view === 'window' ? windowLook : look;
   const canLook = () => view === 'home' || view === 'window';
   // 往右转向唱机时镜头怎么跟着挪（见 homePose）：中心往右 33 厘米、往前 28 厘米、低 8 厘米，拉远 22 厘米，多低一点头
@@ -502,7 +505,7 @@ export async function start(content, { nav = null, music = null, achievements = 
     windowLook.pitchT = clamp(windowLook.pitchT, low, high);
     const halfH = Math.atan2(camera.aspect * Math.tan(halfV),
       Math.cos(out.pitch) - Math.abs(Math.sin(out.pitch)) * Math.tan(halfV));
-    const left = -deg(pano.lon[1]) + margin + halfH, right = -deg(pano.lon[0]) - margin - halfH;
+    const left = -deg(pano.lon[1]) + viewTurn + margin + halfH, right = -deg(pano.lon[0]) + viewTurn - margin - halfH;
     out.yaw = clamp(windowLook.yaw, left, right);
     windowLook.yawT = clamp(windowLook.yawT, left, right);
     return out;
@@ -641,6 +644,7 @@ export async function start(content, { nav = null, music = null, achievements = 
     if (name === view) return;
     const first = view === null, prev = view;
     view = name;
+    if (prev === 'work') tv.run?.silence?.();
     music?.closeCard?.(); // 换了视角就不再是在摆弄唱机：唱片卡片收起来
     if (name !== 'home') answering?.stop();
     if (name === 'phone') {
@@ -675,6 +679,7 @@ export async function start(content, { nav = null, music = null, achievements = 
     else startFly();
   }
   addEventListener('popstate', () => { setView(viewFromHash()); syncBookFromHash(); syncPapersFromHash(); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) tv.run?.silence?.(); });
 
   // ---------- HTML 面板 ----------
   function renderPanel() {
@@ -870,10 +875,10 @@ export async function start(content, { nav = null, music = null, achievements = 
       else phone?.click();
     }
     else if (h.kind === 'art' || /^poster/.test(h.kind)) return;
-    else if (h.kind === 'lamp') { light.lampT = light.lampT ? 0 : 1; sfx.play('switch'); }
-    else if (h.kind === 'room') { light.roomT = light.roomT ? 0 : 1; sfx.play('switch', { rate: 0.85 }); }
+    else if (h.kind === 'lamp') { light.lampT = light.lampT ? 0 : 1; sfx.play('switch', { gain: 0.75 }); }
+    else if (h.kind === 'room') { light.roomT = light.roomT ? 0 : 1; sfx.play('switch', { gain: 0.75, rate: 0.85 }); }
     else if (h.kind === 'about' && view === 'about') pc.click(h.uv);
-    else if (h.tvScreen) { tv.run?.seek?.(1); sfx.play('tv-glitch'); sfx.play('tv-static', { gain: 0.25, dur: 0.25 }); }
+    else if (h.tvScreen) { tv.run?.seek?.(1); sfx.play('tv-glitch', { gain: 0.63 }); sfx.play('tv-static', { gain: 0.3, dur: 0.25 }); }
     else if (h.kind !== view) go(h.kind);
     if (mouse) setHover(pick(x, y), x, y);
   }
@@ -978,7 +983,7 @@ export async function start(content, { nav = null, music = null, achievements = 
     if (view === 'shelf' && shelfBooks?.current() != null && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) cmd(e.key === 'ArrowRight' ? 'read-next' : 'read-prev');
     else if (view === 'work' && e.key === 'ArrowRight') cmd('next');
     else if (view === 'work' && e.key === 'ArrowLeft') cmd('prev');
-    else if (view === 'work' && (e.key === 'ArrowDown' || e.key === 'ArrowUp') && tv.run?.seek) { e.preventDefault(); tv.run.seek(e.key === 'ArrowDown' ? 1 : -1); sfx.play('tv-glitch'); } // 节目带：换章
+    else if (view === 'work' && (e.key === 'ArrowDown' || e.key === 'ArrowUp') && tv.run?.seek) { e.preventDefault(); tv.run.seek(e.key === 'ArrowDown' ? 1 : -1); sfx.play('tv-glitch', { gain: 0.63 }); } // 节目带：换章
     else if (view === 'work' && e.key === ' ') { e.preventDefault(); cmd('stop'); }
   });
 
@@ -1015,14 +1020,15 @@ export async function start(content, { nav = null, music = null, achievements = 
     const s = 1 - Math.exp(-dt * 12);
     light.lamp += (light.lampT - light.lamp) * s;
     light.room += (light.roomT - light.room) * s;
-    tv.update(t, dt);
+    tv.update(t, dt, view === 'work' && !document.hidden);
     updateSub();
     // 节目带放完一遍就换下一盘：打开网站以后电视一直在放，四个项目轮流来（用户自己点了别的带子也接着往下轮）
     if (tv.run !== autoplay.run) { autoplay.run = tv.run; autoplay.passes = tv.run?.passes ?? 0; }
     else if (tv.run && tv.run.passes > autoplay.passes && N > 1) { autoplay.passes = tv.run.passes; insertTape((loaded ?? 0) + 1); }
     pc.update(t, dt);
     turntable?.update(dt, music?.playing, music?.track);
-    sfx.mix({ tv: !tv.run ? 0 : view === 'work' ? 1 : 0.35, record: !!music?.playing }); // 电视放节目：低低的背景音乐（点进电视时大一点）；唱机放歌时让开
+    sfx.mix({ tv: tv.run && view === 'work' ? 1 : 0, narration: tv.run?.narrating, record: !!music?.playing, scene: view });
+    music?.setScene?.(view === 'work' || view === 'window' ? 0.5 : 1); // 看电视、站在窗前：唱片慢慢小一半（滑块 50 ≈ 听着像 25）
     deskCal?.update(dt);
     answering?.update(dt);
     dial?.update(dt);

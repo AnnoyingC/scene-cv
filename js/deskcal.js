@@ -109,7 +109,7 @@ export function createDeskCalendar(room) {
       if (p.delay > 0) { p.delay -= dt; continue; }
       p.t = Math.min(1, p.t + dt / 0.55);
       apply(p, p.t);
-      if (p.t >= 1) sfx.play('wood', { gain: 0.55 }); // 木块落回原位：咔哒一声
+      if (p.t >= 1) sfx.play('wood', { gain: 0.6 }); // 木块落回原位：咔哒一声
     }
     if (!busy && queue.length) { queue.shift()(); wait = queue.length ? 0.25 : 0; }
     if (!busy && !queue.length && new Date().toDateString() !== today) { today = new Date().toDateString(); setDate(new Date()); }

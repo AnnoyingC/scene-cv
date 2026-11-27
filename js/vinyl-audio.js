@@ -6,7 +6,9 @@ export function createVinylAudio(audio, volume, enabled) {
   const context = new Context();
   const master = context.createGain();
   master.gain.value = volume;
-  master.connect(context.destination);
+  // 场景音量：房间按镜头在看哪里慢慢推（看电视、站到窗前时让开一些），和访客自己调的音量分开
+  const scene = context.createGain();
+  master.connect(scene).connect(context.destination);
 
   const dry = context.createGain(), wet = context.createGain();
   dry.gain.value = enabled ? 0 : 1;
@@ -66,6 +68,11 @@ export function createVinylAudio(audio, volume, enabled) {
     resume: () => context.resume(),
     suspend: () => context.suspend(),
     setVolume(value) { ramp(master.gain, value); },
+    // value：0..1；instant = 直接跳到（刚建好的时候）
+    setScene(value, instant = false) {
+      if (instant) { scene.gain.cancelScheduledValues(context.currentTime); scene.gain.value = value; return; }
+      scene.gain.setTargetAtTime(value, context.currentTime, 0.9); // 一两秒里慢慢变过去（接着上一段的当前值走，中途改主意也不跳）
+    },
     setEnabled(value) {
       enabled = value;
       ramp(dry.gain, enabled ? 0 : 1);

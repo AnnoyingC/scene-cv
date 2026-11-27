@@ -527,6 +527,32 @@
       ]
     },
     {
+      "id": "innerscene/curtain-pair-open",
+      "source": "Innerscene 3D Parts Library",
+      "title": "Curtain pair open - Original Interior Furnishing",
+      "zh": "束起的亚麻窗帘",
+      "authors": [
+        "Innerscene"
+      ],
+      "url": "https://www.innerscene.com/tools/library/3d-parts/curtain-pair-open-original-interior-furnishing-8c8dbd3d",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "fetch": {
+        "files": [
+          {
+            "rel": "model.glb",
+            "url": "https://files.innerscene.com/library/curtain-pair-open-original-interior-furnishing-8c8dbd3d/60a6e06061eeca668606/curtain-pair-open-original-interior-furnishing.glb",
+            "size": 297972,
+            "md5": "3b7b94fea9ec41098c56786e98cee5bf"
+          }
+        ]
+      },
+      "note": "Right panel fitted to the existing brass rod, gathered at the tieback and retextured with grey-olive linen.",
+      "changes": [
+        "取右侧帘片和挂环，依窗杆和墙面尺寸重新收束，加上灰橄榄绿亚麻材质，烘焙进房间光照"
+      ]
+    },
+    {
       "id": "polyhaven/rough_linen",
       "source": "Poly Haven",
       "title": "Rough Linen",
@@ -547,7 +573,7 @@
         ]
       },
       "changes": [
-        "怀旧房间窗边的窗帘：只用底色贴图，去色后重新染成燕麦色，按真实大小平铺；烘焙进房间光照"
+        "怀旧房间窗边的窗帘：只用底色贴图，去色后重新染成灰橄榄绿，按真实大小平铺；烘焙进房间光照"
       ]
     },
     {

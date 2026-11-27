@@ -1513,6 +1513,9 @@ with open(os.path.join(OUTD, 'view.json'), 'w') as f:
             {'file': 'view_far.webp', 'data': 'view_far_data.png', 'dist': VIEW['far']},
             {'file': 'view_near.webp', 'data': 'view_near_data.png', 'dist': VIEW['near']},
         ]},
+        # 网页里整座城市再往左转 turn 度（窗户朝向 bearing + turn；麻布台那栋超高层就出了开场镜头的窗框），
+        # 月亮挪到右上方（three 坐标的方向）。js/window-view.js 和 scripts/make_screensaver.py 都读这两个
+        'turn': 16.0, 'moon': [0.4383, 0.3584, -0.8243],
         'built': time.strftime('%Y%m%d-%H%M%S'),
         # 网页里的天空：真实的东京（--osm）是下雨的城市夜空——低云压满、没有银河；程序生成的城市是原来的星空
         **({'sky': {'cover': 0.93, 'urban': 1, 'horizon': [round(c, 4) for c in srgb(URBAN_HAZE)[:3]]}} if A.osm else {}),

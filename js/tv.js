@@ -50,7 +50,7 @@ export class TV {
     this.idleDrawn = false;
   }
 
-  update(t, dt) {
+  update(t, dt, audible = false) {
     const { ctx, W, H } = this;
     if (this.state === 'off' && this.idleDrawn && !this.osd) {
       this.color.multiplyScalar(Math.exp(-dt * 10));
@@ -70,7 +70,7 @@ export class TV {
     }
     if (this.state === 'playing') {
       this.pctx.save();
-      this.run.frame(t - this.t0, dt);
+      this.run.frame(t - this.t0, dt, audible);
       this.pctx.restore();
       ctx.drawImage(this.prog, 0, 0);
     } else if (this.state === 'off') {
