@@ -21,7 +21,7 @@
 
 https://github.com/user-attachments/assets/072a3eb5-5a7f-4fcb-9067-c764a2a01d85
 
-<p align="center"><sub>The film, 3 minutes 20. GitHub starts videos muted: turn the sound on for the score.</sub></p>
+<p align="center"><sub>The film, 3 minutes 20. GitHub starts videos muted: turn the sound on for the score.<br>Full-quality original: <a href="https://github.com/AnnoyingC/scene-cv/releases/download/film-2026-11/SceneCV-1080p.mp4">SceneCV-1080p.mp4</a> (1080p, 539 MB) and English subtitles on the <a href="https://github.com/AnnoyingC/scene-cv/releases/tag/film-2026-11">release page</a>.</sub></p>
 
 - **The objects are the menu.** Click the computer, the papers, a tape, the bookshelf, the cork board or the notepad, and the camera flies over and opens that section. The books on the shelf are real books: click one and it slides out, flies up to you and opens. The top navigation bar and the address bar follow along, so every view has a link you can share.
 - **The view outside is alive.** Rain keeps falling over Tokyo at night under low clouds lit by the city, office and home lights switch on and off, car lights crawl along the streets and the expressway, obstacle lights blink on the high-rises, and now and then a few drops fall from the eaves into the gutter.
@@ -47,8 +47,8 @@ https://github.com/user-attachments/assets/33406382-5451-4920-a9b5-262ca0cb8a5f
 </td>
   </tr>
   <tr>
-    <td><b>Opening · 片头</b><br>The first half-minute of the film: the camera comes down out of the rain clouds over Tokyo, Tokyo Tower rises into view, the title settles over the city, and a scan line turns the whole picture into the pixel art of the computer's screensaver.<br>宣传片的前 30 秒：镜头从东京上空的雨云里落下来，东京塔升进画面，标题落在城市上空，一道扫描线把整幅画面变成电脑屏保里的像素画。</td>
-    <td><b>Making of the view · 窗外是怎么做出来的</b><br>How the city outside the window was built: 17,000 buildings from PLATEAU and OpenStreetMap as a white model, windows cut from three night photographs, satellite night-light data for the distant glow, the trees of the palace grounds, a cloud with real depth, and the camera's path back to the window.<br>窗外的东京是怎么做出来的：PLATEAU 和 OpenStreetMap 的一万七千栋楼先做成白模，窗户取自三张东京夜景照片，远处的灯火按卫星夜光数据铺开，再加上皇居的树、有厚度的云，最后是镜头退回窗前的路线。</td>
+    <td><b>Opening</b><br>The first half-minute of the film: the camera comes down out of the rain clouds over Tokyo, Tokyo Tower rises into view, the title settles over the city, and a scan line turns the whole picture into the pixel art of the computer's screensaver.</td>
+    <td><b>Making of the view</b><br>How the city outside the window was built: 17,000 buildings from PLATEAU and OpenStreetMap as a white model, windows cut from three night photographs, satellite night-light data for the distant glow, the trees of the palace grounds, a cloud with real depth, and the camera's path back to the window.</td>
   </tr>
   <tr>
     <td width="50%">
@@ -120,7 +120,7 @@ https://github.com/user-attachments/assets/3266b5bc-f9f4-431d-9087-a6c6a343a723
   </tr>
   <tr>
     <td><b>Activity Almanac · Usage</b><br>A carved wooden calendar hangs beside the bookshelf. Each tile is a day over the last twelve weeks, stained darker the busier it was. Click a carving to switch between GitHub contributions and Codex or Claude tokens, and a tile to read that day. The template shows labelled sample data; a local script fills it with your own.</td>
-    <td><b>Look out the window · 靠窗看夜景</b><br>Click the window to see Tokyo Tower on a rainy night. Drag to look around, then choose <b>Back to desk</b> to return.<br>点击窗户，靠近玻璃看雨夜里的东京塔。拖动可以环顾四周，点 <b>Back to desk</b> 回到书桌。</td>
+    <td><b>Look out the window</b><br>Click the window to see Tokyo Tower on a rainy night. Drag to look around, then choose <b>Back to desk</b> to return.</td>
   </tr>
 </table>
 
