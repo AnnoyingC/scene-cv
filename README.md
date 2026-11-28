@@ -19,7 +19,9 @@
   <a href="#third-party-assets">Credits</a>
 </p>
 
-![SCENECV · Step into your résumé: the title over Tokyo at night in the rain, with Tokyo Tower lit orange in the middle and the Trendoday Top 25 Rising Repo of the Day laurel below](docs/images/hero-cover.jpg)
+https://github.com/user-attachments/assets/072a3eb5-5a7f-4fcb-9067-c764a2a01d85
+
+<p align="center"><sub>The film, 3 minutes 20. GitHub starts videos muted: turn the sound on for the score.</sub></p>
 
 - **The objects are the menu.** Click the computer, the papers, a tape, the bookshelf, the cork board or the notepad, and the camera flies over and opens that section. The books on the shelf are real books: click one and it slides out, flies up to you and opens. The top navigation bar and the address bar follow along, so every view has a link you can share.
 - **The view outside is alive.** Rain keeps falling over Tokyo at night under low clouds lit by the city, office and home lights switch on and off, car lights crawl along the streets and the expressway, obstacle lights blink on the high-rises, and now and then a few drops fall from the eaves into the gutter.
@@ -27,30 +29,54 @@
 - **One page, two ways to see it.** The 3D room and the plain-text version read the same `index.html`; devices that cannot run the 3D room get the text version automatically.
 - **A static site with no dependencies.** There is no build step and no npm dependency. Edit `index.html` and put it on GitHub Pages, Vercel or Netlify.
 
-Inspired by the spatial personal site at felixrieseberg.com. The name, résumé, work, reading list, photos and contact details in this repository are all samples; replace them with your own.
+Inspired by Felix Rieseberg's 3D room at [felixrieseberg.com](https://felixrieseberg.com/). The name, résumé, work, reading list, photos and contact details in this repository are all samples; replace them with your own.
 
 ## A look around
 
 <table>
   <tr>
-    <td width="50%"><a href="docs/images/tokyo-window-blender.webp"><img src="docs/images/tokyo-window-blender.webp" alt="Blender's 3D viewport shows the white city model with Tokyo Tower in orange"></a></td>
-    <td width="50%"><a href="docs/images/tokyo-window-night.webp"><img src="docs/images/tokyo-window-night.webp" alt="The same skyline from the apartment window at night, with Tokyo Tower lit up on the right"></a></td>
+    <td width="50%">
+
+https://github.com/user-attachments/assets/0c012f05-fda7-4ef7-8263-f7515045f4ca
+
+</td>
+    <td width="50%">
+
+https://github.com/user-attachments/assets/33406382-5451-4920-a9b5-262ca0cb8a5f
+
+</td>
   </tr>
   <tr>
-    <td><b>Tokyo in Blender · 东京街区白模</b><br>The buildings outside the window appear in white in this Blender model. Tokyo Tower keeps its orange steel frame, making it easy to find in the night view.<br>这是窗外街区的 Blender 模型。楼宇以白模呈现，东京塔保留了橙色钢架，方便你在夜景图里找到它。</td>
-    <td><b>Look out the window · 靠窗看夜景</b><br>Click the window to see Tokyo Tower on a rainy night. Drag to look around, then choose <b>Back to desk</b> to return.<br>点击窗户，靠近玻璃看雨夜里的东京塔。拖动可以环顾四周，点 <b>Back to desk</b> 回到书桌。</td>
+    <td><b>Opening · 片头</b><br>The first half-minute of the film: the camera comes down out of the rain clouds over Tokyo, Tokyo Tower rises into view, the title settles over the city, and a scan line turns the whole picture into the pixel art of the computer's screensaver.<br>宣传片的前 30 秒：镜头从东京上空的雨云里落下来，东京塔升进画面，标题落在城市上空，一道扫描线把整幅画面变成电脑屏保里的像素画。</td>
+    <td><b>Making of the view · 窗外是怎么做出来的</b><br>How the city outside the window was built: 17,000 buildings from PLATEAU and OpenStreetMap as a white model, windows cut from three night photographs, satellite night-light data for the distant glow, the trees of the palace grounds, a cloud with real depth, and the camera's path back to the window.<br>窗外的东京是怎么做出来的：PLATEAU 和 OpenStreetMap 的一万七千栋楼先做成白模，窗户取自三张东京夜景照片，远处的灯火按卫星夜光数据铺开，再加上皇居的树、有厚度的云，最后是镜头退回窗前的路线。</td>
   </tr>
   <tr>
-    <td width="50%"><img src="docs/images/room-about-v4.jpg" alt="Close-up of the computer screen laid out like an old adventure game: a pixel-art view of Tokyo Tower, a command list and a message box with a short introduction"></td>
-    <td width="50%"><img src="docs/images/room-papers-v2.jpg" alt="A newspaper and two printed papers fanned out in front of the viewer"></td>
+    <td width="50%">
+
+https://github.com/user-attachments/assets/9bd4adf4-3b86-425b-9b5f-b8c794015703
+
+</td>
+    <td width="50%">
+
+https://github.com/user-attachments/assets/02776670-15a5-4dad-9a9a-710481661cf1
+
+</td>
   </tr>
   <tr>
     <td><b>Computer · About</b><br>While nobody uses it, the computer runs a screensaver: the view outside the window as pixel art, with the title. Click it and, as the camera reaches the screen, the saver dissolves into a screen laid out like an 80s Japanese adventure game: a pixel scene, a command list (who I am, what I'm up to, how I got here, how I think, ask me) and a message box where the text types itself out page by page.</td>
     <td><b>Papers</b><br>Click the stack next to the keyboard: a folded newspaper unfolds and two printed papers fan out behind it. The stapled conference paper lifts a corner and turns each page over its staple; for the journal article the paper clip comes off, the top sheet goes to the back and the clip goes back on.</td>
   </tr>
   <tr>
-    <td><img src="docs/images/room-work-v4.jpg" alt="The TV on a cart plays the sample programme: a line wipes across a foggy picture of hills over a lake and leaves it clear, with a subtitle underneath"></td>
-    <td><img src="docs/images/room-shelf-v3.jpg" alt="The bookshelf left of the desk, with one book pulled out and open in front of the viewer"></td>
+    <td>
+
+https://github.com/user-attachments/assets/00c514d9-40ac-4fc0-affc-f9814c34ce23
+
+</td>
+    <td>
+
+https://github.com/user-attachments/assets/49e96251-a085-443c-8fb1-bfd7db526b52
+
+</td>
   </tr>
   <tr>
     <td><b>VCR · Work</b><br>Each tape is a short programme in chapters, with subtitles under the TV and, if you like, a narration. Click a tape on the rack and it flies into the VCR; after a burst of static it starts playing and the TV's colours light up the room. When a programme ends, the next tape goes in. The first sample tape, Unfog, is a made-up project told the way a finished programme looks.</td>
@@ -73,8 +99,16 @@ Inspired by the spatial personal site at felixrieseberg.com. The name, résumé,
     <td><b>Record player · Music</b><br>Two records come with the template, sides A and B of the Open Goldberg Variations (public domain). Side A starts playing on its own; click the record player to change records, set the volume or switch the vinyl sound off.</td>
   </tr>
   <tr>
-    <td><img src="docs/images/room-messages.jpg" alt="The answering machine at the left end of the desk plays a message, shown as a subtitle with who left it underneath"></td>
-    <td><img src="docs/images/room-phone.jpg" alt="The rotary phone is picked up and a message is being typed into the subtitle area at the bottom of the screen"></td>
+    <td>
+
+https://github.com/user-attachments/assets/83799c29-4751-493d-af0f-064885b21a7d
+
+</td>
+    <td>
+
+https://github.com/user-attachments/assets/3266b5bc-f9f4-431d-9087-a6c6a343a723
+
+</td>
   </tr>
   <tr>
     <td><b>Answering machine · Messages</b><br>At the left end of the desk, the red light next to the MESSAGES key blinks once for every message you haven't heard. Click the machine and the messages play as subtitles, word by word, with who left them underneath. They are what other people say about you.</td>
@@ -82,11 +116,11 @@ Inspired by the spatial personal site at felixrieseberg.com. The name, résumé,
   </tr>
   <tr>
     <td><img src="docs/images/room-activity.jpg" alt="A wooden almanac on the wall beside the bookshelf: carved GitHub, Codex and Claude figures above twelve weeks of stained wooden day tiles"></td>
-    <td><img src="docs/images/room-mug.jpg" alt="Steam rising from a white mug on the desk, with Tokyo Tower outside the window"></td>
+    <td><a href="docs/images/tokyo-window-night.webp"><img src="docs/images/tokyo-window-night.webp" alt="The skyline from the window at night, with Tokyo Tower lit up on the right"></a></td>
   </tr>
   <tr>
     <td><b>Activity Almanac · Usage</b><br>A carved wooden calendar hangs beside the bookshelf. Each tile is a day over the last twelve weeks, stained darker the busier it was. Click a carving to switch between GitHub contributions and Codex or Claude tokens, and a tile to read that day. The template shows labelled sample data; a local script fills it with your own.</td>
-    <td><b>Mug · Steam</b><br>Steam curls up from the coffee mug on the desk and drifts with the air. Click the mug for a close-up.</td>
+    <td><b>Look out the window · 靠窗看夜景</b><br>Click the window to see Tokyo Tower on a rainy night. Drag to look around, then choose <b>Back to desk</b> to return.<br>点击窗户，靠近玻璃看雨夜里的东京塔。拖动可以环顾四周，点 <b>Back to desk</b> 回到书桌。</td>
   </tr>
 </table>
 
